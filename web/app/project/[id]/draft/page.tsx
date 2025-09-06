@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import FactsList from '@/components/FactsList'
 
 export default async function DraftPage({ params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions)
@@ -71,6 +72,37 @@ export default async function DraftPage({ params }: { params: { id: string } }) 
             <button type="submit">Export DOCX</button>
           </form>
         </div>
+        <details style={{marginBottom:16}}>
+          <summary>Budget (simple)</summary>
+          <form action={addBudgetItem.bind(null, project.id)} style={{display:'flex',gap:6,marginTop:8}}>
+            <input name="category" placeholder="Category" />
+            <input name="amount" placeholder="Amount" />
+            <input name="note" placeholder="Note" />
+            <button type="submit">Add</button>
+          </form>
+          <div style={{marginTop:8}}>
+            {(project.meta as any)?.budget?.items?.length ? (
+              <table>
+                <thead><tr><th>Category</th><th>Amount</th><th>Note</th><th></th></tr></thead>
+                <tbody>
+                  {((project.meta as any).budget.items as any[]).map((it:any, idx:number) => (
+                    <tr key={it.id || idx}>
+                      <td>{it.category}</td>
+                      <td>{it.amount}</td>
+                      <td>{it.note}</td>
+                      <td>
+                        <form action={removeBudgetItem.bind(null, project.id)}>
+                          <input type="hidden" name="id" value={String(it.id || idx)} />
+                          <button type="submit">Remove</button>
+                        </form>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : <div>No items yet.</div>}
+          </div>
+        </details>
         {project.sections.map(s => (
           <div key={s.id} style={{margin:'16px 0'}}>
             <h2>{s.title}</h2>
@@ -83,16 +115,7 @@ export default async function DraftPage({ params }: { params: { id: string } }) 
             {(project.factsJson as any[])?.length ? (
               <details style={{marginTop:8}}>
                 <summary>Add a fact to this section</summary>
-                <ul>
-                  {((project.factsJson as any[]) || []).slice(0,5).map((f:any,idx:number) => (
-                    <li key={idx}>
-                      <form action={appendFact.bind(null, s.id)}>
-                        <input type="hidden" name="text" value={String(f.text||'')} />
-                        <button type="submit">Append</button> {f.text}
-                      </form>
-                    </li>
-                  ))}
-                </ul>
+                <FactsList facts={(project.factsJson as any[]) || []} sectionId={s.id} />
               </details>
             ) : null}
           </div>
@@ -152,4 +175,31 @@ async function applyFix(projectId: string, formData: FormData) {
   const section = await prisma.section.findFirst({ where: { projectId, key: sectionKey } })
   if (!section) return
   await prisma.section.update({ where: { id: section.id }, data: { contentMd: (section.contentMd || '') + '\n\n' + patch } })
+}
+
+async function addBudgetItem(projectId: string, formData: FormData) {
+  'use server'
+  const category = String(formData.get('category') || '')
+  const amount = String(formData.get('amount') || '')
+  const note = String(formData.get('note') || '')
+  const p = await prisma.project.findUnique({ where: { id: projectId } })
+  const meta: any = p?.meta || {}
+  const items: any[] = Array.isArray(meta?.budget?.items) ? meta.budget.items : []
+  const id = Date.now().toString(36) + Math.random().toString(36).slice(2)
+  items.push({ id, category, amount, note })
+  const total = items.reduce((sum, it) => sum + (parseFloat(it.amount) || 0), 0)
+  meta.budget = { items, total }
+  await prisma.project.update({ where: { id: projectId }, data: { meta } })
+}
+
+async function removeBudgetItem(projectId: string, formData: FormData) {
+  'use server'
+  const id = String(formData.get('id') || '')
+  const p = await prisma.project.findUnique({ where: { id: projectId } })
+  const meta: any = p?.meta || {}
+  let items: any[] = Array.isArray(meta?.budget?.items) ? meta.budget.items : []
+  items = items.filter((it:any) => String(it.id) !== id)
+  const total = items.reduce((sum, it) => sum + (parseFloat(it.amount) || 0), 0)
+  meta.budget = { items, total }
+  await prisma.project.update({ where: { id: projectId }, data: { meta } })
 }

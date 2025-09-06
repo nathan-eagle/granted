@@ -1,0 +1,22 @@
+{
+  "id": "nih_sbir_phase_i_2025",
+  "name": "NIH SBIR Phase I",
+  "sections": [
+    {"id":"specific_aims","title":"Specific Aims","limitWords":1000,"mustCover":["Overall goal","Aim 1","Aim 2","Expected Outcomes","Impact"]},
+    {"id":"research_strategy","title":"Research Strategy","limitWords":6000,"mustCover":["Significance","Innovation","Approach","Preliminary Data","Milestones"]},
+    {"id":"commercialization","title":"Commercialization Plan","limitWords":3500,"mustCover":["Market","Customers","Competition","IP","Go-to-Market"]},
+    {"id":"team_facilities","title":"Team & Facilities","limitWords":1200,"mustCover":["Personnel","Environment","Facilities/Equipment"]},
+    {"id":"budget_justification","title":"Budget Justification","limitWords":1200,"mustCover":["Summary","Major Costs","Justification"]}
+  ],
+  "rubric": [
+    {"id":"significance","name":"Significance","weight":0.35},
+    {"id":"innovation","name":"Innovation","weight":0.25},
+    {"id":"approach","name":"Approach","weight":0.25},
+    {"id":"investigators","name":"Investigators/Environment","weight":0.15}
+  ],
+  "attachments": [
+    {"name":"Biosketches","required":false},
+    {"name":"Facilities","required":false}
+  ]
+}
+
