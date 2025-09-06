@@ -55,6 +55,9 @@ export default async function DraftPage({ params }: { params: { id: string } }) 
                 </li>
               ))}
             </ul>
+            <form action={applyAllSafeFixes.bind(null, project.id)}>
+              <button type="submit">Apply all safe fixes</button>
+            </form>
           </div>
         ) : (
           <form action={runMockReview.bind(null, project.id)} style={{marginTop:16}}>
@@ -106,7 +109,12 @@ export default async function DraftPage({ params }: { params: { id: string } }) 
         {project.sections.map(s => (
           <div key={s.id} style={{margin:'16px 0'}}>
             <h2>{s.title}</h2>
-            <textarea defaultValue={s.contentMd || ''} rows={10} style={{width:'100%'}} readOnly />
+            <form action={saveSection.bind(null, s.id)}>
+              <textarea name="content" defaultValue={s.contentMd || ''} rows={12} style={{width:'100%'}} />
+              <div style={{marginTop:6}}>
+                <button type="submit">Save</button>
+              </div>
+            </form>
             <div style={{marginTop:8,display:'flex',gap:8}}>
               <form action={fixNext.bind(null, s.id)}><button type="submit">Fix next</button></form>
               <form action={tighten.bind(null, s.id)}><button type="submit">Tighten to limit</button></form>
@@ -177,6 +185,12 @@ async function applyFix(projectId: string, formData: FormData) {
   await prisma.section.update({ where: { id: section.id }, data: { contentMd: (section.contentMd || '') + '\n\n' + patch } })
 }
 
+async function saveSection(sectionId: string, formData: FormData) {
+  'use server'
+  const content = String(formData.get('content') || '')
+  await prisma.section.update({ where: { id: sectionId }, data: { contentMd: content } })
+}
+
 async function addBudgetItem(projectId: string, formData: FormData) {
   'use server'
   const category = String(formData.get('category') || '')
@@ -202,4 +216,19 @@ async function removeBudgetItem(projectId: string, formData: FormData) {
   const total = items.reduce((sum, it) => sum + (parseFloat(it.amount) || 0), 0)
   meta.budget = { items, total }
   await prisma.project.update({ where: { id: projectId }, data: { meta } })
+}
+
+async function applyAllSafeFixes(projectId: string) {
+  'use server'
+  const p = await prisma.project.findUnique({ where: { id: projectId }, include: { sections: true } })
+  const fixes: any[] = (p?.meta as any)?.fixList || []
+  if (!p || !Array.isArray(fixes)) return
+  const byKey = new Map(p.sections.map(s => [s.key, s]))
+  for (const f of fixes) {
+    const patch = String(f.patch || '')
+    if (!patch) continue
+    const sec = byKey.get(String(f.sectionKey || ''))
+    if (!sec) continue
+    await prisma.section.update({ where: { id: sec.id }, data: { contentMd: (sec.contentMd || '') + '\n\n' + patch } })
+  }
 }

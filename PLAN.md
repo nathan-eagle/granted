@@ -27,6 +27,17 @@ Stack (opinionated, minimal):
 
 Each sprint is 1–2 days of focused work. Ship at the end of each sprint.
 
+Progress checklist
+- [x] Sprint 0 — Repo, deploy, and “Hello, Autopilot” (placeholder sections, draft workspace)
+- [x] Sprint 1 — Agency pack + Six‑question intake + Real autodraft (OpenAI JSON → Sections)
+- [x] Sprint 2 — Uploads (.txt/.md) + Fact miner + basic append facts
+- [x] Sprint 3 — Coverage scoring + Fix next + Tighten to limits
+- [x] Sprint 4 — Mock review → Fix‑list (apply individual patches)
+- [x] Sprint 5 — Basic budget + DOCX export + second agency pack (NIH)
+- [ ] Sprint 2 polish — richer facts UI (evidence snippet, per‑fact source)
+- [ ] Sprint 4 polish — Apply all safe fixes; impact ordering by rubric weights
+- [ ] Editor polish — editable textareas with Save/Autosave
+
 ## Sprint 0 — Repo, deploy, and “Hello, Autopilot”
 
 Goal: Have a running app on Vercel with auth, DB, and a placeholder Autodraft that creates sections.
