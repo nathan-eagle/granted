@@ -9,18 +9,18 @@ datasource db {
 
 // NextAuth core models
 model User {
-  id            String   @id @default(cuid())
+  id            String    @id @default(cuid())
   name          String?
-  email         String?  @unique
+  email         String?   @unique
   emailVerified DateTime?
   image         String?
   accounts      Account[]
   sessions      Session[]
 
   // App relations
-  projects      Project[]
-  jobs          Job[]
-  createdAt     DateTime @default(now())
+  projects  Project[]
+  jobs      Job[]
+  createdAt DateTime  @default(now())
 }
 
 model Account {
@@ -29,12 +29,12 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String?  @db.Text
-  access_token      String?  @db.Text
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String?  @db.Text
+  id_token          String? @db.Text
   session_state     String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -60,69 +60,69 @@ model VerificationToken {
 
 // App models
 model Project {
-  id        String  @id @default(cuid())
+  id        String   @id @default(cuid())
   userId    String
   name      String
   createdAt DateTime @default(now())
 
-  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   responses Response[]
   jobs      Job[]
 }
 
 model TemplateCategory {
-  id        String   @id @default(cuid())
+  id        String     @id @default(cuid())
   name      String
-  order     Int      @default(0)
+  order     Int        @default(0)
   templates Template[]
 }
 
 model Template {
-  id          String            @id @default(cuid())
-  categoryId  String
-  slug        String            @unique
-  title       String
-  about       String?           @db.Text
-  prompt      String            @db.Text
-  model       String            @default("gpt-4o-mini")
-  order       Int               @default(0)
-  emoji       String? 
-  icon        String?
+  id         String  @id @default(cuid())
+  categoryId String
+  slug       String  @unique
+  title      String
+  about      String? @db.Text
+  prompt     String  @db.Text
+  model      String  @default("gpt-4o-mini")
+  order      Int     @default(0)
+  emoji      String?
+  icon       String?
 
-  category    TemplateCategory  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  fields      TemplateField[]
-  responses   Response[]
-  jobs        Job[]
+  category  TemplateCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  fields    TemplateField[]
+  responses Response[]
+  jobs      Job[]
 }
 
 model TemplateField {
-  id          String   @id @default(cuid())
+  id          String  @id @default(cuid())
   templateId  String
   key         String
   label       String
-  type        String   @default("long")
+  type        String  @default("long")
   placeholder String?
   help        String?
-  order       Int      @default(0)
+  order       Int     @default(0)
 
-  template    Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  template Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
   @@unique([templateId, key])
 }
 
 model Response {
-  id          String   @id @default(cuid())
-  projectId   String
-  templateId  String
-  inputs      Json
-  output      String?  @db.Text
-  model       String
-  tokenUsage  Json?
-  createdAt   DateTime @default(now())
+  id         String   @id @default(cuid())
+  projectId  String
+  templateId String
+  inputs     Json
+  output     String?  @db.Text
+  model      String
+  tokenUsage Json?
+  createdAt  DateTime @default(now())
 
-  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  template    Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
-  jobId       String?
-  job         Job?     @relation("JobResponse", fields: [jobId], references: [id])
+  project  Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  template Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  job      Job?
 }
 
 enum JobStatus {
@@ -133,20 +133,20 @@ enum JobStatus {
 }
 
 model Job {
-  id         String     @id @default(cuid())
+  id         String    @id @default(cuid())
   userId     String
   projectId  String
   templateId String
   inputs     Json
-  status     JobStatus  @default(queued)
-  progress   String?    @db.Text
-  error      String?    @db.Text
-  responseId String?
+  status     JobStatus @default(queued)
+  progress   String?   @db.Text
+  error      String?   @db.Text
+  responseId String?   @unique
   startedAt  DateTime?
   finishedAt DateTime?
 
-  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  project    Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  template   Template   @relation(fields: [templateId], references: [id], onDelete: Cascade)
-  response   Response?  @relation("JobResponse", fields: [responseId], references: [id])
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project  Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  template Template  @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  response Response? @relation(fields: [responseId], references: [id])
 }
