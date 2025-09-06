@@ -7,7 +7,7 @@
 
 <title>Granted</title>
 <script type="text/javascript">
-    window.bubble_session_uid = '1757191076650x429098455542156700';
+    window.bubble_session_uid = '1757191103787x837339171291088900';
 </script>
 <script type="text/javascript">
     window.headers_source_maps = [["plugin_main_headers_1497473108162x748255442121523200",218,219],["plugin_main_headers_1515787032525x876315403042684900",220,222],["plugin_main_headers_1549381041240x967531714031124500",223,294],["plugin_main_headers_1580238841425x582072028873097200",295,326],["plugin_main_headers_1648657775675x129259588021649400",327,349],["plugin_main_headers_1676280573614x891677842206097400",350,353],["custom_app_header",355,364]]
@@ -37,7 +37,7 @@ window.Lib = new Proxy(function() {}, {
   apply: function() {
     return make_proxy({
       current_user: function() {
-        return make_proxy({ id: "1757191076650x429098455542156700" }, 'Lib().current_user');
+        return make_proxy({ id: "1757191103787x837339171291088900" }, 'Lib().current_user');
       }
     }, 'Lib()');
   }
@@ -62,7 +62,7 @@ if (!window._bubble_page_load_data.js_execution_timings) {
   window._bubble_page_load_data.js_execution_timings = {}
 }
 window._bubble_page_load_data.js_execution_timings['pre_early_js'] = Date.now();
-</script><script type="text/javascript" crossorigin="anonymous" charset="UTF-8" src="../package/early_js/05ae9fe83d6b755291132aab9d325d70918aafd336da1bd91a41a31c8b25734b/early.js"></script><script type="text/javascript">
+</script><script type="text/javascript" crossorigin="anonymous" charset="UTF-8" src="/package/early_js/05ae9fe83d6b755291132aab9d325d70918aafd336da1bd91a41a31c8b25734b/early.js"></script><script type="text/javascript">
 if (!window._bubble_page_load_data) {
   window._bubble_page_load_data = {}
 }
@@ -132,25 +132,25 @@ xhr.send();
 </script>
 <script type="text/javascript">window.gm_key = "AIzaSyB_Eri1SgaHNIbmZpp2tlvfdufqaxZ2y64";</script>
 <script type="text/javascript">window.glrl_key_status = false;</script>
-<script type="text/javascript">window.bubble_page_load_id = "1757191076689x416";</script>
-<script type="text/javascript">window.bubble_plp_token = "7ABs3W3qI/RZZX7mcfq5Bjrl/9Cq2tMzM81f5ByHXLc=";</script>
+<script type="text/javascript">window.bubble_page_load_id = "1757191104037x468";</script>
+<script type="text/javascript">window.bubble_plp_token = "+hY+hni+EDiY52EpqQin05jL9nYbLn95lF2TfTyh1+I=";</script>
 <script type="text/javascript">window.bubble_is_leanjs = false;</script>
 <script type="text/javascript">window.bubble_shim_modules = true;</script>
 <script type="text/javascript">window.bubble_new_reactivity = false;</script>
-<link rel="icon" type="image/jpeg" href="../../904133d31006c5cfee432029d4ab4b31.cdn.bubble.io/cdn-cgi/image/w=128,h=,f=auto,dpr=1,fit=contain/f1677956665349x824373660515238500/granted%20favicon.jpg" />
+<link rel="icon" type="image/jpeg" href="https://904133d31006c5cfee432029d4ab4b31.cdn.bubble.io/cdn-cgi/image/w=128,h=,f=auto,dpr=1,fit=contain/f1677956665349x824373660515238500/granted%20favicon.jpg" />
 <meta name="fragment" content="!">
 <meta name="description" content="Granted Gives You More Time for the Real Work with 10x Grant Writing">
-<link rel="canonical" href="nih-sbir-success-stories-lessons-from-funded-small-business-innovators-in-health-research.html"/>
+<link rel="canonical" href="https://grantedai.com/posts/the-nih-biosketch-showcasing-your-expertise-and-demonstrating-your-fit"/>
 <meta property="og:title" content="Granted AI - Get Funded Faster." />
 <meta name="twitter:title" content="Granted AI - Get Funded Faster." />
 <meta property="og:site_name" content="Granted: AI Proposal Writing" />
 <meta name="twitter:site_name" content="Granted: AI Proposal Writing" />
 <meta property="og:description" content="Granted Gives You More Time for the Real Work with 10x Grant Writing" />
 <meta name="twitter:description" content="Granted Gives You More Time for the Real Work with 10x Grant Writing" />
-<link rel="image_src" href="../../904133d31006c5cfee432029d4ab4b31.cdn.bubble.io/cdn-cgi/image/w=,h=,f=auto,dpr=1,fit=contain/f1680304237157x204610164592428100/granted%20favicon.jpg" />
+<link rel="image_src" href="https://904133d31006c5cfee432029d4ab4b31.cdn.bubble.io/cdn-cgi/image/w=,h=,f=auto,dpr=1,fit=contain/f1680304237157x204610164592428100/granted%20favicon.jpg" />
 <meta property="og:image" content="https://904133d31006c5cfee432029d4ab4b31.cdn.bubble.io/cdn-cgi/image/w=,h=,f=auto,dpr=1,fit=contain/f1680304237157x204610164592428100/granted%20favicon.jpg" />
 <meta name="twitter:image:src" content="https://904133d31006c5cfee432029d4ab4b31.cdn.bubble.io/cdn-cgi/image/w=,h=,f=auto,dpr=1,fit=contain/f1680304237157x204610164592428100/granted%20favicon.jpg" />
-<meta property="og:url" content="https://grantedai.com/posts/nih-sbir-success-stories-lessons-from-funded-small-business-innovators-in-health-research" />
+<meta property="og:url" content="https://grantedai.com/posts/the-nih-biosketch-showcasing-your-expertise-and-demonstrating-your-fit" />
 <meta property="og:type" content="website" />
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -159,7 +159,7 @@ xhr.send();
 <script type="text/javascript">window._p = '{"id":"app_starter_2023","no_branding":true,"import_export_csv":true,"custom_domain":true}';</script>
 <script type="text/javascript">window.bubble_page_name = "posts";</script>
 <script type="text/javascript">window.__bubble_module_mode = false;</script>
-<link type="text/css" href="../package/run_css/e1be5772fefcbbc72a255a5283273ea38a6f0bd7c6b42ec7d201afa354d7d816/grantedai/live/posts/xfalse/xfalse/run.css" rel="stylesheet">
+<link type="text/css" href="/package/run_css/e1be5772fefcbbc72a255a5283273ea38a6f0bd7c6b42ec7d201afa354d7d816/grantedai/live/posts/xfalse/xfalse/run.css" rel="stylesheet">
 <script type="text/javascript">
 if (!window._bubble_page_load_data) {
   window._bubble_page_load_data = {}
@@ -169,8 +169,8 @@ if (!window._bubble_page_load_data.js_execution_timings) {
 }
 window._bubble_page_load_data.js_execution_timings['pre_run_js'] = Date.now();
 </script>
-<script type="text/javascript" crossorigin="anonymous" charset="UTF-8" src="../package/pre_run_jquery_js/dee903a9e36db713e4c86d0cdd96d921e37be0c1293ed8dee29e2e4d7713b9ff/pre_run_jquery.js"></script>
-<script type="text/javascript" crossorigin="anonymous" charset="UTF-8" src="../package/run_js/038dde324cdb396a5bc44519a2feb10d4c6bb7a595e0ca1af1b94e8ae2303a5e/xtrue/x29/run.js"></script>
+<script type="text/javascript" crossorigin="anonymous" charset="UTF-8" src="/package/pre_run_jquery_js/dee903a9e36db713e4c86d0cdd96d921e37be0c1293ed8dee29e2e4d7713b9ff/pre_run_jquery.js"></script>
+<script type="text/javascript" crossorigin="anonymous" charset="UTF-8" src="/package/run_js/038dde324cdb396a5bc44519a2feb10d4c6bb7a595e0ca1af1b94e8ae2303a5e/xtrue/x29/run.js"></script>
 <script type="text/javascript">
 if (!window._bubble_page_load_data) {
   window._bubble_page_load_data = {}
@@ -188,7 +188,7 @@ if (!window._bubble_page_load_data.js_execution_timings) {
   window._bubble_page_load_data.js_execution_timings = {}
 }
 window._bubble_page_load_data.js_execution_timings['pre_static_js'] = Date.now();
-</script><script type="text/javascript" crossorigin="anonymous" charset="UTF-8" src="../package/static_js/178f1d61e516cbabda292619f449de3a3b9e89625c9ab398d98e1f81fe2e1c8f/grantedai/live/posts/xnull/xfalse/xfalse/xtrue/static.js"></script><script type="text/javascript">
+</script><script type="text/javascript" crossorigin="anonymous" charset="UTF-8" src="/package/static_js/178f1d61e516cbabda292619f449de3a3b9e89625c9ab398d98e1f81fe2e1c8f/grantedai/live/posts/xnull/xfalse/xfalse/xtrue/static.js"></script><script type="text/javascript">
 if (!window._bubble_page_load_data) {
   window._bubble_page_load_data = {}
 }
@@ -205,7 +205,7 @@ if (!window._bubble_page_load_data.js_execution_timings) {
   window._bubble_page_load_data.js_execution_timings = {}
 }
 window._bubble_page_load_data.js_execution_timings['pre_dynamic_js'] = Date.now();
-</script><script type="text/javascript" crossorigin="anonymous" charset="UTF-8" src="../package/dynamic_js/f8b4c745ec0fe0f659363dcd35c2b68b661ed424aa475317f08b1fd65f62c327/grantedai/live/posts/xnull/xfalse/xtrue/en_us/xfalse/xfalse/dynamic.js"></script><script type="text/javascript">
+</script><script type="text/javascript" crossorigin="anonymous" charset="UTF-8" src="/package/dynamic_js/f8b4c745ec0fe0f659363dcd35c2b68b661ed424aa475317f08b1fd65f62c327/grantedai/live/posts/xnull/xfalse/xtrue/en_us/xfalse/xfalse/dynamic.js"></script><script type="text/javascript">
 if (!window._bubble_page_load_data) {
   window._bubble_page_load_data = {}
 }
@@ -216,10 +216,10 @@ window._bubble_page_load_data.js_execution_timings['post_dynamic_js'] = Date.now
 </script>
 <script type="text/javascript">window._bubble_page_load_data.js_execution_timings.plugin_js_start_execution = Date.now();</script>
 <!-- 1497473108162x748255442121523200 -->
-<script type="text/javascript" src="../../904133d31006c5cfee432029d4ab4b31.cdn.bubble.io/f1618227041113x740068462949819800/clipboard.min.js"></script>
+<script type="text/javascript" src="//904133d31006c5cfee432029d4ab4b31.cdn.bubble.io/f1618227041113x740068462949819800/clipboard.min.js"></script>
 <!-- 1515787032525x876315403042684900 -->
-<link rel="stylesheet" href="../../d2tf8y1b8kxrzw.cloudfront.net/serve_files/airalert/jquery.toast.min.css" />
-<script src="../../d2tf8y1b8kxrzw.cloudfront.net/serve_files/airalert/jquery-xss.toast.min.js"></script>
+<link rel="stylesheet" href="https://d2tf8y1b8kxrzw.cloudfront.net/serve_files/airalert/jquery.toast.min.css" />
+<script src="https://d2tf8y1b8kxrzw.cloudfront.net/serve_files/airalert/jquery-xss.toast.min.js"></script>
 <!-- 1549381041240x967531714031124500 -->
 <!--
 Plugin developed by Whitigol Web Design
@@ -334,7 +334,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <!-- End Google Tag Manager -->
 
 <!-- Global site tag (gtag.js) - Google Analytics -->
-<script async src="../../www.googletagmanager.com/gtag/js%3Fid=G-RGQQTXGY1K"></script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-RGQQTXGY1K"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
@@ -344,17 +344,17 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 </script>
 
 <!-- Google Tag Manager (noscript) -->
-<noscript><iframe src="../../www.googletagmanager.com/ns.html%3Fid=GTM-KQ6QHXD.html"
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KQ6QHXD"
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
 <!-- 1676280573614x891677842206097400 -->
-<script src="../../unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
-<script src="../../unpkg.com/@dotlottie/player-component@1.0.0/dist/dotlottie-player.js"></script>
-<script src="../../unpkg.com/@lottiefiles/lottie-interactivity@latest/dist/lottie-interactivity.min.js"></script>
+<script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+<script src="https://unpkg.com/@dotlottie/player-component@1.0.0/dist/dotlottie-player.js"></script>
+<script src="https://unpkg.com/@lottiefiles/lottie-interactivity@latest/dist/lottie-interactivity.min.js"></script>
 <script type="text/javascript">window._bubble_page_load_data.js_execution_timings.plugin_js_end_execution = Date.now();</script>
 <!-- custom app meta header -->
 <!-- Google tag (gtag.js) -->
-<script async src="../../www.googletagmanager.com/gtag/js%3Fid=AW-1025794968"></script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=AW-1025794968"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}

@@ -45,5 +45,6 @@ export async function GET(req: NextRequest) {
   }
   const doc = new Document({ sections: [{ children }] })
   const buf = await Packer.toBuffer(doc)
-  return new Response(buf, { headers: { 'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'Content-Disposition': `attachment; filename="${project.name || 'granted'}.docx"` } })
+  const u8 = new Uint8Array(buf)
+  return new Response(u8, { headers: { 'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'Content-Disposition': `attachment; filename="${project.name || 'granted'}.docx"` } })
 }
