@@ -11,7 +11,6 @@ export const authOptions: NextAuthOptions = {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       authorization: {
         params: {
-          // Get a refresh token for Drive/Docs export
           access_type: 'offline',
           prompt: 'consent',
           response_type: 'code',
@@ -19,8 +18,6 @@ export const authOptions: NextAuthOptions = {
             'openid',
             'email',
             'profile',
-            'https://www.googleapis.com/auth/documents',
-            'https://www.googleapis.com/auth/drive.file',
           ].join(' '),
         },
       },
