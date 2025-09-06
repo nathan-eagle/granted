@@ -7,7 +7,7 @@
 
 <title>Granted</title>
 <script type="text/javascript">
-    window.bubble_session_uid = '1757190845410x640735703920738200';
+    window.bubble_session_uid = '1757190982601x808527800920544100';
 </script>
 <script type="text/javascript">
     window.headers_source_maps = [["plugin_main_headers_1497473108162x748255442121523200",218,219],["plugin_main_headers_1515787032525x876315403042684900",220,222],["plugin_main_headers_1549381041240x967531714031124500",223,294],["plugin_main_headers_1580238841425x582072028873097200",295,326],["plugin_main_headers_1648657775675x129259588021649400",327,349],["plugin_main_headers_1676280573614x891677842206097400",350,353],["custom_app_header",355,364]]
@@ -37,7 +37,7 @@ window.Lib = new Proxy(function() {}, {
   apply: function() {
     return make_proxy({
       current_user: function() {
-        return make_proxy({ id: "1757190845410x640735703920738200" }, 'Lib().current_user');
+        return make_proxy({ id: "1757190982601x808527800920544100" }, 'Lib().current_user');
       }
     }, 'Lib()');
   }
@@ -132,7 +132,7 @@ xhr.send();
 </script>
 <script type="text/javascript">window.gm_key = "AIzaSyB_Eri1SgaHNIbmZpp2tlvfdufqaxZ2y64";</script>
 <script type="text/javascript">window.glrl_key_status = false;</script>
-<script type="text/javascript">window.bubble_page_load_id = "1757190845451x286";</script>
+<script type="text/javascript">window.bubble_page_load_id = "1757190982641x468";</script>
 <script type="text/javascript">window.bubble_plp_token = "ubgEAe8hoFDZn+nKwhBGDCjXUCoABwT1HoZGYqW5YBc=";</script>
 <script type="text/javascript">window.bubble_is_leanjs = false;</script>
 <script type="text/javascript">window.bubble_shim_modules = true;</script>

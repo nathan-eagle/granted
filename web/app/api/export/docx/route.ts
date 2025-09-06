@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
   const project = await prisma.project.findUnique({ where: { id: projectId }, include: { sections: { orderBy: { order: 'asc' } } } })
   if (!project) return new Response('Not found', { status: 404 })
 
-  const children: Paragraph[] = []
+  const children: (Paragraph | Table)[] = []
   children.push(new Paragraph({ text: project.name, heading: HeadingLevel.TITLE }))
   children.push(new Paragraph(' '))
   for (let i = 0; i < project.sections.length; i++) {

@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+<title>Granted</title>
+<script type="text/javascript">
+    window.bubble_session_uid = '1757191030476x597294441968535000';
+</script>
+<script type="text/javascript">
+    window.headers_source_maps = [["plugin_main_headers_1497473108162x748255442121523200",218,219],["plugin_main_headers_1515787032525x876315403042684900",220,222],["plugin_main_headers_1549381041240x967531714031124500",223,294],["plugin_main_headers_1580238841425x582072028873097200",295,326],["plugin_main_headers_1648657775675x129259588021649400",327,349],["plugin_main_headers_1676280573614x891677842206097400",350,353],["custom_app_header",355,364]]
+</script>
+<script type="text/javascript">
+function make_proxy(target, name) {
+  return new Proxy(target, {
+    get: function(target, prop) {
+      if (prop in target) {
+        return target[prop];
+      }
+      throw new Error('The variable ' + name + ' is not fully initialized yet');
+    }
+  });
+}
+window.appquery = make_proxy({
+  app_version: function() { return "live"; },
+  last_change: function() { return "32981464209";},
+}, 'appquery');
+window.Lib = new Proxy(function() {}, {
+  get: function(target, prop) {
+    if (prop === 'is_skeleton') {
+      return true;
+    }
+    throw new Error('The variable ' + Lib + ' is not fully initialized yet');
+  },
+  apply: function() {
+    return make_proxy({
+      current_user: function() {
+        return make_proxy({ id: "1757191030476x597294441968535000" }, 'Lib().current_user');
+      }
+    }, 'Lib()');
+  }
+});
+</script>
+<script type="text/javascript">
+function load_error_function (event) {
+  return window.load_error_log.push({ msg: event.message, error_url: event.filename, line: event.lineno, col: event.colno })
+}
+window.load_error_log = [];
+window.addEventListener('error', load_error_function);
+window.disableLoadErrorFunction = function () {
+  window.removeEventListener('error', load_error_function);
+}
+</script>
+<meta name="referrer" content="origin">
+<script type="text/javascript">
+if (!window._bubble_page_load_data) {
+  window._bubble_page_load_data = {}
+}
+if (!window._bubble_page_load_data.js_execution_timings) {
+  window._bubble_page_load_data.js_execution_timings = {}
+}
+window._bubble_page_load_data.js_execution_timings['pre_early_js'] = Date.now();
+</script><script type="text/javascript" crossorigin="anonymous" charset="UTF-8" src="../package/early_js/05ae9fe83d6b755291132aab9d325d70918aafd336da1bd91a41a31c8b25734b/early.js"></script><script type="text/javascript">
+if (!window._bubble_page_load_data) {
+  window._bubble_page_load_data = {}
+}
+if (!window._bubble_page_load_data.js_execution_timings) {
+  window._bubble_page_load_data.js_execution_timings = {}
+}
+window._bubble_page_load_data.js_execution_timings['post_early_js'] = Date.now();
+</script>
+<script type="text/javascript">(function () {
+    function onWebFontFinish () {
+        window.google_web_fonts_active = true;
+if (window.google_web_fonts_active_cb) {
+    window.google_web_fonts_active_cb();
+}
+        (function fontface_loaded_snippet (font) {
+  if (window.fontface_loaded == null) {
+    window.fontface_loaded = {}
+  }
+  if (font != null) {
+    window.fontface_loaded[font] = true
+  } else {
+    window.all_fontface_loaded = true
+  }
+  if (window.fontface_webfonts_loaded_cb) {
+    return window.fontface_webfonts_loaded_cb(font)
+  }
+})()
+    }
+    const WebFontConfig = {'google': { families: ["Bellota:300","Roboto:300","Roboto:regular","Roboto:500","Roboto:600","Roboto:700","Roboto:900"] },
+        active: function() {
+            onWebFontFinish()
+        },
+        inactive: function() {
+            console.log('Failed to load all the fonts');
+            onWebFontFinish()
+        },
+        fontinactive: function(family_name, fvd) {
+            console.log('fontinactive being called for ' + family_name + ', Google says the fonts didnt render');
+            onWebFontFinish()
+        }
+    }
+        window.WebFont.load(WebFontConfig);
+})();</script>
+<script>
+(function initialize_data() {
+const xhr = new XMLHttpRequest();
+xhr.onreadystatechange = function() {
+    if (this.readyState === 4 && this.status === 200) {
+        const data = JSON.parse(this.responseText);
+
+        function init_data() {
+            data.forEach(function(d) {
+                Lib().db_instance().initialize_data(d.id, d.data, d.type, d.version);
+            })
+        }
+
+        if (window.Lib && window.Lib.is_skeleton == null) {
+            init_data();
+        } else {
+            window.Lib_post_load = init_data;
+        }
+    }
+};
+xhr.open("GET", "https://grantedai.com/api/1.1/init/data?location=" + encodeURIComponent(window.location.href), true);
+xhr.send();
+})();
+</script>
+<script type="text/javascript">window.gm_key = "AIzaSyB_Eri1SgaHNIbmZpp2tlvfdufqaxZ2y64";</script>
+<script type="text/javascript">window.glrl_key_status = false;</script>
+<script type="text/javascript">window.bubble_page_load_id = "1757191030511x458";</script>
+<script type="text/javascript">window.bubble_plp_token = "7ABs3W3qI/RZZX7mcfq5Bjrl/9Cq2tMzM81f5ByHXLc=";</script>
+<script type="text/javascript">window.bubble_is_leanjs = false;</script>
+<script type="text/javascript">window.bubble_shim_modules = true;</script>
+<script type="text/javascript">window.bubble_new_reactivity = false;</script>
+<link rel="icon" type="image/jpeg" href="../../904133d31006c5cfee432029d4ab4b31.cdn.bubble.io/cdn-cgi/image/w=128,h=,f=auto,dpr=1,fit=contain/f1677956665349x824373660515238500/granted%20favicon.jpg" />
+<meta name="fragment" content="!">
+<meta name="description" content="Granted Gives You More Time for the Real Work with 10x Grant Writing">
+<link rel="canonical" href="commercialization-strategy-crafting-a-winning-plan-for-your-nih-sbir-grant-application.html"/>
+<meta property="og:title" content="Granted AI - Get Funded Faster." />
+<meta name="twitter:title" content="Granted AI - Get Funded Faster." />
+<meta property="og:site_name" content="Granted: AI Proposal Writing" />
+<meta name="twitter:site_name" content="Granted: AI Proposal Writing" />
+<meta property="og:description" content="Granted Gives You More Time for the Real Work with 10x Grant Writing" />
+<meta name="twitter:description" content="Granted Gives You More Time for the Real Work with 10x Grant Writing" />
+<link rel="image_src" href="../../904133d31006c5cfee432029d4ab4b31.cdn.bubble.io/cdn-cgi/image/w=,h=,f=auto,dpr=1,fit=contain/f1680304237157x204610164592428100/granted%20favicon.jpg" />
+<meta property="og:image" content="https://904133d31006c5cfee432029d4ab4b31.cdn.bubble.io/cdn-cgi/image/w=,h=,f=auto,dpr=1,fit=contain/f1680304237157x204610164592428100/granted%20favicon.jpg" />
+<meta name="twitter:image:src" content="https://904133d31006c5cfee432029d4ab4b31.cdn.bubble.io/cdn-cgi/image/w=,h=,f=auto,dpr=1,fit=contain/f1680304237157x204610164592428100/granted%20favicon.jpg" />
+<meta property="og:url" content="https://grantedai.com/posts/commercialization-strategy-crafting-a-winning-plan-for-your-nih-sbir-grant-application" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<script type="text/javascript">window._p = '{"id":"app_starter_2023","no_branding":true,"import_export_csv":true,"custom_domain":true}';</script>
+<script type="text/javascript">window.bubble_page_name = "posts";</script>
+<script type="text/javascript">window.__bubble_module_mode = false;</script>
+<link type="text/css" href="../package/run_css/e1be5772fefcbbc72a255a5283273ea38a6f0bd7c6b42ec7d201afa354d7d816/grantedai/live/posts/xfalse/xfalse/run.css" rel="stylesheet">
+<script type="text/javascript">
+if (!window._bubble_page_load_data) {
+  window._bubble_page_load_data = {}
+}
+if (!window._bubble_page_load_data.js_execution_timings) {
+  window._bubble_page_load_data.js_execution_timings = {}
+}
+window._bubble_page_load_data.js_execution_timings['pre_run_js'] = Date.now();
+</script>
+<script type="text/javascript" crossorigin="anonymous" charset="UTF-8" src="../package/pre_run_jquery_js/dee903a9e36db713e4c86d0cdd96d921e37be0c1293ed8dee29e2e4d7713b9ff/pre_run_jquery.js"></script>
+<script type="text/javascript" crossorigin="anonymous" charset="UTF-8" src="../package/run_js/038dde324cdb396a5bc44519a2feb10d4c6bb7a595e0ca1af1b94e8ae2303a5e/xtrue/x29/run.js"></script>
+<script type="text/javascript">
+if (!window._bubble_page_load_data) {
+  window._bubble_page_load_data = {}
+}
+if (!window._bubble_page_load_data.js_execution_timings) {
+  window._bubble_page_load_data.js_execution_timings = {}
+}
+window._bubble_page_load_data.js_execution_timings['post_run_js'] = Date.now();
+</script>
+<script type="text/javascript">
+if (!window._bubble_page_load_data) {
+  window._bubble_page_load_data = {}
+}
+if (!window._bubble_page_load_data.js_execution_timings) {
+  window._bubble_page_load_data.js_execution_timings = {}
+}
+window._bubble_page_load_data.js_execution_timings['pre_static_js'] = Date.now();
+</script><script type="text/javascript" crossorigin="anonymous" charset="UTF-8" src="../package/static_js/178f1d61e516cbabda292619f449de3a3b9e89625c9ab398d98e1f81fe2e1c8f/grantedai/live/posts/xnull/xfalse/xfalse/xtrue/static.js"></script><script type="text/javascript">
+if (!window._bubble_page_load_data) {
+  window._bubble_page_load_data = {}
+}
+if (!window._bubble_page_load_data.js_execution_timings) {
+  window._bubble_page_load_data.js_execution_timings = {}
+}
+window._bubble_page_load_data.js_execution_timings['post_static_js'] = Date.now();
+</script>
+<script type="text/javascript">
+if (!window._bubble_page_load_data) {
+  window._bubble_page_load_data = {}
+}
+if (!window._bubble_page_load_data.js_execution_timings) {
+  window._bubble_page_load_data.js_execution_timings = {}
+}
+window._bubble_page_load_data.js_execution_timings['pre_dynamic_js'] = Date.now();
+</script><script type="text/javascript" crossorigin="anonymous" charset="UTF-8" src="../package/dynamic_js/f8b4c745ec0fe0f659363dcd35c2b68b661ed424aa475317f08b1fd65f62c327/grantedai/live/posts/xnull/xfalse/xtrue/en_us/xfalse/xfalse/dynamic.js"></script><script type="text/javascript">
+if (!window._bubble_page_load_data) {
+  window._bubble_page_load_data = {}
+}
+if (!window._bubble_page_load_data.js_execution_timings) {
+  window._bubble_page_load_data.js_execution_timings = {}
+}
+window._bubble_page_load_data.js_execution_timings['post_dynamic_js'] = Date.now();
+</script>
+<script type="text/javascript">window._bubble_page_load_data.js_execution_timings.plugin_js_start_execution = Date.now();</script>
+<!-- 1497473108162x748255442121523200 -->
+<script type="text/javascript" src="../../904133d31006c5cfee432029d4ab4b31.cdn.bubble.io/f1618227041113x740068462949819800/clipboard.min.js"></script>
+<!-- 1515787032525x876315403042684900 -->
+<link rel="stylesheet" href="../../d2tf8y1b8kxrzw.cloudfront.net/serve_files/airalert/jquery.toast.min.css" />
+<script src="../../d2tf8y1b8kxrzw.cloudfront.net/serve_files/airalert/jquery-xss.toast.min.js"></script>
+<!-- 1549381041240x967531714031124500 -->
+<!--
+Plugin developed by Whitigol Web Design
+You are welcome to use this code for your own personal use. But please do not repost it and claim it as yours.
+Thank you, and I hope you enjoy my plugin!
+-->
+<style>
+.Button {
+  position: relative;
+  overflow: hidden;
+  user-drag: none;
+  user-select: none;
+}
+.Button .ink {
+  display: block;
+  position: absolute;
+  background: white;
+  opacity: 0.8;
+  border-radius: 100%;
+  will-change: transform;
+  transform: scale(0);
+}
+.Button .ink.is-animating {
+  animation: ripple 0.4s linear;
+}
+
+@keyframes ripple {
+  0% {
+    opacity: 0.8;
+    transform: scale(0);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.5);
+  }
+}
+</style>
+<script>
+    	document.addEventListener('mousedown', function(event) {
+    
+		if (!event.target.classList.contains('Button')) {
+			return;
+		}
+		
+		var rippleBtn = event.target, 
+        ink = rippleBtn.querySelector('.ink'), diameter;
+    
+		if (!ink) {
+			ink = document.createElement('i');
+			ink.classList.add('ink');
+			
+			diameter = Math.max(rippleBtn.clientWidth, rippleBtn.clientHeight);
+			ink.style.width = diameter + 'px';
+			ink.style.height = diameter + 'px';
+			['animationend', 'webkitAnimationEnd', 'oAnimationEnd', 'MSAnimationEnd'].forEach(function(eventName){
+				ink.addEventListener(eventName, function(){
+					ink.parentNode.removeChild(ink)
+				});
+			});
+
+			rippleBtn.insertBefore(ink, rippleBtn.firstChild);
+		} else {
+			diameter = ink.clientWidth;
+		}
+    ink.style.top = (event.offsetY - diameter/2) + 'px';
+    ink.style.left = (event.offsetX - diameter/2) + 'px';
+        
+		ink.classList.remove('is-animating');
+		ink.width = ink.clientWidth + 'px';
+		ink.classList.add('is-animating');
+	});
+</script>
+<!-- 1580238841425x582072028873097200 -->
+<style>
+    
+    blockquote {
+        border-left: 4px solid #ccc;
+   		margin-bottom: 5px;
+    	margin-top: 5px;
+        padding-left: 16px;
+    }
+    
+    ul, ol {
+    	list-style-position: outside;
+    }
+    
+    .ql-font .ql-picker-label:first-child::before {
+    	font-family: inherit;    
+        overflow: hide;
+    }
+    
+    .ql-font .ql-picker-label {
+        overflow: hidden;
+    }
+    
+    .regular-header-icon {
+        color: #444;
+    }
+    
+    .tooltip-header-icon {
+        color: #ccc;
+    }
+    
+</style>
+<!-- 1648657775675x129259588021649400 -->
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-KQ6QHXD');</script>
+<!-- End Google Tag Manager -->
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="../../www.googletagmanager.com/gtag/js%3Fid=G-RGQQTXGY1K"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-RGQQTXGY1K');
+</script>
+
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="../../www.googletagmanager.com/ns.html%3Fid=GTM-KQ6QHXD.html"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+<!-- 1676280573614x891677842206097400 -->
+<script src="../../unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+<script src="../../unpkg.com/@dotlottie/player-component@1.0.0/dist/dotlottie-player.js"></script>
+<script src="../../unpkg.com/@lottiefiles/lottie-interactivity@latest/dist/lottie-interactivity.min.js"></script>
+<script type="text/javascript">window._bubble_page_load_data.js_execution_timings.plugin_js_end_execution = Date.now();</script>
+<!-- custom app meta header -->
+<!-- Google tag (gtag.js) -->
+<script async src="../../www.googletagmanager.com/gtag/js%3Fid=AW-1025794968"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'AW-1025794968');
+</script>
+</head>
+<body><script type="text/javascript">
+window.addEventListener('DOMContentLoaded', function () {
+  if (window.appquery == null) {
+    const css = document.createElement('style');
+css.type='text/css';
+css.appendChild(document.createTextNode(".warning-message-failure {padding: 30px; line-height: 1.5; white-space: pre; z-index: 1000000; position: fixed; width: 100%; height: 100%; background: white;}"));
+document.getElementsByTagName("head")[0].appendChild(css);
+const newDiv = document.createElement("div");
+newDiv.className = "warning-message-failure";
+newDiv.innerHTML = "Your browser was unable to load some necessary resources, contact your IT network administrator and ask them to allow access to <br><br>     d3dqmih97rcqmh.cloudfront.net <br>     904133d31006c5cfee432029d4ab4b31.cdn.bubble.io/ <br>     d1muf25xaso8hp.cloudfront.net";
+document.body.appendChild(newDiv);
+    httpRequest = new XMLHttpRequest();
+httpRequest.open('POST', '/user/m', true);
+httpRequest.setRequestHeader('Content-Type', 'application/json');
+httpRequest.send(JSON.stringify({measures: {page_load_error: 1, url: document.location.href, errors: window.load_error_log}}));
+  };
+});
+</script><script>(function(w,r){w._rwq=r;w[r]=w[r]||function(){(w[r].q=w[r].q||[]).push(arguments)}})(window,'rewardful');</script>
+<script async src='https://r.wdfl.co/rw.js' data-rewardful='78aa67'></script><script type="text/javascript">window.addEventListener('DOMContentLoaded', function () {if (window.appquery && window.app == null) {const css = document.createElement('style');
+css.type='text/css';
+css.appendChild(document.createTextNode(".warning-message-failure {padding: 30px; line-height: 1.5; white-space: pre; z-index: 1000000; position: fixed; width: 100%; height: 100%; background: white;}"));
+document.getElementsByTagName("head")[0].appendChild(css);
+const newDiv = document.createElement("div");
+newDiv.className = "warning-message-failure";
+newDiv.innerHTML = "Your browser was unable to load the application data. We've been notified of the issue. Please try again in a few moments and make sure not to use ad-blockers.";
+document.body.appendChild(newDiv);}});</script>
+<img style="display: none;" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" />
+</body>
+</html>
