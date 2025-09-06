@@ -43,9 +43,53 @@ export default async function ProjectPage({ params }: { params: { id: string } }
       </aside>
       <section>
         <h1>{project.name}</h1>
+        <div style={{display:'flex', gap:8, margin:'8px 0 16px'}}>
+          <form action={renameProject.bind(null, project.id)}>
+            <input type="text" name="name" placeholder="Rename project" />
+            <button type="submit" style={{marginLeft:8}}>Rename</button>
+          </form>
+          <form action={duplicateProject.bind(null, project.id)}>
+            <button type="submit">Duplicate Project</button>
+          </form>
+        </div>
         <p>Select a template on the left to begin.</p>
       </section>
     </div>
   )
 }
 
+import { redirect } from 'next/navigation'
+async function renameProject(projectId: string, formData: FormData) {
+  'use server'
+  const session = await getServerSession(authOptions)
+  if (!session?.user) return
+  const name = String(formData.get('name') || '').trim()
+  if (!name) return
+  await prisma.project.update({ where: { id: projectId }, data: { name } })
+  redirect(`/projects/${projectId}`)
+}
+
+async function duplicateProject(projectId: string) {
+  'use server'
+  const session = await getServerSession(authOptions)
+  if (!session?.user) return
+  // @ts-ignore
+  const userId = session.user.id as string
+  const src = await prisma.project.findFirst({ where: { id: projectId, userId }, include: { responses: true } })
+  if (!src) return
+  const copy = await prisma.project.create({ data: { userId, name: `Copy of ${src.name}` } })
+  if (src.responses.length) {
+    await prisma.response.createMany({
+      data: src.responses.map(r => ({
+        projectId: copy.id,
+        templateId: r.templateId,
+        inputs: r.inputs,
+        output: r.output,
+        model: r.model,
+        tokenUsage: r.tokenUsage ?? undefined,
+        docUrl: r.docUrl ?? undefined,
+      })),
+    })
+  }
+  redirect(`/projects/${copy.id}`)
+}

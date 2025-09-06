@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { authOptions } from '@/lib/auth'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 
@@ -38,7 +39,7 @@ export default async function ProjectsPage() {
 
 async function createProject(formData: FormData) {
   'use server'
-  const session = await getServerSession()
+  const session = await getServerSession(authOptions)
   if (!session?.user) return
   // @ts-ignore
   const userId = session.user.id as string
@@ -46,4 +47,3 @@ async function createProject(formData: FormData) {
   const project = await prisma.project.create({ data: { userId, name } })
   return redirect(`/projects/${project.id}`)
 }
-

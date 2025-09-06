@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import ExportToGoogle from '@/components/ExportToGoogle'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { notFound } from 'next/navigation'
@@ -70,7 +71,7 @@ async function ResponseView({ responseId }: { responseId: string }) {
         {' | '}
         <a href={`data:text/markdown;charset=utf-8,${encodeURIComponent(response.output || '')}`} download="granted.md">Download .md</a>
       </div>
+      <ExportToGoogle responseId={response.id} />
     </div>
   )
 }
-

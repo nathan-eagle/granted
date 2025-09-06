@@ -9,6 +9,21 @@ export const authOptions: NextAuthOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      authorization: {
+        params: {
+          // Get a refresh token for Drive/Docs export
+          access_type: 'offline',
+          prompt: 'consent',
+          response_type: 'code',
+          scope: [
+            'openid',
+            'email',
+            'profile',
+            'https://www.googleapis.com/auth/documents',
+            'https://www.googleapis.com/auth/drive.file',
+          ].join(' '),
+        },
+      },
     }),
   ],
   session: { strategy: 'database' },
@@ -25,4 +40,3 @@ export const authOptions: NextAuthOptions = {
 }
 
 export const { auth } = NextAuth(authOptions)
-
