@@ -24,6 +24,17 @@ export default async function NewProjectPage() {
           {packs.map(p => <option key={p.id} value={p.file}>{p.id}</option>)}
         </select>
         <div style={{marginTop:12}}>
+          <strong>Six quick questions (optional)</strong>
+        </div>
+        <div style={{display:'grid',gap:8,marginTop:8}}>
+          <input name="q_problem" placeholder="Problem (who/what)" />
+          <input name="q_innovation" placeholder="Innovation vs alternatives" />
+          <input name="q_customer" placeholder="Who pays / market" />
+          <input name="q_evidence" placeholder="Evidence today (prototype, pilots)" />
+          <input name="q_milestones" placeholder="Phase I milestones (comma-separated)" />
+          <input name="q_risks" placeholder="Top risks" />
+        </div>
+        <div style={{marginTop:12}}>
           <button type="submit">Create Project & Autodraft</button>
         </div>
       </form>
@@ -39,17 +50,17 @@ async function createProject(formData: FormData) {
   const userId = session.user.id as string
   const packFile = String(formData.get('pack'))
   const name = 'SBIR Draft'
-  const project = await prisma.project.create({ data: { userId, name, agencyPackId: packFile, status: 'drafting' } })
-  await placeholderAutodraft(project.id)
+  const charter = {
+    problem: String(formData.get('q_problem') || ''),
+    innovation: String(formData.get('q_innovation') || ''),
+    customer: String(formData.get('q_customer') || ''),
+    evidence: String(formData.get('q_evidence') || ''),
+    milestones: String(formData.get('q_milestones') || ''),
+    risks: String(formData.get('q_risks') || ''),
+  }
+  const project = await prisma.project.create({ data: { userId, name, agencyPackId: packFile, status: 'drafting', charterJson: charter } })
+  // Kick real autodraft
+  await fetch(`${process.env.APP_URL || 'http://localhost:3000'}/api/autopilot/autodraft`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ projectId: project.id }) }).catch(()=>{})
   redirect(`/project/${project.id}/draft`)
-}
-
-async function placeholderAutodraft(projectId: string) {
-  const sections = [
-    { key: 'overview', title: 'Project Overview', order: 1 },
-    { key: 'technical', title: 'Technical Volume', order: 2 },
-    { key: 'commercial', title: 'Commercialization Plan', order: 3 },
-  ]
-  await prisma.section.createMany({ data: sections.map(s => ({ ...s, projectId, contentMd: 'Lorem ipsum draft. [MISSING: Problem] [MISSING: Market]' })) })
 }
 
