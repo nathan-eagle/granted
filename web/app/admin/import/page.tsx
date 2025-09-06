@@ -9,10 +9,9 @@ export default function ImportPromptsPage() {
         <p>Paste the CSV content from your prompts export and submit.</p>
         <textarea id="csv" name="csv" rows={18} style={{width:'100%'}} placeholder="Paste CSV file contents here" />
         <div style={{marginTop:12}}>
-          <button type="submit" formaction="/api/admin/import-prompts">Import</button>
+          <button type="submit" formAction="/api/admin/import-prompts">Import</button>
         </div>
       </form>
     </div>
   )
 }
-
