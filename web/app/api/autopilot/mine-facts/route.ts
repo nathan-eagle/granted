@@ -20,7 +20,28 @@ export async function POST(req: NextRequest) {
   })
   let facts: any[] = []
   try { facts = JSON.parse(r.choices[0]?.message?.content || '[]') } catch {}
+  // Post-process: try to link each fact to an upload by substring match; capture a short quote
+  const uploads = project.uploads || []
+  const normalized = uploads.map(u => ({
+    id: u.id,
+    filename: u.filename,
+    text: (u.text || ''),
+    lower: (u.text || '').toLowerCase(),
+  }))
+  for (const f of facts) {
+    const needle = String(f.text || '').slice(0, 200).toLowerCase()
+    let linked: { uploadId: string; quote: string } | null = null
+    for (const up of normalized) {
+      const idx = needle ? up.lower.indexOf(needle) : -1
+      if (idx >= 0) {
+        const start = Math.max(0, idx - 80)
+        const end = Math.min(up.text.length, idx + needle.length + 80)
+        linked = { uploadId: up.id, quote: up.text.slice(start, end) }
+        break
+      }
+    }
+    if (linked) f.evidence = linked
+  }
   await prisma.project.update({ where: { id: projectId }, data: { factsJson: facts } })
   return NextResponse.json({ ok: true, count: facts.length })
 }
-

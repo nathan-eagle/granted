@@ -10,7 +10,7 @@ export default async function DraftPage({ params }: { params: { id: string } }) 
   if (!session?.user) notFound()
   // @ts-ignore
   const userId = session.user.id as string
-  const project = await prisma.project.findFirst({ where: { id: params.id, userId }, include: { sections: { orderBy: { order: 'asc' } } } })
+  const project = await prisma.project.findFirst({ where: { id: params.id, userId }, include: { sections: { orderBy: { order: 'asc' } }, uploads: true } })
   if (!project) notFound()
   return (
     <div style={{display:'grid',gridTemplateColumns:'260px 1fr',gap:24}}>
@@ -123,7 +123,13 @@ export default async function DraftPage({ params }: { params: { id: string } }) 
             {(project.factsJson as any[])?.length ? (
               <details style={{marginTop:8}}>
                 <summary>Add a fact to this section</summary>
-                <FactsList facts={(project.factsJson as any[]) || []} sectionId={s.id} />
+                <FactsList facts={(((project.factsJson as any[]) || []).map((f:any) => ({
+                  ...f,
+                  evidence: f.evidence ? {
+                    ...f.evidence,
+                    filename: project.uploads.find(u => u.id === f.evidence.uploadId)?.filename
+                  } : undefined
+                })))} sectionId={s.id} />
               </details>
             ) : null}
           </div>
