@@ -52,7 +52,32 @@ export default async function ProjectPage({ params }: { params: { id: string } }
             <button type="submit">Duplicate Project</button>
           </form>
         </div>
-        <p>Select a template on the left to begin.</p>
+        
+        <div style={{ marginBottom: '2rem', padding: '1.5rem', backgroundColor: '#f0f9ff', borderRadius: '0.5rem', border: '1px solid #0ea5e9' }}>
+          <h3 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1rem', color: '#0c4a6e' }}>
+            🚀 New: Complete Grant Writing Assistant
+          </h3>
+          <p style={{ color: '#0369a1', marginBottom: '1rem' }}>
+            Create comprehensive grant applications with our guided wizard, AI-powered section writing, and mock review system.
+          </p>
+          <a 
+            href={`/projects/${project.id}/grants`}
+            style={{
+              display: 'inline-block',
+              padding: '0.75rem 1.5rem',
+              backgroundColor: '#0ea5e9',
+              color: 'white',
+              textDecoration: 'none',
+              borderRadius: '0.5rem',
+              fontWeight: '600',
+              fontSize: '0.875rem'
+            }}
+          >
+            Manage Grant Applications
+          </a>
+        </div>
+        
+        <p>Select a template on the left for individual grant sections, or use the complete grant assistant above.</p>
       </section>
     </div>
   )
