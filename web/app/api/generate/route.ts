@@ -2,7 +2,7 @@ import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 
-export const maxDuration = 900 // 15 minutes background runtime
+export const maxDuration = 300 // 5 minutes (Vercel Pro limit)
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
