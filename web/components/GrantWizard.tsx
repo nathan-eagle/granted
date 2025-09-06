@@ -68,7 +68,7 @@ export default function GrantWizard({ projectId, onComplete }: GrantWizardProps)
   const updateNestedData = (parent: string, field: string, value: any) => {
     setFormData(prev => ({
       ...prev,
-      [parent]: { ...prev[parent as keyof FormData], [field]: value }
+      [parent]: { ...(prev[parent as keyof FormData] as any), [field]: value }
     }))
   }
 
