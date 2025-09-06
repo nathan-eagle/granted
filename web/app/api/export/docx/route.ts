@@ -24,9 +24,9 @@ export async function GET(req: NextRequest) {
     if (isBudget && budget && Array.isArray(budget.items) && budget.items.length) {
       const rows: TableRow[] = [
         new TableRow({ children: [
-          new TableCell({ children:[new Paragraph('Category')], width:{ size:33, type: WidthType.PERCENT}}),
-          new TableCell({ children:[new Paragraph('Amount')], width:{ size:33, type: WidthType.PERCENT}}),
-          new TableCell({ children:[new Paragraph('Note')], width:{ size:34, type: WidthType.PERCENT}}),
+          new TableCell({ children:[new Paragraph('Category')], width:{ size:33, type: WidthType.PERCENTAGE}}),
+          new TableCell({ children:[new Paragraph('Amount')], width:{ size:33, type: WidthType.PERCENTAGE}}),
+          new TableCell({ children:[new Paragraph('Note')], width:{ size:34, type: WidthType.PERCENTAGE}}),
         ]})
       ]
       for (const it of budget.items) {
