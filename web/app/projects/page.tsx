@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 
@@ -10,7 +11,7 @@ async function getProjects(userId: string) {
 }
 
 export default async function ProjectsPage() {
-  const session = await getServerSession()
+  const session = await getServerSession(authOptions)
   if (!session?.user?.email) redirect('/api/auth/signin')
   // @ts-ignore
   const userId = session.user.id as string

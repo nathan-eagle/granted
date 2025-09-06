@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 
@@ -15,7 +16,7 @@ async function getCategories() {
 }
 
 export default async function ProjectPage({ params }: { params: { id: string } }) {
-  const session = await getServerSession()
+  const session = await getServerSession(authOptions)
   if (!session?.user) notFound()
   // @ts-ignore
   const userId = session.user.id as string

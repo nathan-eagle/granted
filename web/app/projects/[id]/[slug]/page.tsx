@@ -1,11 +1,12 @@
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import { notFound } from 'next/navigation'
 
 export const dynamic = 'force-dynamic'
 
 export default async function TemplateRunPage({ params }: { params: { id: string, slug: string } }) {
-  const session = await getServerSession()
+  const session = await getServerSession(authOptions)
   if (!session?.user) notFound()
   // @ts-ignore
   const userId = session.user.id as string
@@ -38,7 +39,7 @@ export default async function TemplateRunPage({ params }: { params: { id: string
 
 async function createJob(projectId: string, templateId: string, formData: FormData) {
   'use server'
-  const session = await getServerSession()
+  const session = await getServerSession(authOptions)
   if (!session?.user) return
   // @ts-ignore
   const userId = session.user.id as string

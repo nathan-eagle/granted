@@ -20,21 +20,6 @@ export const authOptions: NextAuthOptions = {
       }
       return session
     },
-    async redirect({ url, baseUrl }) {
-      // Redirect to /projects after sign in
-      if (url === baseUrl || url === `${baseUrl}/`) {
-        return `${baseUrl}/projects`
-      }
-      // Allow relative callback URLs
-      if (url.startsWith('/')) {
-        return `${baseUrl}${url}`
-      }
-      // Allow callback URLs on the same origin
-      if (new URL(url).origin === baseUrl) {
-        return url
-      }
-      return `${baseUrl}/projects`
-    },
   },
   pages: {
     signIn: '/api/auth/signin',

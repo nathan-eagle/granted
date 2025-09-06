@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import { notFound } from 'next/navigation'
 
 async function getJob(jobId: string, userId: string) {
@@ -12,7 +13,7 @@ async function getPoll(jobId: string) {
 }
 
 export default async function JobPage({ params }: { params: { jobId: string } }) {
-  const session = await getServerSession()
+  const session = await getServerSession(authOptions)
   if (!session?.user) notFound()
   // @ts-ignore
   const userId = session.user.id as string
