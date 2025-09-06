@@ -70,6 +70,14 @@ model Project {
   responses Response[]
   jobs      Job[]
   grants    Grant[]
+  // Autopilot extensions
+  agencyPackId String?
+  status       String?
+  charterJson  Json?
+  factsJson    Json?
+  meta         Json?
+  sections     Section[]
+  uploads      Upload[]
 }
 
 model TemplateCategory {
@@ -231,4 +239,27 @@ model MockReview {
   createdAt  DateTime @default(now())
   
   grant      Grant    @relation(fields: [grantId], references: [id], onDelete: Cascade)
+}
+
+// Autopilot models
+model Section {
+  id         String   @id @default(cuid())
+  projectId  String
+  key        String
+  title      String
+  order      Int
+  contentMd  String   @default("")
+  slotsJson  Json?
+  coverage   Json?
+  Project    Project  @relation(fields: [projectId], references: [id])
+}
+
+model Upload {
+  id         String   @id @default(cuid())
+  projectId  String
+  kind       String
+  filename   String
+  url        String?
+  text       String?
+  Project    Project  @relation(fields: [projectId], references: [id])
 }

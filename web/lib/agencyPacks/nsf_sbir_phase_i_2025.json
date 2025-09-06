@@ -1,0 +1,21 @@
+{
+  "id": "nsf_sbir_phase_i_2025",
+  "name": "NSF SBIR Phase I",
+  "sections": [
+    {"id":"overview","title":"Project Overview","limitWords":600,"mustCover":["Problem","Innovation","Customer/Need","Outcomes"]},
+    {"id":"technical","title":"Technical Volume","limitWords":5000,"mustCover":["Objectives","Background","Work Plan","Risks","Metrics"]},
+    {"id":"commercial","title":"Commercialization Plan","limitWords":3500,"mustCover":["Market","Competition","Business Model","Go-to-Market","IP"]},
+    {"id":"team","title":"Team & Facilities","limitWords":1200,"mustCover":["Key Personnel","Capability","Facilities/Equipment"]},
+    {"id":"budget","title":"Budget Justification","limitWords":1200,"mustCover":["Summary","Major Costs","Justification"]}
+  ],
+  "rubric": [
+    {"id":"tech","name":"Technical Merit/Innovation","weight":0.4},
+    {"id":"market","name":"Commercial Potential","weight":0.4},
+    {"id":"execution","name":"Team & Plan","weight":0.2}
+  ],
+  "attachments": [
+    {"name":"References","required":false},
+    {"name":"Biosketches","required":false}
+  ]
+}
+
