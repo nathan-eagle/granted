@@ -12,7 +12,7 @@ async function getProjects(userId: string) {
 
 export default async function ProjectsPage() {
   const session = await getServerSession(authOptions)
-  if (!session?.user?.email) redirect('/api/auth/signin')
+  if (!session?.user?.email) redirect('/')
   // @ts-ignore
   const userId = session.user.id as string
   const projects = await getProjects(userId)

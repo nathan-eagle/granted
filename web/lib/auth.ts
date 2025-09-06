@@ -21,10 +21,6 @@ export const authOptions: NextAuthOptions = {
       return session
     },
   },
-  pages: {
-    signIn: '/api/auth/signin',
-    error: '/api/auth/error',
-  },
   secret: process.env.NEXTAUTH_SECRET,
 }
 
