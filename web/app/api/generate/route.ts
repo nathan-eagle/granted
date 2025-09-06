@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
       data: {
         projectId: job.projectId,
         templateId: job.templateId,
-        inputs: job.inputs,
+        inputs: job.inputs as any,
         output: text,
         model: template.model || 'gpt-4o-mini',
         tokenUsage: usage ? { prompt: usage.prompt_tokens, completion: usage.completion_tokens, total: usage.total_tokens } : undefined,
