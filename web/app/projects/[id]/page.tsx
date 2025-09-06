@@ -83,10 +83,10 @@ async function duplicateProject(projectId: string) {
       data: src.responses.map(r => ({
         projectId: copy.id,
         templateId: r.templateId,
-        inputs: r.inputs,
+        inputs: r.inputs as any,
         output: r.output,
         model: r.model,
-        tokenUsage: r.tokenUsage ?? undefined,
+        tokenUsage: (r.tokenUsage as any) ?? undefined,
         docUrl: r.docUrl ?? undefined,
       })),
     })
