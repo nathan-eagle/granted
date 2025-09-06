@@ -1,0 +1,12 @@
+fetch("https://api.vectara.io:443/v1/query", {
+headers: {
+  "Content-Type": "application/json",
+  authorization: "Bearer eyJraWQiOiJvUnVNVmNrXC9DRFN2R2RDa2ViVEc2SVIwM0NCbmtlbnRISjFkNGFEZUZpUT0iLCJhbGciOiJSUzI1NiJ9.eyJhdF9oYXNoIjoiQjdhLUk2V2xDOF84REJEN2VfcmYxdyIsInN1YiI6IjgyNGQ3ZDIyLWYxZjEtNGNjZS1hYjBhLTg4NWU3OTA4NmVlZSIsImNvZ25pdG86Z3JvdXBzIjpbInVzLXdlc3QtMl9KMFZqQnd6b1dfR29vZ2xlIl0sImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJpc3MiOiJodHRwczpcL1wvY29nbml0by1pZHAudXMtd2VzdC0yLmFtYXpvbmF3cy5jb21cL3VzLXdlc3QtMl9KMFZqQnd6b1ciLCJjb2duaXRvOnVzZXJuYW1lIjoiR29vZ2xlXzEwMTk4NjkxODA4Mzg1NjgwMDY5OCIsImdpdmVuX25hbWUiOiJDYWxlYiIsIm9yaWdpbl9qdGkiOiJhZjQ3ZjY1My1iMmE0LTQ4ZTQtOGViYy0xYzE1NzM4YjMwZTkiLCJhdWQiOiI1dWtmNnY5bjliN21vcHJlbWhwMjljMnN0byIsImlkZW50aXRpZXMiOlt7InVzZXJJZCI6IjEwMTk4NjkxODA4Mzg1NjgwMDY5OCIsInByb3ZpZGVyTmFtZSI6Ikdvb2dsZSIsInByb3ZpZGVyVHlwZSI6Ikdvb2dsZSIsImlzc3VlciI6bnVsbCwicHJpbWFyeSI6InRydWUiLCJkYXRlQ3JlYXRlZCI6IjE2OTM0MDc5MDY1MjkifV0sInRva2VuX3VzZSI6ImlkIiwiYXV0aF90aW1lIjoxNjk2MDE1MjkwLCJuYW1lIjoiQ2FsZWIgU21pdGgiLCJleHAiOjE2OTYzNjYwMjAsImlhdCI6MTY5NjM2MjQyMSwiZmFtaWx5X25hbWUiOiJTbWl0aCIsImp0aSI6IjI1OTZjMjM4LTJhNjUtNGFjNy1iMDg4LWU3YjhlMWEzMjE5ZSIsImVtYWlsIjoiY2FsZWIuc21pdGhAZ21haWwuY29tIn0.qsp9XCkahLeBlIrJSiK6JsFBp2-lYUHWPE7Ury9FXLvnlhw_Qpvx-FupREShXppec5WkJ7gtUOuXpJmbCFq3fWGNZ0e2CakTJvocqXcLVvD7O_mtXSaQBb13X7fwmqoPZLnpiYFOLdKhbUEz1GzdPzsmbgr4eF2df5nCNHgnN1vLbWX4HS1ccqXeEEICNHTX8ZAVPvCN3DuIV8QAtnulR6GSkQzdwjCt0OhVnLe9kE1imOs6-u9ZfLgGeY9VC4LIjW_vV9wsfQmQUUz0Uhrm8mJG17-NzFerrRBjK5UACUz5uC_C-8kFtS88YnrQxxdsZLCllfY0A8XoGWBfaEXbXA",
+  "customer-id": "629412522",
+},
+body: "{\"query\":[{\"query\":\"Is the applicant's broadband infrastructure project designed to deliver, upon project completion, service that reliably meets or exceeds symmetrical download and upload speeds of 100 Mbps?\",\"queryContext\":\"\",\"start\":0,\"numResults\":10,\"contextConfig\":{\"charsBefore\":0,\"charsAfter\":0,\"sentencesBefore\":2,\"sentencesAfter\":2,\"startTag\":\"%START_SNIPPET%\",\"endTag\":\"%END_SNIPPET%\"},\"corpusKey\":[{\"customerId\":629412522,\"corpusId\":3,\"semantics\":0,\"metadataFilter\":\"\",\"lexicalInterpolationConfig\":{\"lambda\":0.025},\"dim\":[]}],\"summary\":[{\"maxSummarizedResults\":5,\"responseLang\":\"eng\",\"summarizerPromptName\":\"vectara-summary-ext-v1.2.0\"}]}]}",
+method: "post",
+})
+.then((res) => res.json())
+.then((data) => console.log(data))
+.catch((error) => console.log(error))
