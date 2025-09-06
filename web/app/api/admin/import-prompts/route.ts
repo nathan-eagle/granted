@@ -14,11 +14,14 @@ export async function POST(req: NextRequest) {
   let created = 0
   for (const r of records) {
     const categoryName = (r.category || 'Uncategorized').trim()
-    const cat = await prisma.templateCategory.upsert({
-      where: { name: categoryName },
-      update: {},
-      create: { name: categoryName },
+    let cat = await prisma.templateCategory.findFirst({
+      where: { name: categoryName }
     })
+    if (!cat) {
+      cat = await prisma.templateCategory.create({
+        data: { name: categoryName }
+      })
+    }
 
     const slug = slugify(r.title || r["title"] || r["Template"] || (r["unique id"] || '').toString() || (r["about"] || '').slice(0, 32))
     const tmpl = await prisma.template.upsert({
