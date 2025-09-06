@@ -248,7 +248,7 @@ export default function GrantWizard({ projectId, onComplete }: GrantWizardProps)
 // Step Components
 function GrantInfoStep({ formData, updateFormData }: any) {
   return (
-    <div style={{ space: '2rem' }}>
+    <div style={{ display: 'grid', gap: '2rem' }}>
       <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1.5rem' }}>
         Grant Information
       </h2>
