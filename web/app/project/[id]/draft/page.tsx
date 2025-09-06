@@ -4,6 +4,10 @@ import { authOptions } from '@/lib/auth'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import FactsList from '@/components/FactsList'
+import PrimaryButton from '@/components/ui/PrimaryButton'
+import dynamic from 'next/dynamic'
+const MagicOverlay = dynamic(()=> import('@/components/MagicOverlay'), { ssr: false })
+import { useState } from 'react'
 
 export default async function DraftPage({ params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions)
@@ -74,6 +78,8 @@ export default async function DraftPage({ params }: { params: { id: string } }) 
           <form action={exportDocx.bind(null, project.id)}>
             <button type="submit">Export DOCX</button>
           </form>
+          {/* Magic overlay trigger */}
+          <RunAutopilotClient projectId={project.id} />
         </div>
         <details style={{marginBottom:16}}>
           <summary>Budget (simple)</summary>
@@ -237,4 +243,20 @@ async function applyAllSafeFixes(projectId: string) {
     if (!sec) continue
     await prisma.section.update({ where: { id: sec.id }, data: { contentMd: (sec.contentMd || '') + '\n\n' + patch } })
   }
+}
+
+// Client trigger for MagicOverlay + orchestrator
+function RunAutopilotClient({ projectId }: { projectId: string }){
+  'use client'
+  const [open, setOpen] = useState(false)
+  async function kick(){
+    setOpen(true)
+    await fetch('/api/autopilot/run', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ projectId }) })
+  }
+  return (
+    <>
+      <PrimaryButton onClick={kick}>Run Autopilot</PrimaryButton>
+      {open ? <MagicOverlay projectId={projectId} onClose={()=> setOpen(false)} /> : null}
+    </>
+  )
 }

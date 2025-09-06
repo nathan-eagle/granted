@@ -29,6 +29,10 @@ See PLAN.md for full details. Summary:
 5. Sprint 4 — Mock review → Fix‑list (+ 1‑click patches)
 6. Sprint 5 — Basic budget + DOCX export + second agency pack
 
+## New Experience Plan
+
+See PLAN2.md for the “premium experience” plan (M1–M6) covering the cinematic onboarding, Magic Overlay, polished workspace, beautiful facts, safe tightening, and elegant DOCX.
+
 ## Data Model (initial)
 
 We extend `Project` and add `Section`, `Upload`, and later `Review`.
@@ -98,4 +102,3 @@ model Upload {
 ---
 
 See PLAN.md for step‑by‑step sprint tasks and acceptance criteria.
-

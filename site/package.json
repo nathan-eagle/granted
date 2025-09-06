@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "import:posts": "node scripts/import-posts.mjs"
+    "import:posts": "node scripts/import-posts.mjs",
+    "scrape": "node scripts/scrape-pages.mjs",
+    "scrape:install": "npx playwright install chromium"
   },
   "dependencies": {
     "next": "14.2.5",
@@ -24,6 +26,7 @@
     "node": ">=18.18.0"
   },
   "devDependencies": {
+    "playwright": "1.47.2",
     "@tailwindcss/typography": "0.5.13",
     "@types/node": "20.11.30",
     "@types/react": "18.2.66",

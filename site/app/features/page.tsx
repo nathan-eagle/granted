@@ -1,14 +1,16 @@
-export default function FeaturesPage() {
+import { loadScraped, toParagraphs } from '@/lib/scraped'
+
+export default async function FeaturesPage() {
+  const scraped = await loadScraped('features')
+  const paras = scraped ? toParagraphs(scraped) : []
   return (
-    <section className="mx-auto max-w-6xl px-4 py-12">
-      <h1 className="text-3xl font-bold mb-6">Features</h1>
-      <ul className="grid md:grid-cols-2 gap-6">
-        <li className="border rounded-md p-4">AI-assisted section drafting</li>
-        <li className="border rounded-md p-4">Templates for NIH/NSF/SBIR</li>
-        <li className="border rounded-md p-4">Reviewer-style feedback</li>
-        <li className="border rounded-md p-4">Collaboration & versioning</li>
-      </ul>
+    <section className="mx-auto max-w-3xl px-4 py-12">
+      <h1 className="text-3xl font-bold mb-6">{scraped?.title ?? 'Features'}</h1>
+      <div className="prose prose-slate max-w-none">
+        {paras.map((p, i) => (
+          <p key={i}>{p}</p>
+        ))}
+      </div>
     </section>
   )
 }
-
