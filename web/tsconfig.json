@@ -25,6 +25,9 @@
       ],
       "@/app/*": [
         "app/*"
+      ],
+      "@/components/*": [
+        "components/*"
       ]
     },
     "plugins": [
