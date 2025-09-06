@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import { ReactNode } from 'react'
 import { Roboto, Bellota } from 'next/font/google'
 import Script from 'next/script'
+import Image from 'next/image'
 
 const roboto = Roboto({ subsets: ['latin'], weight: ['300','400','500','700','900'], variable: '--font-roboto' })
 const bellota = Bellota({ subsets: ['latin'], weight: ['300'], variable: '--font-bellota' })
@@ -54,8 +55,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       </head>
       <body className="min-h-dvh flex flex-col">
         <header className="border-b">
-          <div className="mx-auto max-w-6xl px-4 py-4 flex items-center justify-between">
-            <div className="font-bold">Granted</div>
+          <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between">
+            <a href="/" className="flex items-center gap-2">
+              <Image src="/images/granted-favicon.jpg" alt="Granted" width={28} height={28} className="rounded-sm" />
+              <span className="font-bold tracking-tight">Granted</span>
+            </a>
             <nav className="flex gap-6 text-sm">
               <a href="/features">Features</a>
               <a href="/pricing">Pricing</a>

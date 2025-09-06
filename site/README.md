@@ -31,3 +31,5 @@ Vercel Setup
 - Domains: set `grantedai.com` -> this project.
 - For product app (in `web/`), deploy as separate Vercel project and point `app.grantedai.com` to it.
 
+Notes
+- If the Vercel URL shows 404, set Project Settings → Root Directory to `site/` and redeploy.

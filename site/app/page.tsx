@@ -17,7 +17,7 @@ export default function Home() {
             </div>
             <div className="relative">
               <div className="rounded-xl border bg-white shadow-sm p-4 md:p-6">
-                <div className="aspect-[16/10] rounded-lg bg-gradient-to-br from-sky-100 to-white border grid place-items-center text-sky-600 text-sm">Product preview</div>
+                <img src="/images/img4-1.jpg" alt="Granted preview" className="rounded-lg w-full h-auto" />
               </div>
             </div>
           </div>
