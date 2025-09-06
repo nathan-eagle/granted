@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<rootTag>
+  <Award>
+    <AwardTitle>Contract For the Operation and Maintenance of the MeteorOlogy Section of the National Register of ScientifIc and Technical Personnel (C385)</AwardTitle>
+    <AwardEffectiveDate>06/30/1967</AwardEffectiveDate>
+    <AwardExpirationDate>06/30/1972</AwardExpirationDate>
+    <AwardAmount>87163</AwardAmount>
+    <AwardInstrument>
+      <Value>Contract</Value>
+    </AwardInstrument>
+    <Organization>
+      <Code>07000000</Code>
+      <Directorate>
+        <LongName>Directorate For Engineering</LongName>
+      </Directorate>
+      <Division>
+        <LongName>Directorate For Engineering</LongName>
+      </Division>
+    </Organization>
+    <ProgramOfficer>
+      <SignBlockName>name not available</SignBlockName>
+    </ProgramOfficer>
+    <AbstractNarration/>
+    <MinAmdLetterDate>06/30/1967</MinAmdLetterDate>
+    <MaxAmdLetterDate>09/01/1970</MaxAmdLetterDate>
+    <ARRAAmount/>
+    <AwardID>5900048</AwardID>
+    <Investigator>
+      <FirstName>Kenneth</FirstName>
+      <LastName>Spengler</LastName>
+      <EmailAddress/>
+      <StartDate>06/30/1967</StartDate>
+      <EndDate/>
+      <RoleCode>Principal Investigator</RoleCode>
+    </Investigator>
+    <Institution>
+      <Name>American Meteorological Society</Name>
+      <CityName>Boston</CityName>
+      <ZipCode>021083693</ZipCode>
+      <PhoneNumber>6172272425</PhoneNumber>
+      <StreetAddress>45 BEACON ST</StreetAddress>
+      <CountryName>United States</CountryName>
+      <StateName>Massachusetts</StateName>
+      <StateCode>MA</StateCode>
+    </Institution>
+  </Award>
+</rootTag>

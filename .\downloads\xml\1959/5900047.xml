@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<rootTag>
+  <Award>
+    <AwardTitle>Contract For Operation and Maintenance of the Physics AnD Astronomy Section of the National Register of ScientifIc and Technical Personnel (C380)</AwardTitle>
+    <AwardEffectiveDate>06/30/1967</AwardEffectiveDate>
+    <AwardExpirationDate>06/30/1972</AwardExpirationDate>
+    <AwardAmount>246813</AwardAmount>
+    <AwardInstrument>
+      <Value>Contract</Value>
+    </AwardInstrument>
+    <Organization>
+      <Code>07000000</Code>
+      <Directorate>
+        <LongName>Directorate For Engineering</LongName>
+      </Directorate>
+      <Division>
+        <LongName>Directorate For Engineering</LongName>
+      </Division>
+    </Organization>
+    <ProgramOfficer>
+      <SignBlockName>name not available</SignBlockName>
+    </ProgramOfficer>
+    <AbstractNarration/>
+    <MinAmdLetterDate>06/30/1967</MinAmdLetterDate>
+    <MaxAmdLetterDate>06/26/1969</MaxAmdLetterDate>
+    <ARRAAmount/>
+    <AwardID>5900047</AwardID>
+    <Investigator>
+      <FirstName>May Beth</FirstName>
+      <LastName>Givan</LastName>
+      <EmailAddress/>
+      <StartDate>06/30/1967</StartDate>
+      <EndDate/>
+      <RoleCode>Principal Investigator</RoleCode>
+    </Investigator>
+    <Institution>
+      <Name>American Institute of Physics</Name>
+      <CityName>COLLEGE PARK</CityName>
+      <ZipCode>207400384</ZipCode>
+      <PhoneNumber>3012093127</PhoneNumber>
+      <StreetAddress>1 PHYSICS ELLIPSE</StreetAddress>
+      <CountryName>United States</CountryName>
+      <StateName>Maryland</StateName>
+      <StateCode>MD</StateCode>
+    </Institution>
+  </Award>
+</rootTag>

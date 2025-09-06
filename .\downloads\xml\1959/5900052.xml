@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<rootTag>
+  <Award>
+    <AwardTitle>Contract For the Operation and Maintenance of the Engineers Section of the National Register of Scientific and TechnicalPersonnel</AwardTitle>
+    <AwardEffectiveDate>06/30/1967</AwardEffectiveDate>
+    <AwardExpirationDate>06/30/1973</AwardExpirationDate>
+    <AwardAmount>399660</AwardAmount>
+    <AwardInstrument>
+      <Value>Contract</Value>
+    </AwardInstrument>
+    <Organization>
+      <Code>07000000</Code>
+      <Directorate>
+        <LongName>Directorate For Engineering</LongName>
+      </Directorate>
+      <Division>
+        <LongName>Directorate For Engineering</LongName>
+      </Division>
+    </Organization>
+    <ProgramOfficer>
+      <SignBlockName>name not available</SignBlockName>
+    </ProgramOfficer>
+    <AbstractNarration/>
+    <MinAmdLetterDate>06/30/1967</MinAmdLetterDate>
+    <MaxAmdLetterDate>06/16/1970</MaxAmdLetterDate>
+    <ARRAAmount/>
+    <AwardID>5900052</AwardID>
+    <Investigator>
+      <FirstName>Carl</FirstName>
+      <LastName>Frey</LastName>
+      <EmailAddress/>
+      <StartDate>06/30/1967</StartDate>
+      <EndDate/>
+      <RoleCode>Principal Investigator</RoleCode>
+    </Investigator>
+    <Institution>
+      <Name>American Association of Engineering Societies Inc</Name>
+      <CityName>Washington</CityName>
+      <ZipCode>200363690</ZipCode>
+      <PhoneNumber>2022962237</PhoneNumber>
+      <StreetAddress>1111 19th Street, NW, Suite 608</StreetAddress>
+      <CountryName>United States</CountryName>
+      <StateName>District of Columbia</StateName>
+      <StateCode>DC</StateCode>
+    </Institution>
+  </Award>
+</rootTag>
