@@ -27,6 +27,19 @@ export default async function DraftPage({ params, searchParams }: { params: { id
             <li key={s.id}>{s.title}</li>
           ))}
         </ul>
+        {/* Uploaded documents */}
+        <div style={{marginTop:12}}>
+          <div style={{fontWeight:600}}>Documents</div>
+          {project.uploads.length ? (
+            <ul>
+              {project.uploads.map(u => (
+                <li key={u.id} title={u.filename}>{u.filename}</li>
+              ))}
+            </ul>
+          ) : (
+            <div style={{color:'#6b7280'}}>No documents uploaded</div>
+          )}
+        </div>
         <div style={{marginTop:12}}>
           <form action={recomputeCoverage.bind(null, project.id)}>
             <button type="submit">Recompute Coverage</button>

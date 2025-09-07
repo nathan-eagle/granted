@@ -20,6 +20,20 @@ export async function POST(req: NextRequest) {
   })
   let facts: any[] = []
   try { facts = JSON.parse(r.choices[0]?.message?.content || '[]') } catch {}
+  // Normalize facts: ensure id, kind present
+  const normFacts: any[] = []
+  for (const f of (Array.isArray(facts) ? facts : [])) {
+    const text = String(f.text || '').trim()
+    if (!text) continue
+    let id = String(f.id || '').trim()
+    if (!id) {
+      // simple stable hash for id
+      let h = 0
+      for (let i = 0; i < Math.min(200, text.length); i++) { h = (h * 31 + text.charCodeAt(i)) >>> 0 }
+      id = 'f' + h.toString(36)
+    }
+    normFacts.push({ id, text, kind: f.kind || 'evidence' })
+  }
   // Post-process: try to link each fact to an upload by substring match; capture a short quote
   const uploads = project.uploads || []
   const normalized = uploads.map(u => ({
@@ -28,7 +42,7 @@ export async function POST(req: NextRequest) {
     text: (u.text || ''),
     lower: (u.text || '').toLowerCase(),
   }))
-  for (const f of facts) {
+  for (const f of normFacts) {
     const needle = String(f.text || '').slice(0, 200).toLowerCase()
     let linked: { uploadId: string; quote: string } | null = null
     for (const up of normalized) {
@@ -42,6 +56,6 @@ export async function POST(req: NextRequest) {
     }
     if (linked) f.evidence = linked
   }
-  await prisma.project.update({ where: { id: projectId }, data: { factsJson: facts } })
-  return NextResponse.json({ ok: true, count: facts.length })
+  await prisma.project.update({ where: { id: projectId }, data: { factsJson: normFacts } })
+  return NextResponse.json({ ok: true, count: normFacts.length })
 }
