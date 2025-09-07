@@ -1,40 +1,55 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import PrimaryButton from './ui/PrimaryButton'
 
 const steps = [
-  'Parsing your docs',
-  'Drafting sections',
-  'Checking coverage',
-  'Filling gaps',
-  'Tightening to limits',
-  'Getting reviewer feedback',
-  'Applying safe fixes',
+  'Parsing your docs…',
+  'Drafting sections…',
+  'Checking coverage…',
+  'Filling gaps…',
+  'Tightening to limits…',
+  'Getting reviewer feedback…',
+  'Applying safe fixes…',
 ]
 
 export default function MagicOverlay({ projectId, onClose }: { projectId: string; onClose: () => void }){
   const [active, setActive] = useState(true)
-  const [progress, setProgress] = useState<string[]>([])
+  const [doneSteps, setDoneSteps] = useState<string[]>([])
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    let alive = true
-    async function poll(){
-      try{
-        const res = await fetch(`/api/autopilot/progress?projectId=${projectId}`, { cache: 'no-store' })
-        const data = await res.json()
-        if (!alive) return
-        setProgress(Array.isArray(data.progress)? data.progress: [])
-        if (data.done) { setActive(false); onClose(); }
-        else setTimeout(poll, 1000)
-      } catch { setTimeout(poll, 1500) }
+    if (!projectId) return
+    let closed = false
+    const es = new EventSource(`/api/autopilot/stream?projectId=${projectId}`)
+    es.onmessage = (ev) => {
+      try {
+        const payload = JSON.parse(ev.data)
+        if (payload.type === 'status') {
+          const label = String(payload.data?.label || '')
+          if (label) setDoneSteps(prev => Array.from(new Set([...prev, label])))
+        } else if (payload.type === 'done') {
+          setActive(false)
+          es.close()
+          if (!closed) { closed = true; onClose() }
+        } else if (payload.type === 'error') {
+          setError(String(payload.data?.message || 'Error'))
+        }
+      } catch {}
     }
-    poll();
-    return () => { alive = false }
+    es.onerror = () => {
+      setError('Connection lost')
+    }
+    return () => { closed = true; es.close() }
   }, [projectId, onClose])
 
   if (!active) return null
-  const idx = steps.findIndex(s => progress.includes(s))
-  const doneCount = progress.length
+  const doneCount = useMemo(() => {
+    let count = 0
+    for (const s of steps) {
+      if (doneSteps.some(d => d.startsWith(s.replace('…','')))) count++
+    }
+    return count
+  }, [doneSteps])
 
   return (
     <div style={{position:'fixed', inset:0, background:'rgba(0,0,0,0.55)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000}}>
@@ -43,6 +58,7 @@ export default function MagicOverlay({ projectId, onClose }: { projectId: string
         <div style={{height:6, background:'#1F2937', borderRadius:999, overflow:'hidden', margin:'8px 0 12px'}}>
           <div style={{width:`${Math.min(100, Math.round((doneCount/steps.length)*100))}%`, height:'100%', background:'linear-gradient(90deg,#7c3aed,#06b6d4)'}} />
         </div>
+        {error ? <div style={{color:'#fda4af', marginBottom:8}}>{error}</div> : null}
         <ul style={{listStyle:'none', padding:0, margin:0}}>
           {steps.map((s,i)=> (
             <li key={s} style={{display:'flex', alignItems:'center', gap:8, opacity: i < doneCount ? 1 : 0.6, margin:'6px 0'}}>

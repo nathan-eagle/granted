@@ -18,8 +18,11 @@ export function loadPackByFile(file: string): AgencyPack | null {
   }
 }
 
-export async function loadPackForProject(project: { agencyPackId: string | null }): Promise<AgencyPack | null> {
+export async function loadPackForProject(project: { agencyPackId: string | null; meta?: any }): Promise<AgencyPack | null> {
+  try {
+    const meta: any = (project as any).meta || {}
+    if (meta && meta.autoPack) return meta.autoPack as AgencyPack
+  } catch {}
   if (!project.agencyPackId) return null
   return loadPackByFile(project.agencyPackId)
 }
-

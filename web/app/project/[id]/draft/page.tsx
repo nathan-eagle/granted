@@ -122,6 +122,8 @@ export default async function DraftPage({ params, searchParams }: { params: { id
                 <button type="submit">Save</button>
               </div>
             </form>
+            {/* Inline source bubbles (list) when {{fact:ID}} markers are present */}
+            {renderSources((project.factsJson as any[]) || [], project.uploads || [], s.contentMd || '')}
             <div style={{marginTop:8,display:'flex',gap:8}}>
               <form action={fixNext.bind(null, s.id)}><button type="submit">Fix next</button></form>
               <form action={tighten.bind(null, s.id)}><button type="submit">Tighten to limit</button></form>
@@ -142,6 +144,28 @@ export default async function DraftPage({ params, searchParams }: { params: { id
           </div>
         ))}
       </section>
+    </div>
+  )
+}
+
+function renderSources(facts: any[], uploads: { id: string; filename: string }[], md: string){
+  const m = Array.from(md.matchAll(/\{\{fact:([^}]+)\}\}/g)).map(x => String(x[1]))
+  if (!m.length) return null
+  const byId = new Map(facts.map(f => [String(f.id || ''), f]))
+  const unique = Array.from(new Set(m))
+  const items = unique.map(id => {
+    const f = byId.get(id)
+    const fn = f?.evidence?.uploadId ? (uploads.find(u => u.id === f.evidence.uploadId)?.filename || '') : ''
+    return { id, text: f?.text || '', filename: fn }
+  }).filter(it => it.text)
+  if (!items.length) return null
+  return (
+    <div style={{marginTop:6, fontSize:12, color:'#9CA3AF'}}>
+      Sources used: {items.map((it, i) => (
+        <span key={it.id} style={{marginRight:8}}>
+          ({it.filename ? `Source: ${it.filename}` : `Fact ${it.id}`})
+        </span>
+      ))}
     </div>
   )
 }

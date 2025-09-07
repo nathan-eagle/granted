@@ -1,0 +1,125 @@
+{
+  "url": "https://grantedai.com/",
+  "items": [
+    {
+      "name": "heroTitle",
+      "box": {
+        "x": 0,
+        "y": 150,
+        "width": 1440,
+        "height": 100.796875
+      },
+      "styles": {
+        "fontSize": "72px",
+        "lineHeight": "100.8px",
+        "fontWeight": "900",
+        "letterSpacing": "normal",
+        "marginTop": "0px",
+        "marginBottom": "0px",
+        "paddingTop": "0px",
+        "paddingBottom": "0px",
+        "borderRadius": "0px",
+        "color": "rgb(255, 255, 255)",
+        "display": "block",
+        "tag": "DIV",
+        "text": "You have better things to do with your time"
+      }
+    },
+    {
+      "name": "heroSub",
+      "box": {
+        "x": 20,
+        "y": 300.796875,
+        "width": 1400,
+        "height": 50.390625
+      },
+      "styles": {
+        "fontSize": "36px",
+        "lineHeight": "50.4px",
+        "fontWeight": "900",
+        "letterSpacing": "normal",
+        "marginTop": "0px",
+        "marginBottom": "0px",
+        "paddingTop": "0px",
+        "paddingBottom": "0px",
+        "borderRadius": "0px",
+        "color": "rgb(249, 251, 253)",
+        "display": "block",
+        "tag": "DIV",
+        "text": "Get your projects funded faster with AI"
+      }
+    },
+    {
+      "name": "stepsTitle",
+      "box": {
+        "x": 30,
+        "y": 2612.21875,
+        "width": 1380,
+        "height": 78.390625
+      },
+      "styles": {
+        "fontSize": "56px",
+        "lineHeight": "78.4px",
+        "fontWeight": "900",
+        "letterSpacing": "normal",
+        "marginTop": "0px",
+        "marginBottom": "0px",
+        "paddingTop": "0px",
+        "paddingBottom": "0px",
+        "borderRadius": "0px",
+        "color": "rgb(255, 255, 255)",
+        "display": "block",
+        "tag": "DIV",
+        "text": "3 Steps To Your Fastest Funding Ever"
+      }
+    },
+    {
+      "name": "equityTitle",
+      "box": {
+        "x": 610,
+        "y": 3465.265625,
+        "width": 550,
+        "height": 134.375
+      },
+      "styles": {
+        "fontSize": "48px",
+        "lineHeight": "67.2px",
+        "fontWeight": "900",
+        "letterSpacing": "normal",
+        "marginTop": "0px",
+        "marginBottom": "0px",
+        "paddingTop": "0px",
+        "paddingBottom": "0px",
+        "borderRadius": "0px",
+        "color": "rgb(0, 0, 0)",
+        "display": "block",
+        "tag": "DIV",
+        "text": "Level the fundraising playing field."
+      }
+    },
+    {
+      "name": "stepCard",
+      "box": {
+        "x": 60,
+        "y": 2935,
+        "width": 340,
+        "height": 25.1875
+      },
+      "styles": {
+        "fontSize": "18px",
+        "lineHeight": "25.2px",
+        "fontWeight": "900",
+        "letterSpacing": "normal",
+        "marginTop": "0px",
+        "marginBottom": "0px",
+        "paddingTop": "0px",
+        "paddingBottom": "0px",
+        "borderRadius": "0px",
+        "color": "rgb(0, 0, 0)",
+        "display": "block",
+        "tag": "DIV",
+        "text": "Create a new project."
+      }
+    }
+  ]
+}

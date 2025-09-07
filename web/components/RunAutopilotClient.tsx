@@ -8,7 +8,6 @@ export default function RunAutopilotClient({ projectId, auto }: { projectId: str
   const [open, setOpen] = useState(false)
   async function kick(){
     setOpen(true)
-    await fetch('/api/autopilot/run', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ projectId }) })
   }
   if (auto && !open) { setTimeout(kick, 300) }
   return (
@@ -18,4 +17,3 @@ export default function RunAutopilotClient({ projectId, auto }: { projectId: str
     </>
   )
 }
-

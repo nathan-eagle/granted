@@ -14,8 +14,8 @@ export default async function Home() {
       {/* Hero (black) */}
       <section className="bg-black text-white">
         <div className="mx-auto max-w-[1200px] px-6 md:px-8 py-24 md:py-32 text-center">
-          <h1 className="font-extrabold leading-[1.04] text-[48px] md:text-[76px] lg:text-[90px] tracking-tight">{headline}</h1>
-          <div className="mt-6 text-[24px] md:text-[30px] font-semibold">{subhead}</div>
+          <h1 className="font-extrabold tracking-tight text-[72px] leading-[100.8px]">{headline}</h1>
+          <div className="mt-6 text-[36px] leading-[50.4px] font-extrabold">{subhead}</div>
           <div className="mt-5 text-gray-300 max-w-3xl mx-auto space-y-2 text-[16px] md:text-[18px]">
             <p>{p1}</p>
             <p>{p2}</p>
@@ -30,7 +30,7 @@ export default async function Home() {
       <section className="bg-white">
         <div className="mx-auto max-w-[1200px] px-6 md:px-8 py-20 grid md:grid-cols-2 gap-16 items-center">
           <div>
-            <h2 className="text-[34px] md:text-[44px] font-extrabold leading-tight">{h2}</h2>
+            <h2 className="text-[36px] md:text-[48px] font-extrabold leading-[1.1]">{h2}</h2>
             <p className="mt-5 text-gray-700 max-w-xl text-[16px] md:text-[18px]">
               Instantly generate high-quality drafts for a wide range of grant proposals, appeals, letters of support, articles, and more, just by entering simple information about your project.
             </p>
@@ -51,7 +51,7 @@ export default async function Home() {
             <img src="/images/imgi_9_img3.jpg" alt="Use cases" width="460" height="540" className="mx-auto rounded-xl" />
           </div>
           <div className="order-1 md:order-2">
-            <h3 className="text-[30px] md:text-[36px] font-extrabold leading-tight">{h3}</h3>
+            <h3 className="text-[30px] md:text-[36px] font-extrabold leading-[1.15]">{h3}</h3>
             <ul className="mt-6 text-gray-700 space-y-2 list-disc pl-5 text-[16px] md:text-[18px]">
               <li>Quickly assemble full fundraising proposals.</li>
               <li>Granted's AI is specifically trained for grant proposal writing and produces superior outcomes compared to general-purpose AI writing tools.</li>
@@ -68,7 +68,7 @@ export default async function Home() {
       {/* Section: 3 Steps */}
       <section className="bg-black text-white">
         <div className="mx-auto max-w-[1200px] px-6 md:px-8 py-24">
-          <h2 className="text-[36px] md:text-[56px] font-extrabold text-center">3 Steps To Your Fastest Funding Ever</h2>
+          <h2 className="text-[56px] leading-[78.4px] font-extrabold text-center">3 Steps To Your Fastest Funding Ever</h2>
           <div className="mt-12 grid gap-8 md:grid-cols-3">
             <div className="rounded-[28px] bg-white/95 text-black p-8 shadow border border-gray-200">
               <div className="text-4xl font-extrabold text-yellow-400">1</div>
@@ -96,7 +96,7 @@ export default async function Home() {
             <img src="/images/imgi_8_img2.jpg" alt="Equity" width="520" height="520" className="mx-auto rounded-xl" />
           </div>
           <div className="order-1 md:order-2">
-            <h2 className="text-[34px] md:text-[54px] font-extrabold leading-tight">Level the fundraising playing field.</h2>
+            <h2 className="text-[48px] leading-[67.2px] font-extrabold">Level the fundraising playing field.</h2>
             <p className="mt-6 text-gray-700 max-w-xl">The fundraising game isn't fair. The submission and selection process has well-known equity issues that disproportionately affect the careers of women, minorities, and non-native English speakers.</p>
             <p className="mt-4 text-gray-700 max-w-xl">Granted's mission is to make fundraising less tedious, more accessible, and more successful for everyone &mdash; while freeing up millions of additional hours of productivity.</p>
           </div>
