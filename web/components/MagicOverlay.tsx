@@ -54,6 +54,15 @@ export default function MagicOverlay({ projectId, onClose }: { projectId: string
     return count
   }, [doneSteps])
 
+  // Failsafe: if we saw all steps, auto-close and refresh even if 'done' was missed
+  useEffect(() => {
+    if (doneCount >= steps.length && active) {
+      try { router.refresh() } catch {}
+      setActive(false)
+      onClose()
+    }
+  }, [doneCount, active, onClose, router])
+
   return (
     <div style={{position:'fixed', inset:0, background:'rgba(0,0,0,0.55)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000}}>
       <div style={{width:520, background:'#111318', border:'1px solid #1f2430', borderRadius:14, padding:20, color:'#E5E7EB', boxShadow:'0 12px 24px rgba(0,0,0,0.35)'}}>
