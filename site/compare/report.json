@@ -1,38 +1,182 @@
 [
   {
     "page": "/",
-    "mismatched": 2891878,
-    "total": 6513120,
-    "pct": 0.44400809443093325
+    "viewport": {
+      "width": 1280,
+      "height": 1000
+    },
+    "mismatched": 2488000,
+    "total": 6065920,
+    "pct": 0.4101603713863684
+  },
+  {
+    "page": "/",
+    "viewport": {
+      "width": 1440,
+      "height": 1200
+    },
+    "mismatched": 3184805,
+    "total": 6824160,
+    "pct": 0.46669553468851843
+  },
+  {
+    "page": "/",
+    "viewport": {
+      "width": 1920,
+      "height": 1200
+    },
+    "mismatched": 3826566,
+    "total": 9098880,
+    "pct": 0.42055351867482593
   },
   {
     "page": "/features",
+    "viewport": {
+      "width": 1280,
+      "height": 1000
+    },
+    "mismatched": 2955043,
+    "total": 3752960,
+    "pct": 0.7873899535300136
+  },
+  {
+    "page": "/features",
+    "viewport": {
+      "width": 1440,
+      "height": 1200
+    },
     "mismatched": 3368462,
     "total": 4222080,
     "pct": 0.7978205055328179
   },
   {
+    "page": "/features",
+    "viewport": {
+      "width": 1920,
+      "height": 1200
+    },
+    "mismatched": 4609737,
+    "total": 5629440,
+    "pct": 0.8188624445770805
+  },
+  {
     "page": "/pricing",
-    "mismatched": 3978071,
+    "viewport": {
+      "width": 1280,
+      "height": 1000
+    },
+    "mismatched": 3476893,
+    "total": 4564480,
+    "pct": 0.7617281705692652
+  },
+  {
+    "page": "/pricing",
+    "viewport": {
+      "width": 1440,
+      "height": 1200
+    },
+    "mismatched": 3978050,
     "total": 5135040,
-    "pct": 0.7746913363868636
+    "pct": 0.7746872468374151
+  },
+  {
+    "page": "/pricing",
+    "viewport": {
+      "width": 1920,
+      "height": 1200
+    },
+    "mismatched": 5520155,
+    "total": 6846720,
+    "pct": 0.8062481012806132
   },
   {
     "page": "/faq",
+    "viewport": {
+      "width": 1280,
+      "height": 1000
+    },
+    "mismatched": 1042396,
+    "total": 2191360,
+    "pct": 0.47568450642523363
+  },
+  {
+    "page": "/faq",
+    "viewport": {
+      "width": 1440,
+      "height": 1200
+    },
     "mismatched": 1253948,
     "total": 2465280,
     "pct": 0.5086432372793354
   },
   {
+    "page": "/faq",
+    "viewport": {
+      "width": 1920,
+      "height": 1200
+    },
+    "mismatched": 1907936,
+    "total": 3287040,
+    "pct": 0.5804419781931465
+  },
+  {
     "page": "/tech",
+    "viewport": {
+      "width": 1280,
+      "height": 1000
+    },
+    "mismatched": 2759503,
+    "total": 5258240,
+    "pct": 0.5247959393257059
+  },
+  {
+    "page": "/tech",
+    "viewport": {
+      "width": 1440,
+      "height": 1200
+    },
     "mismatched": 3071718,
     "total": 5915520,
     "pct": 0.5192642405063291
   },
   {
+    "page": "/tech",
+    "viewport": {
+      "width": 1920,
+      "height": 1200
+    },
+    "mismatched": 4068354,
+    "total": 7887360,
+    "pct": 0.5158068098831549
+  },
+  {
     "page": "/contact",
+    "viewport": {
+      "width": 1280,
+      "height": 1000
+    },
+    "mismatched": 1521848,
+    "total": 2106880,
+    "pct": 0.7223230558930741
+  },
+  {
+    "page": "/contact",
+    "viewport": {
+      "width": 1440,
+      "height": 1200
+    },
     "mismatched": 1715030,
     "total": 2370240,
     "pct": 0.7235680774942622
+  },
+  {
+    "page": "/contact",
+    "viewport": {
+      "width": 1920,
+      "height": 1200
+    },
+    "mismatched": 2337268,
+    "total": 3160320,
+    "pct": 0.7395668793033617
   }
 ]

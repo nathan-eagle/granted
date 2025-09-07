@@ -8,14 +8,19 @@ import { PNG } from 'pngjs'
 const OLD = process.env.OLD_ORIGIN || 'https://grantedai.com'
 const NEW = process.env.NEW_ORIGIN || 'https://granted-website.vercel.app'
 const PAGES = ['/', '/features', '/pricing', '/faq', '/tech', '/contact']
+const VIEWPORTS = [
+  { width: 1280, height: 1000 },
+  { width: 1440, height: 1200 },
+  { width: 1920, height: 1200 },
+]
 const OUT = path.join(process.cwd(), 'compare')
 
 async function ensureDir(p) { await fs.mkdir(p, { recursive: true }) }
 
-async function shot(page, url, file) {
+async function shot(page, url, file, vp) {
   await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 })
   await page.waitForTimeout(1500)
-  await page.setViewportSize({ width: 1440, height: 1200 })
+  await page.setViewportSize(vp)
   await page.screenshot({ path: file, fullPage: true })
 }
 
@@ -42,19 +47,21 @@ async function main() {
   const results = []
   for (const p of PAGES) {
     const slug = p === '/' ? 'home' : p.replace(/^\//,'')
-    const oldShot = path.join(OUT, `${slug}-old.png`)
-    const newShot = path.join(OUT, `${slug}-new.png`)
-    const diffShot = path.join(OUT, `${slug}-diff.png`)
-    console.log('Capture', p)
-    await shot(page, OLD + p, oldShot)
-    await shot(page, NEW + p, newShot)
-    const r = await diffImages(oldShot, newShot, diffShot)
-    results.push({ page: p, ...r })
-    console.log(`${p}: ${(r.pct*100).toFixed(2)}% different -> ${diffShot}`)
+    for (const vp of VIEWPORTS) {
+      const tag = `w${vp.width}`
+      const oldShot = path.join(OUT, `${slug}-${tag}-old.png`)
+      const newShot = path.join(OUT, `${slug}-${tag}-new.png`)
+      const diffShot = path.join(OUT, `${slug}-${tag}-diff.png`)
+      console.log('Capture', p, tag)
+      await shot(page, OLD + p, oldShot, vp)
+      await shot(page, NEW + p, newShot, vp)
+      const r = await diffImages(oldShot, newShot, diffShot)
+      results.push({ page: p, viewport: vp, ...r })
+      console.log(`${p} ${tag}: ${(r.pct*100).toFixed(2)}% different -> ${diffShot}`)
+    }
   }
   await browser.close()
   await fs.writeFile(path.join(OUT, 'report.json'), JSON.stringify(results, null, 2))
 }
 
 main().catch(e => { console.error(e); process.exit(1) })
-
