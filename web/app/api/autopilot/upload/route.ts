@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import pdfParse from 'pdf-parse'
-import mammoth from 'mammoth'
+// Avoid importing heavy libs at build time; lazy-import inside handler
 
 export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 
 export async function POST(req: NextRequest) {
   const form = await req.formData()
@@ -21,9 +21,13 @@ export async function POST(req: NextRequest) {
   if (ext === 'txt' || ext === 'md') {
     text = buf.toString('utf8')
   } else if (ext === 'pdf') {
+    const mod = await import('pdf-parse')
+    const pdfParse = (mod as any).default || (mod as any)
     const data = await pdfParse(buf)
     text = data.text || ''
   } else if (ext === 'docx') {
+    const mod = await import('mammoth')
+    const mammoth = (mod as any).default || (mod as any)
     const res = await mammoth.extractRawText({ buffer: buf })
     text = res.value || ''
   } else {
