@@ -7,6 +7,10 @@ import FactsList from '@/components/FactsList'
 import TopFixes from '@/components/TopFixes'
 import RunAutopilotClient from '@/components/RunAutopilotClient'
 
+// Always render server-fresh to show newly generated sections without manual refresh
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export default async function DraftPage({ params, searchParams }: { params: { id: string }, searchParams: { [k:string]: string | string[] | undefined } }) {
   const session = await getServerSession(authOptions)
   if (!session?.user) notFound()
