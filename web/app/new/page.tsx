@@ -21,7 +21,6 @@ export default async function NewProjectPage() {
     <div>
       <h1>Autowrite my SBIR</h1>
       {/* Client stepper wizard */}
-      {/* @ts-expect-error Server-to-client prop */}
       <NewWizard packs={packItems} />
     </div>
   )

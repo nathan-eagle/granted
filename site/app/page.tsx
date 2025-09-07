@@ -64,6 +64,57 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+      {/* Section: 3 Steps */}
+      <section className="bg-black text-white">
+        <div className="mx-auto max-w-7xl px-6 md:px-8 py-16">
+          <h2 className="text-3xl md:text-5xl font-extrabold text-center">3 Steps To Your Fastest Funding Ever</h2>
+          <div className="mt-10 grid gap-8 md:grid-cols-3">
+            <div className="rounded-[28px] bg-white/95 text-black p-8 shadow border">
+              <div className="text-4xl font-extrabold text-yellow-400">1</div>
+              <div className="mt-4 font-semibold">Create a new project.</div>
+              <p className="mt-2 text-gray-600">Enter your mission statement and describe your work.</p>
+            </div>
+            <div className="rounded-[28px] bg-white/95 text-black p-8 shadow border">
+              <div className="text-4xl font-extrabold text-yellow-400">2</div>
+              <div className="mt-4 font-semibold">Select a model and complete the prompt.</div>
+              <p className="mt-2 text-gray-600">Each of the 50+ models require some essential information, such as key personnel, values, funding request amount, and project description.</p>
+            </div>
+            <div className="rounded-[28px] bg-white/95 text-black p-8 shadow border">
+              <div className="text-4xl font-extrabold text-yellow-400">3</div>
+              <div className="mt-4 font-semibold">Watch as Granted creates a quality draft in seconds.</div>
+              <p className="mt-2 text-gray-600">Pick your favorite draft and go. Or copy it into a larger document in the editor to assemble your full proposal.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Section: Level the playing field */}
+      <section className="bg-white">
+        <div className="mx-auto max-w-7xl px-6 md:px-8 py-16 grid md:grid-cols-2 gap-10 items-center">
+          <div className="order-2 md:order-1 text-center">
+            <img src="/images/imgi_8_img2.jpg" alt="Equity" width="520" height="520" className="mx-auto rounded-xl" />
+          </div>
+          <div className="order-1 md:order-2">
+            <h2 className="text-4xl md:text-5xl font-extrabold leading-tight">Level the fundraising playing field.</h2>
+            <p className="mt-6 text-gray-700 max-w-xl">The fundraising game isn't fair. The submission and selection process has well-known equity issues that disproportionately affect the careers of women, minorities, and non-native English speakers.</p>
+            <p className="mt-4 text-gray-700 max-w-xl">Granted's mission is to make fundraising less tedious, more accessible, and more successful for everyone &mdash; while freeing up millions of additional hours of productivity.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA band */}
+      <section className="bg-black">
+        <div className="mx-auto max-w-7xl px-6 md:px-8 py-16">
+          <div className="mx-auto max-w-5xl rounded-[24px] p-10 md:p-14" style={{background:'linear-gradient(180deg,#fde68a,#fbbf24)'}}>
+            <h3 className="text-3xl md:text-5xl font-extrabold text-black text-center">Ready to Get Granted?</h3>
+            <p className="mt-4 text-black/80 text-center">Save time. Stop frustration. Get inspired. Start your free trial today.</p>
+            <div className="mt-8 flex justify-center">
+              <a href="https://app.grantedai.com" className="px-6 py-3 rounded-md bg-black text-white font-semibold hover:opacity-90">Start Writing</a>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   )
 }
