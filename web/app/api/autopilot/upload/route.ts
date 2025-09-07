@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import pdfParse from 'pdf-parse'
+import mammoth from 'mammoth'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,11 +20,16 @@ export async function POST(req: NextRequest) {
   let text = ''
   if (ext === 'txt' || ext === 'md') {
     text = buf.toString('utf8')
+  } else if (ext === 'pdf') {
+    const data = await pdfParse(buf)
+    text = data.text || ''
+  } else if (ext === 'docx') {
+    const res = await mammoth.extractRawText({ buffer: buf })
+    text = res.value || ''
   } else {
-    return NextResponse.json({ error: 'Only .txt or .md supported in v1' }, { status: 400 })
+    return NextResponse.json({ error: 'Only .txt, .md, .pdf, or .docx supported' }, { status: 400 })
   }
 
   await prisma.upload.create({ data: { projectId, kind, filename: name, text } })
   return NextResponse.json({ ok: true })
 }
-
