@@ -76,7 +76,7 @@ export async function GET(req: NextRequest) {
             }
           }
           const words = acc.trim().split(/\s+/).filter(Boolean).length
-          await prisma.section.create({ data: { projectId, key: spec.id, title: spec.title, order: i + 1, contentMd: acc, slotsJson: null } })
+          await prisma.section.create({ data: { projectId, key: spec.id, title: spec.title, order: i + 1, contentMd: acc } })
           await send({ type: 'section_complete', data: { key: spec.id, title: spec.title, words } })
         }
 
