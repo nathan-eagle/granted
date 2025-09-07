@@ -49,11 +49,11 @@ export default async function DraftPage({ params, searchParams }: { params: { id
           </div>
         </div>
         <div style={{marginTop:16}}>
-          <div style={{fontWeight:600, marginBottom:4}}>Upload (.txt/.md)</div>
+          <div style={{fontWeight:600, marginBottom:4}}>Upload (.pdf/.docx/.txt/.md)</div>
           <form action="/api/autopilot/upload" method="post" encType="multipart/form-data">
             <input type="hidden" name="projectId" value={project.id} />
             <input type="text" name="kind" placeholder="kind (e.g., boilerplate)" />
-            <input type="file" name="file" accept=".txt,.md" />
+            <input type="file" name="file" accept=".pdf,.docx,.txt,.md" />
             <button type="submit" style={{marginTop:6}}>Upload</button>
           </form>
           <form action={mineFacts.bind(null, project.id)} style={{marginTop:8}}>
