@@ -54,20 +54,18 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         </Script>
       </head>
       <body className="min-h-dvh flex flex-col">
-        <header className="border-b">
-          <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between">
+        <header className="border-b bg-black text-white">
+          <div className="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between">
             <a href="/" className="flex items-center gap-2">
               <Image src="/images/granted-favicon.jpg" alt="Granted" width={28} height={28} className="rounded-sm" />
-              <span className="font-bold tracking-tight">Granted</span>
+              <span className="font-bold tracking-tight text-yellow-400">Granted</span>
             </a>
-            <nav className="flex gap-6 text-sm">
-              <a href="/features">Features</a>
-              <a href="/pricing">Pricing</a>
-              <a href="/blog">Blog</a>
-              <a href="/faq">FAQ</a>
-              <a href="/tech">Tech</a>
-              <a href="/contact">Contact</a>
-              <a href="https://app.grantedai.com" className="font-medium">Sign in</a>
+            <nav className="flex items-center gap-6 text-sm">
+              <a href="/pricing" className="hover:opacity-80">Pricing</a>
+              <a href="/tech" className="hover:opacity-80">Technology</a>
+              <a href="/blog" className="hover:opacity-80">Blog</a>
+              <a href="/faq" className="hover:opacity-80">FAQ</a>
+              <a href="https://app.grantedai.com" className="ml-4 font-medium hover:opacity-80">Login</a>
             </nav>
           </div>
         </header>
