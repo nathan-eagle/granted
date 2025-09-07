@@ -1,38 +1,38 @@
 [
   {
     "page": "/",
-    "mismatched": 2898802,
-    "total": 6520320,
-    "pct": 0.4445797138790734
+    "mismatched": 2891878,
+    "total": 6513120,
+    "pct": 0.44400809443093325
   },
   {
     "page": "/features",
-    "mismatched": 3620742,
-    "total": 4504320,
-    "pct": 0.8038376491901108
+    "mismatched": 3368462,
+    "total": 4222080,
+    "pct": 0.7978205055328179
   },
   {
     "page": "/pricing",
-    "mismatched": 3977956,
+    "mismatched": 3978071,
     "total": 5135040,
-    "pct": 0.7746689412351219
+    "pct": 0.7746913363868636
   },
   {
     "page": "/faq",
-    "mismatched": 1276130,
-    "total": 2505600,
-    "pct": 0.5093111430395914
+    "mismatched": 1253948,
+    "total": 2465280,
+    "pct": 0.5086432372793354
   },
   {
     "page": "/tech",
-    "mismatched": 3061334,
+    "mismatched": 3071718,
     "total": 5915520,
-    "pct": 0.5175088580547441
+    "pct": 0.5192642405063291
   },
   {
     "page": "/contact",
-    "mismatched": 1715683,
+    "mismatched": 1715030,
     "total": 2370240,
-    "pct": 0.7238435770217362
+    "pct": 0.7235680774942622
   }
 ]

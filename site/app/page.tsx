@@ -13,9 +13,9 @@ export default async function Home() {
     <div>
       {/* Hero (black) */}
       <section className="bg-black text-white">
-        <div className="mx-auto max-w-7xl px-6 md:px-8 py-20 md:py-28 text-center">
-          <h1 className="font-extrabold leading-[1.05] text-[46px] md:text-[72px] lg:text-[84px] tracking-tight">{headline}</h1>
-          <div className="mt-6 text-[22px] md:text-[28px] font-semibold">{subhead}</div>
+        <div className="mx-auto max-w-[1200px] px-6 md:px-8 py-24 md:py-32 text-center">
+          <h1 className="font-extrabold leading-[1.04] text-[48px] md:text-[76px] lg:text-[90px] tracking-tight">{headline}</h1>
+          <div className="mt-6 text-[24px] md:text-[30px] font-semibold">{subhead}</div>
           <div className="mt-5 text-gray-300 max-w-3xl mx-auto space-y-2 text-[16px] md:text-[18px]">
             <p>{p1}</p>
             <p>{p2}</p>
@@ -28,7 +28,7 @@ export default async function Home() {
 
       {/* Section: quality of ideas */}
       <section className="bg-white">
-        <div className="mx-auto max-w-7xl px-6 md:px-8 py-16 grid md:grid-cols-2 gap-12 items-center">
+        <div className="mx-auto max-w-[1200px] px-6 md:px-8 py-20 grid md:grid-cols-2 gap-16 items-center">
           <div>
             <h2 className="text-[34px] md:text-[44px] font-extrabold leading-tight">{h2}</h2>
             <p className="mt-5 text-gray-700 max-w-xl text-[16px] md:text-[18px]">
@@ -46,7 +46,7 @@ export default async function Home() {
 
       {/* Section: donor appeal to NIH R01 */}
       <section className="bg-white">
-        <div className="mx-auto max-w-7xl px-6 md:px-8 py-14 grid md:grid-cols-2 gap-12 items-start">
+        <div className="mx-auto max-w-[1200px] px-6 md:px-8 py-16 grid md:grid-cols-2 gap-16 items-start">
           <div className="order-2 md:order-1 text-center">
             <img src="/images/imgi_9_img3.jpg" alt="Use cases" width="460" height="540" className="mx-auto rounded-xl" />
           </div>
@@ -67,8 +67,8 @@ export default async function Home() {
 
       {/* Section: 3 Steps */}
       <section className="bg-black text-white">
-        <div className="mx-auto max-w-7xl px-6 md:px-8 py-20">
-          <h2 className="text-[34px] md:text-[54px] font-extrabold text-center">3 Steps To Your Fastest Funding Ever</h2>
+        <div className="mx-auto max-w-[1200px] px-6 md:px-8 py-24">
+          <h2 className="text-[36px] md:text-[56px] font-extrabold text-center">3 Steps To Your Fastest Funding Ever</h2>
           <div className="mt-12 grid gap-8 md:grid-cols-3">
             <div className="rounded-[28px] bg-white/95 text-black p-8 shadow border border-gray-200">
               <div className="text-4xl font-extrabold text-yellow-400">1</div>
@@ -91,7 +91,7 @@ export default async function Home() {
 
       {/* Section: Level the playing field */}
       <section className="bg-white">
-        <div className="mx-auto max-w-7xl px-6 md:px-8 py-20 grid md:grid-cols-2 gap-12 items-center">
+        <div className="mx-auto max-w-[1200px] px-6 md:px-8 py-24 grid md:grid-cols-2 gap-16 items-center">
           <div className="order-2 md:order-1 text-center">
             <img src="/images/imgi_8_img2.jpg" alt="Equity" width="520" height="520" className="mx-auto rounded-xl" />
           </div>
@@ -105,8 +105,8 @@ export default async function Home() {
 
       {/* CTA band */}
       <section className="bg-black">
-        <div className="mx-auto max-w-7xl px-6 md:px-8 py-24">
-          <div className="mx-auto max-w-5xl rounded-[24px] p-10 md:p-16 shadow-lg" style={{background:'linear-gradient(180deg,#fde68a,#f59e0b)'}}>
+        <div className="mx-auto max-w-[1200px] px-6 md:px-8 py-28">
+          <div className="mx-auto max-w-5xl rounded-[24px] p-10 md:p-16 shadow-lg brand-cta-gradient">
             <h3 className="text-[34px] md:text-[54px] font-extrabold text-black text-center">Ready to Get Granted?</h3>
             <p className="mt-4 text-black/80 text-center text-lg">Save time. Stop frustration. Get inspired. Start your free trial today.</p>
             <div className="mt-10 flex justify-center">

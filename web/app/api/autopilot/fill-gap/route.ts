@@ -13,11 +13,11 @@ export async function POST(req: NextRequest) {
   const gap = missing[0] || 'General'
   const system = 'Patch one missing slot in SBIR section. Write 2–5 concise sentences in markdown. Avoid repetition.'
   const user = { gapLabel: gap, sectionMarkdown: section.contentMd }
+  const model = process.env.OPENAI_MODEL || 'gpt-4o-mini'
   const r = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
+    model,
     messages: [{ role: 'system', content: system }, { role: 'user', content: JSON.stringify(user) }],
     temperature: 0.2,
-    timeout: 20000,
   })
   const patch = r.choices[0]?.message?.content || ''
   const updated = (section.contentMd || '') + '\n\n' + patch

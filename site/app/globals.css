@@ -5,6 +5,8 @@
 :root {
   --background: 255 255 255;
   --foreground: 17 24 39;
+  --brand-yellow-1: #FFE580;
+  --brand-yellow-2: #FFD132;
 }
 
 html, body { height: 100%; }
@@ -12,3 +14,6 @@ body { color: rgb(var(--foreground)); background: rgb(var(--background)); }
 
 a { text-decoration: none; }
 
+.brand-cta-gradient {
+  background: linear-gradient(180deg, var(--brand-yellow-1), var(--brand-yellow-2));
+}

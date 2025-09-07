@@ -17,8 +17,9 @@ export async function POST(req: NextRequest) {
   const before = (section.coverage as any)?.completionPct || 0
   const system = 'Compress section to <= LIMIT words without removing sentences that satisfy required elements.'
   const user = { LIMIT: limit, sectionMarkdown: section.contentMd }
+  const model = process.env.OPENAI_MODEL || 'gpt-4o-mini'
   const r = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
+    model,
     messages: [{ role: 'system', content: system }, { role: 'user', content: JSON.stringify(user) }],
     temperature: 0.2,
   })

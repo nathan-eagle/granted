@@ -30,14 +30,15 @@ Return ONLY valid JSON in the schema provided by the user. Use the agency pack:
       },
     }
 
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+  const model = process.env.OPENAI_MODEL || 'gpt-4o-mini'
+  const completion = await openai.chat.completions.create({
+      model,
       messages: [
         { role: 'system', content: system },
         { role: 'user', content: JSON.stringify(user) },
       ],
       temperature: 0.2,
-    })
+  })
     const raw = completion.choices[0]?.message?.content || '{}'
     let parsed: any
     try { parsed = JSON.parse(raw) } catch { parsed = { title: 'Draft', sections: [] } }
@@ -69,4 +70,3 @@ Return ONLY valid JSON in the schema provided by the user. Use the agency pack:
     return NextResponse.json({ error: String(e) }, { status: 500 })
   }
 }
-
