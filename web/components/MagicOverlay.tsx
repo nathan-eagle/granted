@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import PrimaryButton from './ui/PrimaryButton'
 
 const steps = [
@@ -16,6 +17,7 @@ export default function MagicOverlay({ projectId, onClose }: { projectId: string
   const [active, setActive] = useState(true)
   const [doneSteps, setDoneSteps] = useState<string[]>([])
   const [error, setError] = useState<string | null>(null)
+  const router = useRouter()
 
   useEffect(() => {
     if (!projectId) return
@@ -30,6 +32,7 @@ export default function MagicOverlay({ projectId, onClose }: { projectId: string
         } else if (payload.type === 'done') {
           setActive(false)
           es.close()
+          try { router.refresh() } catch {}
           if (!closed) { closed = true; onClose() }
         } else if (payload.type === 'error') {
           setError(String(payload.data?.message || 'Error'))
@@ -68,10 +71,9 @@ export default function MagicOverlay({ projectId, onClose }: { projectId: string
           ))}
         </ul>
         <div style={{textAlign:'right', marginTop:12}}>
-          <PrimaryButton onClick={()=>{ setActive(false); onClose(); }}>Hide</PrimaryButton>
+          <PrimaryButton onClick={()=>{ setActive(false); try { router.refresh() } catch {}; onClose(); }}>Hide</PrimaryButton>
         </div>
       </div>
     </div>
   )
 }
-
