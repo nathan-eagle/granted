@@ -9,10 +9,17 @@ async function mark(projectId: string, label: string) {
   await prisma.project.update({ where: { id: projectId }, data: { meta: { ...meta, progress } } })
 }
 
-async function postJSON(path: string, body: any) {
+async function postJSON(path: string, body: any, timeoutMs = 30000) {
   const base = process.env.APP_URL || 'http://localhost:3000'
-  const res = await fetch(`${base}${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
-  if (!res.ok) throw new Error(`Failed ${path}: ${res.status}`)
+  const ctrl = new AbortController()
+  const t = setTimeout(() => ctrl.abort(), timeoutMs)
+  try {
+    const res = await fetch(`${base}${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: ctrl.signal })
+    if (!res.ok) throw new Error(`Failed ${path}: ${res.status}`)
+    return await res.json().catch(() => ({}))
+  } finally {
+    clearTimeout(t)
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -33,16 +40,22 @@ export async function POST(req: NextRequest) {
 
     // Fill a couple of gaps per section, then tighten
     const sections = await prisma.section.findMany({ where: { projectId }, orderBy: { order: 'asc' } })
+    const total = sections.length
+    let idx = 0
     for (const s of sections) {
-      for (let i = 0; i < 2; i++) {
-        await postJSON('/api/autopilot/fill-gap', { sectionId: s.id })
-        await postJSON('/api/autopilot/coverage', { projectId })
-      }
+      idx++
+      // Fill one gap per section with timeout safeguards
+      try { await postJSON('/api/autopilot/fill-gap', { sectionId: s.id }, 25000) } catch {}
+      await postJSON('/api/autopilot/coverage', { projectId }, 15000)
+      await mark(projectId, `Filling gaps ${idx}/${total}`)
     }
     await mark(projectId, 'Filling gaps')
+    idx = 0
     for (const s of sections) {
-      await postJSON('/api/autopilot/tighten', { sectionId: s.id })
-      await postJSON('/api/autopilot/coverage', { projectId })
+      idx++
+      try { await postJSON('/api/autopilot/tighten', { sectionId: s.id }, 25000) } catch {}
+      await postJSON('/api/autopilot/coverage', { projectId }, 15000)
+      await mark(projectId, `Tightening ${idx}/${total}`)
     }
     await mark(projectId, 'Tightening to limits')
 
@@ -72,4 +85,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: String(e) }, { status: 500 })
   }
 }
-

@@ -53,7 +53,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           gtag('config', 'AW-1025794968');`}
         </Script>
       </head>
-      <body className="min-h-dvh flex flex-col">
+      <body className="min-h-dvh flex flex-col font-roboto">
         <header className="border-b bg-black text-white">
           <div className="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between">
             <a href="/" className="flex items-center gap-2">

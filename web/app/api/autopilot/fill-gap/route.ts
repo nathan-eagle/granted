@@ -17,10 +17,10 @@ export async function POST(req: NextRequest) {
     model: 'gpt-4o-mini',
     messages: [{ role: 'system', content: system }, { role: 'user', content: JSON.stringify(user) }],
     temperature: 0.2,
+    timeout: 20000,
   })
   const patch = r.choices[0]?.message?.content || ''
   const updated = (section.contentMd || '') + '\n\n' + patch
   await prisma.section.update({ where: { id: sectionId }, data: { contentMd: updated } })
   return NextResponse.json({ ok: true })
 }
-
