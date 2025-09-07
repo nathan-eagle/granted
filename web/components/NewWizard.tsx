@@ -16,11 +16,11 @@ export default function NewWizard({ packs }: { packs: Pack[] }){
   function back(){ setStep(s => Math.max(1, s-1)) }
 
   async function runAutopilot(){
-    // 1) Create project via /new server action by posting the form
+    // 1) Create project via API
     const fd = new FormData()
     fd.append('pack', pack)
     Object.entries(answers).forEach(([k,v])=> fd.append(k, v))
-    const res = await fetch('/new', { method:'POST', body: fd })
+    const res = await fetch('/api/projects/create', { method:'POST', body: fd })
     const { projectId } = await res.json()
     // 2) Upload files
     for (const file of uploads){
@@ -76,4 +76,3 @@ export default function NewWizard({ packs }: { packs: Pack[] }){
     </div>
   )
 }
-

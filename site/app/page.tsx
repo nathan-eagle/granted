@@ -21,7 +21,7 @@ export default async function Home() {
             <p>{p2}</p>
           </div>
           <div className="mt-10">
-            <a href="https://app.grantedai.com" className="px-6 py-3 rounded-md bg-yellow-400 text-black font-semibold shadow hover:bg-yellow-300">Start Writing</a>
+            <a href="https://app.grantedai.com" className="px-6 py-3 rounded-md bg-yellow-400 text-black font-semibold hover:bg-yellow-300 border border-yellow-500">Start Writing</a>
           </div>
         </div>
       </section>
@@ -39,7 +39,7 @@ export default async function Home() {
             </div>
           </div>
           <div className="text-center">
-            <img src="/images/img4-1.jpg" alt="Granted" className="mx-auto rounded-xl border w-full max-w-md" />
+            <img src="/images/imgi_7_img1.jpg" alt="Granted" width="480" height="540" className="mx-auto rounded-xl border" />
           </div>
         </div>
       </section>
@@ -48,7 +48,7 @@ export default async function Home() {
       <section className="bg-white">
         <div className="mx-auto max-w-7xl px-6 md:px-8 py-10 grid md:grid-cols-2 gap-10 items-start">
           <div className="order-2 md:order-1 text-center">
-            <img src="/images/img3.jpg" alt="Use cases" className="mx-auto rounded-xl border w-full max-w-md" />
+            <img src="/images/imgi_9_img3.jpg" alt="Use cases" width="420" height="500" className="mx-auto rounded-xl border" />
           </div>
           <div className="order-1 md:order-2">
             <h3 className="text-3xl font-extrabold leading-tight">{h3}</h3>

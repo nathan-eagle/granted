@@ -57,8 +57,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <header className="border-b bg-black text-white">
           <div className="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between">
             <a href="/" className="flex items-center gap-2">
-              <Image src="/images/granted-favicon.jpg" alt="Granted" width={28} height={28} className="rounded-sm" />
-              <span className="font-bold tracking-tight text-yellow-400">Granted</span>
+              <Image src="/images/imgi_2_granted-logo-stars.png" alt="Granted" width={118} height={28} />
             </a>
             <nav className="flex items-center gap-6 text-sm">
               <a href="/pricing" className="hover:opacity-80">Pricing</a>
