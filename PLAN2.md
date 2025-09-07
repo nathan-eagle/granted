@@ -25,12 +25,11 @@ Microcopy tone: warm, reassuring, “We’re on it.”
 
 Keep each milestone deployable. No feature flags; just ship.
 
-- [ ] M1 — “Cinematic” Onboarding Wizard
-- [ ] M2 — “Single‑Click Magic” Autopilot (orchestrator + overlay)
+- [x] M1 — “Cinematic” Onboarding Wizard (basic stepper + uploads)
+- [x] M2 — “Single‑Click Magic” Autopilot (orchestrator + overlay)
 - [ ] M3 — “Magic Canvas” Workspace (clean, calm, powerful)
 - [ ] M4 — “Beautiful Facts” & Smart Insert
 - [ ] M5 — “Elegant Tightening” & Safe‑Guarded Coverage
 - [ ] M6 — “Delightful Output” DOCX & Mini Demo Mode
 
 Each milestone has Objective, Rationale, Tasks, Prompts, Polish, Acceptance Criteria in README (implementation notes) and comments in code.
-

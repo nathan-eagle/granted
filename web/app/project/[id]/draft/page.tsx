@@ -4,12 +4,13 @@ import { authOptions } from '@/lib/auth'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import FactsList from '@/components/FactsList'
+import TopFixes from '@/components/TopFixes'
 import PrimaryButton from '@/components/ui/PrimaryButton'
 import dynamic from 'next/dynamic'
 const MagicOverlay = dynamic(()=> import('@/components/MagicOverlay'), { ssr: false })
 import { useState } from 'react'
 
-export default async function DraftPage({ params }: { params: { id: string } }) {
+export default async function DraftPage({ params, searchParams }: { params: { id: string }, searchParams: { [k:string]: string | string[] | undefined } }) {
   const session = await getServerSession(authOptions)
   if (!session?.user) notFound()
   // @ts-ignore
@@ -71,6 +72,8 @@ export default async function DraftPage({ params }: { params: { id: string } }) 
       </aside>
       <section>
         <h1>{project.name}</h1>
+        {/* Top fixes panel */}
+        { (project.meta as any)?.fixList?.length ? <TopFixes projectId={project.id} fixes={(project.meta as any).fixList} /> : null }
         <div style={{display:'flex',gap:8,margin:'8px 0 16px'}}>
           <form action={runAutodraft.bind(null, project.id)}>
             <button type="submit">Regenerate Draft</button>
@@ -79,7 +82,7 @@ export default async function DraftPage({ params }: { params: { id: string } }) 
             <button type="submit">Export DOCX</button>
           </form>
           {/* Magic overlay trigger */}
-          <RunAutopilotClient projectId={project.id} />
+          <RunAutopilotClient projectId={project.id} auto={searchParams?.run === '1'} />
         </div>
         <details style={{marginBottom:16}}>
           <summary>Budget (simple)</summary>
@@ -246,13 +249,14 @@ async function applyAllSafeFixes(projectId: string) {
 }
 
 // Client trigger for MagicOverlay + orchestrator
-function RunAutopilotClient({ projectId }: { projectId: string }){
+function RunAutopilotClient({ projectId, auto }: { projectId: string, auto?: boolean }){
   'use client'
   const [open, setOpen] = useState(false)
   async function kick(){
     setOpen(true)
     await fetch('/api/autopilot/run', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ projectId }) })
   }
+  if (auto && !open) { setTimeout(kick, 300) }
   return (
     <>
       <PrimaryButton onClick={kick}>Run Autopilot</PrimaryButton>

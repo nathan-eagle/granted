@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { Document, Packer, Paragraph, HeadingLevel, TextRun, PageBreak, Table, TableRow, TableCell, WidthType } from 'docx'
+import removeMd from 'remove-markdown'
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
@@ -10,13 +11,15 @@ export async function GET(req: NextRequest) {
   if (!project) return new Response('Not found', { status: 404 })
 
   const children: (Paragraph | Table)[] = []
+  // Title page
   children.push(new Paragraph({ text: project.name, heading: HeadingLevel.TITLE }))
+  children.push(new Paragraph({ text: new Date().toLocaleDateString() }))
   children.push(new Paragraph(' '))
   for (let i = 0; i < project.sections.length; i++) {
     const s = project.sections[i]
     if (i > 0) children.push(new Paragraph({ children: [new PageBreak()] }))
     children.push(new Paragraph({ text: s.title, heading: HeadingLevel.HEADING_1 }))
-    const text = (s.contentMd || '').replace(/[#*_>`]/g, '')
+    const text = removeMd(s.contentMd || '')
     // If this is the budget section and Project.meta.budget exists, render a table
     const isBudget = /budget/i.test(s.key) || /budget/i.test(s.title)
     const meta: any = project as any
