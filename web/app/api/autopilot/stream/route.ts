@@ -37,9 +37,10 @@ export async function GET(req: NextRequest) {
         await send({ type: 'status', data: { step: 'start', label: 'Starting…' } })
 
         // Facts (if uploads exist)
-        const uploads = await prisma.upload.count({ where: { projectId } })
-        if (uploads > 0) {
+        const uploads = await prisma.upload.findMany({ where: { projectId } })
+        if (uploads.length > 0) {
           await send({ type: 'status', data: { step: 'facts', label: 'Parsing your docs…' } })
+          await send({ type: 'files', data: { count: uploads.length, names: uploads.map(u => u.filename) } })
           await postJSON('/api/autopilot/mine-facts', { projectId }, 25000)
         }
 

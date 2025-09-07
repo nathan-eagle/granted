@@ -17,6 +17,7 @@ export default function MagicOverlay({ projectId, onClose }: { projectId: string
   const [active, setActive] = useState(true)
   const [doneSteps, setDoneSteps] = useState<string[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [files, setFiles] = useState<string[]>([])
   const router = useRouter()
 
   useEffect(() => {
@@ -29,6 +30,9 @@ export default function MagicOverlay({ projectId, onClose }: { projectId: string
         if (payload.type === 'status') {
           const label = String(payload.data?.label || '')
           if (label) setDoneSteps(prev => Array.from(new Set([...prev, label])))
+        } else if (payload.type === 'files') {
+          const names: string[] = Array.isArray(payload.data?.names) ? payload.data.names : []
+          setFiles(names)
         } else if (payload.type === 'done') {
           setActive(false)
           es.close()
@@ -71,6 +75,11 @@ export default function MagicOverlay({ projectId, onClose }: { projectId: string
           <div style={{width:`${Math.min(100, Math.round((doneCount/steps.length)*100))}%`, height:'100%', background:'linear-gradient(90deg,#7c3aed,#06b6d4)'}} />
         </div>
         {error ? <div style={{color:'#fda4af', marginBottom:8}}>{error}</div> : null}
+        {!!files.length && (
+          <div style={{margin:'6px 0 8px', fontSize:12, color:'#9CA3AF'}}>
+            Parsing {files.length} document{files.length>1?'s':''}: {files.slice(0,3).join(', ')}{files.length>3?` +${files.length-3} more`:''}
+          </div>
+        )}
         <ul style={{listStyle:'none', padding:0, margin:0}}>
           {steps.map((s,i)=> (
             <li key={s} style={{display:'flex', alignItems:'center', gap:8, opacity: i < doneCount ? 1 : 0.6, margin:'6px 0'}}>
