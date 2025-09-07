@@ -39,7 +39,7 @@ export default async function Home() {
             </div>
           </div>
           <div className="text-center">
-            <img src="/images/imgi_7_img1.jpg" alt="Granted" width="520" height="560" className="mx-auto rounded-xl" />
+            <img src="/images/imgi_7_img1.jpg" alt="Granted" width="420" height="480" className="mx-auto rounded-xl" />
           </div>
         </div>
       </section>
@@ -48,7 +48,7 @@ export default async function Home() {
       <section className="bg-white">
         <div className="mx-auto max-w-[1200px] px-6 md:px-8 py-16 grid md:grid-cols-2 gap-16 items-start">
           <div className="order-2 md:order-1 text-center">
-            <img src="/images/imgi_9_img3.jpg" alt="Use cases" width="460" height="540" className="mx-auto rounded-xl" />
+            <img src="/images/imgi_9_img3.jpg" alt="Use cases" width="400" height="480" className="mx-auto rounded-xl" />
           </div>
           <div className="order-1 md:order-2">
             <h3 className="text-[30px] md:text-[36px] font-extrabold leading-[1.15]">{h3}</h3>
@@ -61,6 +61,19 @@ export default async function Home() {
               <li>Improve how you explain your work with specialized AI feedback.</li>
               <li>Keep donors in the loop with well-written project updates.</li>
             </ul>
+          </div>
+        </div>
+      </section>
+
+      {/* Section: Mid CTA (yellow) */}
+      <section className="bg-black">
+        <div className="mx-auto max-w-[1200px] px-6 md:px-8 py-10">
+          <div className="mx-auto max-w-4xl rounded-[24px] p-10 md:p-14 brand-cta-gradient text-center">
+            <h3 className="text-[40px] md:text-[56px] font-extrabold text-black">Let us write your next draft,<br/>no strings attached.</h3>
+            <p className="mt-3 text-black/80">See what Granted can do for you in just a few minutes and leave with the content you need.</p>
+            <div className="mt-6 flex justify-center">
+              <a href="https://app.grantedai.com" className="px-6 py-3 rounded-md bg-black text-white font-semibold hover:opacity-90">Start a 7-day free trial</a>
+            </div>
           </div>
         </div>
       </section>

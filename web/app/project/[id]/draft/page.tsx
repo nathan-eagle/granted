@@ -141,6 +141,10 @@ export default async function DraftPage({ params, searchParams }: { params: { id
             </form>
             {/* Inline source bubbles (list) when {{fact:ID}} markers are present */}
             {renderSources((project.factsJson as any[]) || [], project.uploads || [], s.contentMd || '')}
+            {/* Fact usage count */}
+            <div style={{marginTop:4, fontSize:12, color:'#6b7280'}}>
+              Facts used in this section: {countFactMarkers(s.contentMd || '')}
+            </div>
             <div style={{marginTop:8,display:'flex',gap:8}}>
               <form action={fixNext.bind(null, s.id)}><button type="submit">Fix next</button></form>
               <form action={tighten.bind(null, s.id)}><button type="submit">Tighten to limit</button></form>
@@ -185,6 +189,12 @@ function renderSources(facts: any[], uploads: { id: string; filename: string }[]
       ))}
     </div>
   )
+}
+
+function countFactMarkers(md: string){
+  if (!md) return 0
+  const matches = md.match(/\{\{fact:[^}]+\}\}/g)
+  return matches ? matches.length : 0
 }
 
 async function runAutodraft(projectId: string) {
