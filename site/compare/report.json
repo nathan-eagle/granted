@@ -1,0 +1,38 @@
+[
+  {
+    "page": "/",
+    "mismatched": 1096512,
+    "total": 3242880,
+    "pct": 0.3381290704558911
+  },
+  {
+    "page": "/features",
+    "mismatched": 4839845,
+    "total": 5447520,
+    "pct": 0.8884492392868681
+  },
+  {
+    "page": "/pricing",
+    "mismatched": 4284218,
+    "total": 5135040,
+    "pct": 0.8343105409110737
+  },
+  {
+    "page": "/faq",
+    "mismatched": 1288938,
+    "total": 2141280,
+    "pct": 0.6019474333109168
+  },
+  {
+    "page": "/tech",
+    "mismatched": 2918254,
+    "total": 5833440,
+    "pct": 0.500262966620039
+  },
+  {
+    "page": "/contact",
+    "mismatched": 1695326,
+    "total": 1965600,
+    "pct": 0.862497964997965
+  }
+]
