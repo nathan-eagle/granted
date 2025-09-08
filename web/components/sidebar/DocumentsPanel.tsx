@@ -46,7 +46,18 @@ export default function DocumentsPanel({ projectId, uploads }: { projectId: stri
             <div key={k} style={{marginBottom:4}}>
               <div style={{fontWeight:600, color:'#374151'}}>{k} ({arr.length})</div>
               <ul style={{margin:0, paddingLeft:16}}>
-                {arr.map(u => (<li key={u.id} title={u.filename}>{u.filename}</li>))}
+                {arr.map(u => (
+                  <li key={u.id} title={u.filename} style={{display:'flex', alignItems:'center', gap:6}}>
+                    <span style={{flex:1, overflow:'hidden', textOverflow:'ellipsis'}}>{u.filename}</span>
+                    <select defaultValue={u.kind} onChange={async (e)=>{
+                      const kind = e.target.value
+                      await fetch('/api/autopilot/update-upload', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ uploadId: u.id, kind }) })
+                    }}>
+                      {['rfp','prior_proposal','cv','boilerplate','budget','facilities','other'].map(v => (<option key={v} value={v}>{v}</option>))}
+                    </select>
+                    <button onClick={async ()=>{ await fetch('/api/autopilot/delete-upload', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ uploadId: u.id }) }); try{ (window as any).location?.reload() }catch{} }}>Remove</button>
+                  </li>
+                ))}
               </ul>
             </div>
           ))}

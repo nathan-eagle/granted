@@ -138,16 +138,19 @@ export default async function DraftPage({ params, searchParams }: { params: { id
                 <span>• {String(((s.coverage as any)?.length?.words) || (s.contentMd || '').trim().split(/\s+/).filter(Boolean).length)} words</span>
               </span>
             </h2>
-            <form action={saveSection.bind(null, s.id)}>
-              <textarea name="content" defaultValue={s.contentMd || ''} rows={12} style={{width:'100%'}} />
-              <div style={{marginTop:6}}>
-                <button type="submit">Save</button>
-              </div>
-            </form>
-            <details style={{marginTop:6}}>
-              <summary>Preview with citations</summary>
-              <div style={{padding:8, border:'1px solid #eee', borderRadius:8}} dangerouslySetInnerHTML={{__html: renderCitedHtml(s.contentMd || '', (project.factsJson as any[]) || [], project.uploads || [])}} />
+            {/* Default: Preview with citations */}
+            <div style={{padding:8, border:'1px solid #eee', borderRadius:8}} dangerouslySetInnerHTML={{__html: renderCitedHtml(s.contentMd || '', (project.factsJson as any[]) || [], project.uploads || [])}} />
+            {/* Edit content (collapsed by default) */}
+            <details style={{marginTop:8}}>
+              <summary>Edit content</summary>
+              <form action={saveSection.bind(null, s.id)} style={{marginTop:6}}>
+                <textarea name="content" defaultValue={s.contentMd || ''} rows={12} style={{width:'100%'}} />
+                <div style={{marginTop:6}}>
+                  <button type="submit">Save</button>
+                </div>
+              </form>
             </details>
+            
             {/* Inline source bubbles (list) when {{fact:ID}} markers are present */}
             {renderSources((project.factsJson as any[]) || [], project.uploads || [], s.contentMd || '')}
             {/* Fact usage count */}

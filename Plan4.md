@@ -37,7 +37,8 @@ Progress checklist
 - [x] Assistant right panel (Top Fixes) + Advanced tools tucked away
 - [x] Try Sample CTA on home
 - [x] DOCX export adds References section from citations
-- [ ] Citations UI polish ([n] superscripts inline everywhere + hovercards + dedicated panel)
+- [x] Citations superscripts in default preview per section
+- [ ] Citations UI polish (hovercards + dedicated Citations panel)
 
 ### P0.1 FTUE Stepper + **Streaming** MagicOverlay (end‑to‑end wire‑up)
 **Files:** `web/app/new/page.tsx`, `web/components/MagicOverlay.tsx`, `web/app/api/autopilot/stream/route.ts`, `web/lib/pack/loader.ts`  
