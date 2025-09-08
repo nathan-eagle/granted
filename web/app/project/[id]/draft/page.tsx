@@ -45,7 +45,7 @@ export default async function DraftPage({ params, searchParams }: { params: { id
             <button type="submit">Recompute Coverage</button>
           </form>
           <div style={{marginTop:8}}>
-            <Link href={`/projects/${project.id}`}>Back to Project</Link>
+            <Link href={`/projects`}>Back to Projects</Link>
           </div>
         </div>
         <div style={{marginTop:16}}>

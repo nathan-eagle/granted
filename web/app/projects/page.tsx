@@ -26,7 +26,7 @@ export default async function ProjectsPage() {
       </form>
       <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(280px, 1fr))', gap:12}}>
         {projects.map(p => (
-          <Link key={p.id} href={`/projects/${p.id}`} style={{border:'1px solid #eee', padding:12, borderRadius:8}}>
+          <Link key={p.id} href={`/project/${p.id}/draft`} style={{border:'1px solid #eee', padding:12, borderRadius:8}}>
             <div style={{fontWeight:600}}>{p.name}</div>
             <div style={{fontSize:12, color:'#666'}}>Created: {new Date(p.createdAt).toLocaleString()}</div>
           </Link>
@@ -44,5 +44,5 @@ async function createProject(formData: FormData) {
   const userId = session.user.id as string
   const name = String(formData.get('name'))
   const project = await prisma.project.create({ data: { userId, name } })
-  return redirect(`/projects/${project.id}`)
+  return redirect(`/project/${project.id}/draft`)
 }
