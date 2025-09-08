@@ -38,7 +38,7 @@ Progress checklist
 - [x] Try Sample CTA on home
 - [x] DOCX export adds References section from citations
 - [x] Citations superscripts in default preview per section
-- [ ] Citations UI polish (hovercards + dedicated Citations panel)
+- [x] Citations UI hovercards on superscripts; grouped Citations panel by section
   - [x] Baseline hovercards on superscripts in section preview
   - [ ] Dedicated Citations panel styling (group by section; quick jump)
 - [x] Documents panel: remove/change kind/rename
