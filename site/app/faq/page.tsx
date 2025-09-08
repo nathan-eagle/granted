@@ -1,4 +1,5 @@
 import { loadScraped, toParagraphs } from '@/lib/scraped'
+import { renderTextBlocks } from '@/lib/format'
 import Image from 'next/image'
 
 export default async function FAQPage() {
@@ -14,11 +15,7 @@ export default async function FAQPage() {
       </section>
       <section className="mx-auto max-w-7xl px-6 md:px-8 py-16">
         <div className="grid gap-10 md:grid-cols-2 items-start">
-          <div className="prose prose-slate max-w-none">
-            {paras.map((p, i) => (
-              <p key={i}>{p}</p>
-            ))}
-          </div>
+          <div className="prose prose-slate max-w-none">{renderTextBlocks(paras)}</div>
           <div>
             <Image src="/images/img2-2.jpg" alt="FAQ" width={600} height={500} className="rounded-xl w-full h-auto" sizes="(min-width: 1024px) 600px, 90vw" />
           </div>

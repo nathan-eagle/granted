@@ -26,7 +26,7 @@ export default function DocumentsPanel({ projectId, uploads }: { projectId: stri
     try{
       const fd = new FormData()
       fd.append('projectId', projectId)
-      Array.from(files as any).forEach((f: File) => fd.append('file', f))
+      Array.from(files as unknown as File[]).forEach((f: File) => fd.append('file', f))
       const res = await fetch('/api/autopilot/upload', { method:'POST', body: fd })
       if (!res.ok) throw new Error('Upload failed')
       setMessage('Uploaded')
@@ -69,4 +69,3 @@ export default function DocumentsPanel({ projectId, uploads }: { projectId: stri
     </div>
   )
 }
-

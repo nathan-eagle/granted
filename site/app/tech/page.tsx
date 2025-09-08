@@ -1,4 +1,5 @@
 import { loadScraped, toParagraphs } from '@/lib/scraped'
+import { renderTextBlocks } from '@/lib/format'
 import Image from 'next/image'
 
 export default async function TechPage() {
@@ -14,11 +15,7 @@ export default async function TechPage() {
       </section>
       <section className="mx-auto max-w-7xl px-6 md:px-8 py-16">
         <div className="grid gap-12 md:grid-cols-2 items-start">
-          <div className="prose prose-slate max-w-none">
-            {paras.map((p, i) => (
-              <p key={i}>{p}</p>
-            ))}
-          </div>
+          <div className="prose prose-slate max-w-none">{renderTextBlocks(paras)}</div>
           <div>
             <Image src="/images/tech3.jpg" alt="Technology" width={900} height={600} className="rounded-xl w-full h-auto" sizes="(min-width: 1024px) 900px, 90vw" />
           </div>
