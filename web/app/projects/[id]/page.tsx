@@ -2,17 +2,6 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { notFound, redirect } from 'next/navigation'
 
-async function getProject(id: string, userId: string) {
-  return prisma.project.findFirst({ where: { id, userId } })
-}
-
-async function getCategories() {
-  return prisma.templateCategory.findMany({
-    orderBy: { order: 'asc' },
-    include: { templates: { orderBy: { order: 'asc' } } },
-  })
-}
-
 export default async function ProjectPage({ params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions)
   if (!session?.user) notFound()
