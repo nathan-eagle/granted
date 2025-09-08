@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import PrimaryButton from '@/components/ui/PrimaryButton'
+import { useToast } from '@/components/ui/Toast'
 const MagicOverlay = dynamic(()=> import('@/components/MagicOverlay'), { ssr: false })
 
 export default function RunAutopilotClient({ projectId, auto, mode: modeProp }: { projectId: string, auto?: boolean, mode?: string }){
@@ -12,6 +13,7 @@ export default function RunAutopilotClient({ projectId, auto, mode: modeProp }: 
   const search = useSearchParams()
   const modeFromUrl = search.get('mode') || undefined
   const mode = modeProp || modeFromUrl || 'rerun_smart'
+  const { show } = useToast()
 
   function removeRunParam(){
     try {
@@ -23,6 +25,7 @@ export default function RunAutopilotClient({ projectId, auto, mode: modeProp }: 
 
   async function kick(){
     setOpen(true)
+    show(mode==='first_run' ? 'Starting full regenerate…' : 'Running Autopilot…')
   }
   useEffect(() => {
     if (auto && !open) {
@@ -33,7 +36,7 @@ export default function RunAutopilotClient({ projectId, auto, mode: modeProp }: 
   }, [auto])
   return (
     <>
-      <PrimaryButton onClick={() => { kick(); removeRunParam() }}>Run Autopilot</PrimaryButton>
+      <PrimaryButton onClick={() => { kick(); removeRunParam() }} disabled={open}>{open ? 'Running…' : 'Run Autopilot'}</PrimaryButton>
       {open ? <MagicOverlay projectId={projectId} onClose={()=> { setOpen(false); removeRunParam(); router.refresh() }} mode={mode} /> : null}
     </>
   )

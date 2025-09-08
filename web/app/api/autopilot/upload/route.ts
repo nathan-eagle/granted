@@ -49,13 +49,18 @@ export async function POST(req: NextRequest) {
     }
 
     const kind = classify(explicitKind, name, text.slice(0, 12000))
-    const meta = { parsedChars: text.length, confidence: 0.9, topReasons: [kind === 'rfp' ? 'RFP keywords detected' : 'Filename/text cues'] }
-    await prisma.upload.create({ data: { projectId, kind, filename: name, text, meta } as any })
+    await prisma.upload.create({ data: { projectId, kind, filename: name, text } })
   }
 
   if (files.length > 0) {
-    for (const f of files) await parseOne(f)
+    for (const f of files) {
+      const sizeMB = (f.size || 0) / (1024 * 1024)
+      if (sizeMB > 20) return NextResponse.json({ error: 'File too large (max 20MB)' }, { status: 413 })
+      await parseOne(f)
+    }
   } else if (file) {
+    const sizeMB = (file.size || 0) / (1024 * 1024)
+    if (sizeMB > 20) return NextResponse.json({ error: 'File too large (max 20MB)' }, { status: 413 })
     await parseOne(file)
   }
 

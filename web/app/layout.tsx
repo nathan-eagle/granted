@@ -1,6 +1,7 @@
 import './globals.css'
 import { ReactNode } from 'react'
 import { getServerSession } from 'next-auth'
+import { ToastProvider } from '@/components/ui/Toast'
 import { authOptions } from '@/lib/auth'
 import Link from 'next/link'
 
@@ -20,9 +21,11 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             {session ? <a href="/api/auth/signout">Sign out</a> : <a href="/api/auth/signin?callbackUrl=/projects">Sign in</a>}
           </nav>
         </header>
-        <main style={{maxWidth:960, margin:'24px auto', padding:'0 16px'}}>
-          {children}
-        </main>
+        <ToastProvider>
+          <main style={{maxWidth:960, margin:'24px auto', padding:'0 16px'}}>
+            {children}
+          </main>
+        </ToastProvider>
       </body>
     </html>
   )
