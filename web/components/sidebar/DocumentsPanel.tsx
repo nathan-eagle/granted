@@ -49,6 +49,7 @@ export default function DocumentsPanel({ projectId, uploads }: { projectId: stri
                 {arr.map(u => (
                   <li key={u.id} title={u.filename} style={{display:'flex', alignItems:'center', gap:6}}>
                     <span style={{flex:1, overflow:'hidden', textOverflow:'ellipsis'}}>{u.filename}</span>
+                    <button onClick={async ()=>{ const name = prompt('Rename file', u.filename); if (name && name !== u.filename){ await fetch('/api/autopilot/update-upload', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ uploadId: u.id, filename: name }) }); try{ (window as any).location?.reload() }catch{} } }}>Rename</button>
                     <select defaultValue={u.kind} onChange={async (e)=>{
                       const kind = e.target.value
                       await fetch('/api/autopilot/update-upload', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ uploadId: u.id, kind }) })

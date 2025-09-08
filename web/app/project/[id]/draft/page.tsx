@@ -20,6 +20,21 @@ export default async function DraftPage({ params, searchParams }: { params: { id
   const userId = session.user.id as string
   const project = await prisma.project.findFirst({ where: { id: params.id, userId }, include: { sections: { orderBy: { order: 'asc' } }, uploads: true } })
   if (!project) notFound()
+  // Build citations list for Assistant panel (flattened)
+  const citations: { sectionKey:string; sectionTitle:string; n:number; text:string; filename?:string }[] = []
+  const facts: any[] = (project.factsJson as any[]) || []
+  const byFact = new Map(facts.map(f => [String(f.id||''), f]))
+  for (const s of project.sections) {
+    const ids: string[] = Array.from(new Set((s.contentMd || '').match(/\{\{fact:([^}]+)\}\}/g)?.map(m => String(m).replace(/^\{\{fact:|\}\}$/g,'')) || []))
+    ids.forEach((id, idx) => {
+      const f: any = byFact.get(id)
+      if (f && f.text) {
+        const fn = f?.evidence?.uploadId ? project.uploads.find(u => u.id === f.evidence.uploadId)?.filename : undefined
+        citations.push({ sectionKey: s.key, sectionTitle: s.title, n: idx+1, text: f.text, filename: fn })
+      }
+    })
+  }
+
   return (
     <div style={{display:'grid',gridTemplateColumns:'260px 1fr 300px',gap:24}}>
       <aside style={{borderRight:'1px solid #eee',paddingRight:16}}>
@@ -180,7 +195,7 @@ export default async function DraftPage({ params, searchParams }: { params: { id
           </div>
         ))}
       </section>
-      <RightAssistantPanel projectId={project.id} fixes={(project.meta as any)?.fixList || []} />
+      <RightAssistantPanel projectId={project.id} fixes={(project.meta as any)?.fixList || []} citations={citations} />
     </div>
   )
 }

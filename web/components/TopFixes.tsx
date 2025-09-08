@@ -23,6 +23,7 @@ export default function TopFixes({ projectId, fixes }: { projectId: string; fixe
         {list.map((f:any, idx:number)=> (
           <li key={idx} style={{margin:'6px 0'}}>
             <button onClick={()=> apply(String(f.sectionKey||''), String(f.patch||''))} disabled={!f.patch}>Apply</button>
+            {' '}<a href={`#sec-${String(f.sectionKey||'')}`} style={{textDecoration:'none'}} title="Open section">Open</a>
             {' '}<strong>{String(f.sectionKey||'')}</strong>: {String(f.label||'')}
           </li>
         ))}
@@ -30,4 +31,3 @@ export default function TopFixes({ projectId, fixes }: { projectId: string; fixe
     </div>
   )
 }
-
