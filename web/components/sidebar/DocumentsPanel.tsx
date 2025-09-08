@@ -78,6 +78,9 @@ export default function DocumentsPanel({ projectId, uploads }: { projectId: stri
         </div>
         {message ? <div style={{fontSize:12, color:'#9CA3AF', marginTop:6}}>{message}</div> : null}
       </div>
+      <div style={{marginTop:8}}>
+        <button onClick={async ()=>{ setBusy(true); setMessage('Mining facts…'); try{ await fetch('/api/autopilot/mine-facts', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ projectId }) }); setMessage('Facts updated'); setTimeout(()=> setMessage(''), 1200) } finally { setBusy(false) } }}>Re‑mine facts</button>
+      </div>
     </div>
   )
 }

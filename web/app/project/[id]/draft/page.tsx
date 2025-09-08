@@ -142,7 +142,7 @@ export default async function DraftPage({ params, searchParams }: { params: { id
         </details>
         {project.sections.map(s => (
           <div key={s.id} style={{margin:'16px 0'}}>
-            <h2 style={{display:'flex', alignItems:'center', gap:12}}>
+            <h2 id={`sec-${s.key}`} style={{display:'flex', alignItems:'center', gap:12}}>
               <span>{s.title}</span>
               {/* Coverage bar + words */}
               <span style={{display:'inline-flex', alignItems:'center', gap:6, fontSize:12, color:'#6b7280'}}>

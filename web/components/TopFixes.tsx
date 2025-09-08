@@ -9,6 +9,7 @@ export default function TopFixes({ projectId, fixes }: { projectId: string; fixe
   }
   async function applyAll(){
     await fetch(`/project/${projectId}/draft`, { method: 'POST', body: new FormData() })
+    try { await fetch(`/api/autopilot/coverage`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ projectId }) }) } catch {}
     location.reload()
   }
   const list = (fixes || []).slice(0,5)

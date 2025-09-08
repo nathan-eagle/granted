@@ -39,6 +39,7 @@ Progress checklist
 - [x] DOCX export adds References section from citations
 - [x] Citations superscripts in default preview per section
 - [ ] Citations UI polish (hovercards + dedicated Citations panel)
+- [x] Documents panel: remove/change kind/rename
 
 ### P0.1 FTUE Stepper + **Streaming** MagicOverlay (end‑to‑end wire‑up)
 **Files:** `web/app/new/page.tsx`, `web/components/MagicOverlay.tsx`, `web/app/api/autopilot/stream/route.ts`, `web/lib/pack/loader.ts`  
