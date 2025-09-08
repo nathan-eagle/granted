@@ -13,7 +13,7 @@ const steps = [
   'Applying safe fixes…',
 ]
 
-export default function MagicOverlay({ projectId, onClose }: { projectId: string; onClose: () => void }){
+export default function MagicOverlay({ projectId, onClose, mode }: { projectId: string; onClose: () => void, mode?: string }){
   const [active, setActive] = useState(true)
   const [doneSteps, setDoneSteps] = useState<string[]>([])
   const [error, setError] = useState<string | null>(null)
@@ -31,7 +31,8 @@ export default function MagicOverlay({ projectId, onClose }: { projectId: string
     const subscribe = () => {
       if (closed) return
       attempt += 1
-      es = new EventSource(`/api/autopilot/stream?projectId=${projectId}`)
+      const m = mode ? `&mode=${encodeURIComponent(mode)}` : ''
+      es = new EventSource(`/api/autopilot/stream?projectId=${projectId}${m}`)
       es.onmessage = (ev) => {
         try {
           const payload = JSON.parse(ev.data)

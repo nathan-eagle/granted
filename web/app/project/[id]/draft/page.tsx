@@ -41,7 +41,7 @@ export default async function DraftPage({ params, searchParams }: { params: { id
         <div style={{fontWeight:600}}>Outline</div>
         <ul>
           {project.sections.map(s => (
-            <li key={s.id}>{s.title}</li>
+            <li key={s.id}><a href={`#sec-${s.key}`} style={{textDecoration:'none'}}>{s.title}</a></li>
           ))}
         </ul>
         <div style={{marginTop:12}}>
@@ -106,15 +106,14 @@ export default async function DraftPage({ params, searchParams }: { params: { id
         {/* Top fixes panel */}
         { (project.meta as any)?.fixList?.length ? <TopFixes projectId={project.id} fixes={(project.meta as any).fixList} /> : null }
         <div style={{display:'flex',gap:8,margin:'8px 0 16px'}}>
-          <form action={runAutodraft.bind(null, project.id)}>
-            <button type="submit">Regenerate Draft</button>
-          </form>
+          {/* Full regenerate triggers overlay in first_run mode */}
+          <a href={`?run=1&mode=first_run`}><button type="button">Full Regenerate</button></a>
           <form action={exportDocx.bind(null, project.id)}>
             <button type="submit">Export DOCX</button>
           </form>
           {/* Magic overlay trigger */}
           {/* Client trigger */}
-          <RunAutopilotClient projectId={project.id} auto={searchParams?.run === '1'} />
+          <RunAutopilotClient projectId={project.id} auto={searchParams?.run === '1'} mode={String(searchParams?.mode || '')} />
         </div>
         <details style={{marginBottom:16}}>
           <summary>Budget (simple)</summary>
@@ -184,6 +183,7 @@ export default async function DraftPage({ params, searchParams }: { params: { id
               <div style={{marginTop:6,display:'flex',gap:8}}>
                 <form action={fixNext.bind(null, s.id)}><button type="submit">Fix next</button></form>
                 <form action={tighten.bind(null, s.id)}><button type="submit">Tighten to limit</button></form>
+                <form action={regenerateSection.bind(null, s.id)}><button type="submit">Regenerate section</button></form>
               </div>
             </details>
             {/* Append each fact to this section, if available */}
@@ -285,6 +285,13 @@ async function exportDocx(projectId: string) {
   'use server'
   // Fire and forget; client can download from returned route if needed in future
   await fetch(`${process.env.APP_URL || 'http://localhost:3000'}/api/export/docx?projectId=${projectId}`)
+}
+
+async function regenerateSection(sectionId: string) {
+  'use server'
+  const section = await prisma.section.findUnique({ where: { id: sectionId } })
+  if (!section) return
+  await fetch(`${process.env.APP_URL || 'http://localhost:3000'}/api/autopilot/regenerate-section`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ projectId: section.projectId, sectionId }) })
 }
 
 async function mineFacts(projectId: string) {

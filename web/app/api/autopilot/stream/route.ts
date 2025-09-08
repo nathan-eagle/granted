@@ -37,6 +37,7 @@ async function mark(projectId: string, entry: any) {
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const projectId = searchParams.get('projectId')
+  const mode = searchParams.get('mode') || 'rerun_smart'
   if (!projectId) return new Response('Missing projectId', { status: 400 })
 
   const stream = new ReadableStream({
@@ -66,13 +67,24 @@ export async function GET(req: NextRequest) {
         if (!pack) throw new Error('Pack not found')
         const facts: any[] = (project as any).factsJson || []
         const charter = project.charterJson ?? {}
-        // Clear previous sections
-        await prisma.section.deleteMany({ where: { projectId } })
+        // Determine which sections to write based on mode
+        const existing = await prisma.section.findMany({ where: { projectId }, orderBy: { order: 'asc' } })
+        const byKeyExisting = new Map(existing.map(s => [s.key, s]))
         const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
         const model = process.env.OPENAI_MODEL || 'gpt-4o-mini'
 
         for (let i = 0; i < pack.sections.length; i++) {
           const spec = pack.sections[i]
+          // Skip non-targeted sections in rerun_smart mode
+          if (mode === 'rerun_smart') {
+            const ex = byKeyExisting.get(spec.id)
+            const cov: any = ex?.coverage || {}
+            const missingCount = (cov?.missing || []).length
+            const contentEmpty = !ex?.contentMd || ex.contentMd.trim().length === 0
+            if (ex && !contentEmpty && (missingCount === 0)) {
+              continue
+            }
+          }
           let acc = ''
           await send({ type: 'section_start', data: { key: spec.id, title: spec.title } })
           const system = `You write SBIR/STTR-style grant sections for non-technical founders.\nWrite ONLY Markdown prose for the section "${spec.title}".\nUse CHARTER and FACTS. When using a fact, embed {{fact:ID}} inline.\nStay within ~${spec.limitWords || 800} words (±10%). Clear, reviewer-friendly voice.`
@@ -91,7 +103,12 @@ export async function GET(req: NextRequest) {
             }
           }
           const words = acc.trim().split(/\s+/).filter(Boolean).length
-          await prisma.section.create({ data: { projectId, key: spec.id, title: spec.title, order: i + 1, contentMd: acc } })
+          const prev = byKeyExisting.get(spec.id)
+          if (prev) {
+            await prisma.section.update({ where: { id: prev.id }, data: { contentMd: acc, title: spec.title, order: prev.order || i + 1 } })
+          } else {
+            await prisma.section.create({ data: { projectId, key: spec.id, title: spec.title, order: i + 1, contentMd: acc } })
+          }
           await send({ type: 'section_complete', data: { key: spec.id, title: spec.title, words } })
         }
 
