@@ -86,6 +86,16 @@ export default async function DraftPage({ params, searchParams }: { params: { id
       </aside>
       <section>
         <h1>{project.name}</h1>
+        {(project.meta as any)?.progress?.length ? (
+          <details style={{margin:'8px 0 12px'}} open>
+            <summary>Last run progress</summary>
+            <ul style={{fontSize:12, color:'#6b7280'}}>
+              {((project.meta as any).progress as any[]).slice(-12).map((p:any, i:number) => (
+                <li key={i}>{new Date(p.t || Date.now()).toLocaleTimeString()} — {String(p.step || '')}</li>
+              ))}
+            </ul>
+          </details>
+        ) : null}
         {/* Top fixes panel */}
         { (project.meta as any)?.fixList?.length ? <TopFixes projectId={project.id} fixes={(project.meta as any).fixList} /> : null }
         <div style={{display:'flex',gap:8,margin:'8px 0 16px'}}>
@@ -132,7 +142,17 @@ export default async function DraftPage({ params, searchParams }: { params: { id
         </details>
         {project.sections.map(s => (
           <div key={s.id} style={{margin:'16px 0'}}>
-            <h2>{s.title}</h2>
+            <h2 style={{display:'flex', alignItems:'center', gap:12}}>
+              <span>{s.title}</span>
+              {/* Coverage bar + words */}
+              <span style={{display:'inline-flex', alignItems:'center', gap:6, fontSize:12, color:'#6b7280'}}>
+                <span style={{width:120, height:6, background:'#e5e7eb', borderRadius:999, overflow:'hidden', display:'inline-block'}}>
+                  <span style={{display:'block', width:`${Math.min(100, Number((s.coverage as any)?.completionPct || 0))}%`, height:'100%', background:'#10b981'}} />
+                </span>
+                <span>{Number((s.coverage as any)?.completionPct || 0)}%</span>
+                <span>• {String(((s.coverage as any)?.length?.words) || (s.contentMd || '').trim().split(/\s+/).filter(Boolean).length)} words</span>
+              </span>
+            </h2>
             <form action={saveSection.bind(null, s.id)}>
               <textarea name="content" defaultValue={s.contentMd || ''} rows={12} style={{width:'100%'}} />
               <div style={{marginTop:6}}>

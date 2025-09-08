@@ -1,4 +1,5 @@
 import { loadScraped, toParagraphs } from '@/lib/scraped'
+import Image from 'next/image'
 
 export default async function FeaturesPage() {
   const scraped = await loadScraped('features')
@@ -21,7 +22,7 @@ export default async function FeaturesPage() {
             </div>
           </div>
           <div>
-            <img src="/images/imgi_7_img1.jpg" alt="Features" className="rounded-xl w-full h-auto" />
+            <Image src="/images/imgi_7_img1.jpg" alt="Features" width={520} height={520} className="rounded-xl h-auto w-auto" sizes="(min-width: 1024px) 520px, 80vw" />
           </div>
         </div>
       </section>

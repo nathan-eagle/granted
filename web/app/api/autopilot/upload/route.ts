@@ -8,32 +8,55 @@ export const runtime = 'nodejs'
 export async function POST(req: NextRequest) {
   const form = await req.formData()
   const projectId = String(form.get('projectId') || '')
-  const kind = String(form.get('kind') || 'other')
-  const file = form.get('file') as File | null
-  if (!projectId || !file) return NextResponse.json({ error: 'Missing projectId or file' }, { status: 400 })
+  const explicitKind = String(form.get('kind') || '')
+  const files = (form.getAll('file') as File[]).filter(Boolean)
+  const file = (files[0] as any) as File | null
+  if (!projectId || (!file && files.length === 0)) return NextResponse.json({ error: 'Missing projectId or file' }, { status: 400 })
 
-  const buf = Buffer.from(await file.arrayBuffer())
-  const name = file.name || 'upload.txt'
-  const ext = (name.split('.').pop() || '').toLowerCase()
+  async function parseOne(f: File) {
+    const buf = Buffer.from(await f.arrayBuffer())
+    const name = f.name || 'upload.txt'
+    const ext = (name.split('.').pop() || '').toLowerCase()
 
-  // Minimal support: txt/md only for v1; PDFs and DOCX can be added later
-  let text = ''
-  if (ext === 'txt' || ext === 'md') {
-    text = buf.toString('utf8')
-  } else if (ext === 'pdf') {
-    const mod = await import('pdf-parse')
-    const pdfParse = (mod as any).default || (mod as any)
-    const data = await pdfParse(buf)
-    text = data.text || ''
-  } else if (ext === 'docx') {
-    const mod = await import('mammoth')
-    const mammoth = (mod as any).default || (mod as any)
-    const res = await mammoth.extractRawText({ buffer: buf })
-    text = res.value || ''
-  } else {
-    return NextResponse.json({ error: 'Only .txt, .md, .pdf, or .docx supported' }, { status: 400 })
+    let text = ''
+    if (ext === 'txt' || ext === 'md') {
+      text = buf.toString('utf8')
+    } else if (ext === 'pdf') {
+      const mod = await import('pdf-parse')
+      const pdfParse = (mod as any).default || (mod as any)
+      const data = await pdfParse(buf)
+      text = data.text || ''
+    } else if (ext === 'docx') {
+      const mod = await import('mammoth')
+      const mammoth = (mod as any).default || (mod as any)
+      const res = await mammoth.extractRawText({ buffer: buf })
+      text = res.value || ''
+    } else {
+      throw new Error('Only .txt, .md, .pdf, or .docx supported')
+    }
+
+    function classify(kind: string, filename: string, body: string) {
+      if (kind) return kind
+      const fn = filename.toLowerCase()
+      const t = (body || '').toLowerCase()
+      if (/rfp|solicitation|request\s+for\s+proposals|funding\s+opportunity/.test(fn) || /request\s+for\s+proposals|funding\s+opportunity|nsf\s+sbir|nih\s+sbir/.test(t)) return 'rfp'
+      if (/prior|overview|proposal/.test(fn)) return 'prior_proposal'
+      if (/cv|resume|biosketch/.test(fn)) return 'cv'
+      if (/budget|cost/.test(fn)) return 'budget'
+      if (/facilit(y|ies)|equipment/.test(fn)) return 'facilities'
+      if (/boiler/.test(fn)) return 'boilerplate'
+      return 'other'
+    }
+
+    const kind = classify(explicitKind, name, text.slice(0, 12000))
+    await prisma.upload.create({ data: { projectId, kind, filename: name, text } })
   }
 
-  await prisma.upload.create({ data: { projectId, kind, filename: name, text } })
+  if (files.length > 0) {
+    for (const f of files) await parseOne(f)
+  } else if (file) {
+    await parseOne(file)
+  }
+
   return NextResponse.json({ ok: true })
 }

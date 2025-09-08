@@ -1,4 +1,6 @@
 import { loadScraped } from '@/lib/scraped'
+import CheckoutButton from '../components/CheckoutButton'
+import Image from 'next/image'
 
 export default async function Home() {
   const scraped = await loadScraped('home')
@@ -20,9 +22,7 @@ export default async function Home() {
             <p>{p1}</p>
             <p>{p2}</p>
           </div>
-          <div className="mt-12">
-            <a href="https://app.grantedai.com" className="px-6 py-3 rounded-md bg-yellow-400 text-black font-semibold hover:bg-yellow-300 border border-yellow-500 shadow">Start Writing</a>
-          </div>
+          <div className="mt-12"><CheckoutButton label="Start Writing" /></div>
         </div>
       </section>
 
@@ -39,7 +39,7 @@ export default async function Home() {
             </div>
           </div>
           <div className="text-center">
-            <img src="/images/imgi_7_img1.jpg" alt="Granted" width="420" height="480" className="mx-auto rounded-xl" />
+            <Image src="/images/imgi_7_img1.jpg" alt="Granted" width={420} height={480} className="mx-auto rounded-xl h-auto w-auto" sizes="(min-width: 1024px) 420px, 80vw" />
           </div>
         </div>
       </section>
@@ -48,7 +48,7 @@ export default async function Home() {
       <section className="bg-white">
         <div className="mx-auto max-w-[1200px] px-6 md:px-8 py-16 grid md:grid-cols-2 gap-16 items-start">
           <div className="order-2 md:order-1 text-center">
-            <img src="/images/imgi_9_img3.jpg" alt="Use cases" width="400" height="480" className="mx-auto rounded-xl" />
+            <Image src="/images/imgi_9_img3.jpg" alt="Use cases" width={400} height={480} className="mx-auto rounded-xl h-auto w-auto" sizes="(min-width: 1024px) 400px, 80vw" />
           </div>
           <div className="order-1 md:order-2">
             <h3 className="text-[30px] md:text-[36px] font-extrabold leading-[1.15]">{h3}</h3>
@@ -71,9 +71,7 @@ export default async function Home() {
           <div className="mx-auto max-w-4xl rounded-[24px] p-10 md:p-14 brand-cta-gradient text-center">
             <h3 className="text-[40px] md:text-[56px] font-extrabold text-black">Let us write your next draft,<br/>no strings attached.</h3>
             <p className="mt-3 text-black/80">See what Granted can do for you in just a few minutes and leave with the content you need.</p>
-            <div className="mt-6 flex justify-center">
-              <a href="https://app.grantedai.com" className="px-6 py-3 rounded-md bg-black text-white font-semibold hover:opacity-90">Start a 7-day free trial</a>
-            </div>
+            <div className="mt-6 flex justify-center"><CheckoutButton label="Start a 7-day free trial" /></div>
           </div>
         </div>
       </section>
@@ -106,7 +104,7 @@ export default async function Home() {
       <section className="bg-white">
         <div className="mx-auto max-w-[1200px] px-6 md:px-8 py-24 grid md:grid-cols-2 gap-16 items-center">
           <div className="order-2 md:order-1 text-center">
-            <img src="/images/imgi_8_img2.jpg" alt="Equity" width="520" height="520" className="mx-auto rounded-xl" />
+            <Image src="/images/imgi_8_img2.jpg" alt="Equity" width={520} height={520} className="mx-auto rounded-xl h-auto w-auto" sizes="(min-width: 1024px) 520px, 80vw" />
           </div>
           <div className="order-1 md:order-2">
             <h2 className="text-[48px] leading-[67.2px] font-extrabold">Level the fundraising playing field.</h2>

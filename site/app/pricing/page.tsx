@@ -1,4 +1,5 @@
 import { loadScraped, toParagraphs } from '@/lib/scraped'
+import Image from 'next/image'
 
 export default async function PricingPage() {
   const scraped = await loadScraped('pricing')
@@ -12,7 +13,7 @@ export default async function PricingPage() {
         </div>
       </section>
       <section className="mx-auto max-w-6xl px-6 md:px-8 py-16">
-        <img src="/images/img3.jpg" alt="Pricing" className="rounded-xl w-full h-auto mb-10" />
+        <Image src="/images/img3.jpg" alt="Pricing" width={1000} height={600} className="rounded-xl w-full h-auto mb-10" sizes="(min-width: 1024px) 1000px, 90vw" />
         <div className="prose prose-slate max-w-none mx-auto">
           {paras.map((p, i) => (
             <p key={i}>{p}</p>

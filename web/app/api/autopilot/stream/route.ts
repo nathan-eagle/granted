@@ -41,11 +41,13 @@ export async function GET(req: NextRequest) {
         if (uploads.length > 0) {
           await send({ type: 'status', data: { step: 'facts', label: 'Parsing your docs…' } })
           await send({ type: 'files', data: { count: uploads.length, names: uploads.map(u => u.filename) } })
+          await mark(projectId, { step: 'Parsing your docs' })
           await postJSON('/api/autopilot/mine-facts', { projectId }, 25000)
         }
 
         // Draft (streaming per section)
         await send({ type: 'status', data: { step: 'drafting', label: 'Drafting sections…' } })
+        await mark(projectId, { step: 'Drafting sections' })
         const project = await prisma.project.findUnique({ where: { id: projectId } })
         if (!project) throw new Error('Project not found')
         const pack = await loadPackForProject(project)
@@ -83,6 +85,7 @@ export async function GET(req: NextRequest) {
 
         // Coverage
         await send({ type: 'status', data: { step: 'coverage', label: 'Checking coverage…' } })
+        await mark(projectId, { step: 'Checking coverage' })
         await postJSON('/api/autopilot/coverage', { projectId }, 20000)
         const withCov = await prisma.section.findMany({ where: { projectId }, orderBy: { order: 'asc' } })
         for (const s of withCov) {
@@ -92,6 +95,7 @@ export async function GET(req: NextRequest) {
 
         // Fill a small number of gaps
         await send({ type: 'status', data: { step: 'gaps', label: 'Filling gaps…' } })
+        await mark(projectId, { step: 'Filling gaps' })
         const secs = await prisma.section.findMany({ where: { projectId }, orderBy: { order: 'asc' } })
         for (const s of secs) {
           try {
@@ -103,6 +107,7 @@ export async function GET(req: NextRequest) {
 
         // Tighten with guard handled in endpoint; reflect outcome optimistically
         await send({ type: 'status', data: { step: 'tighten', label: 'Tightening to limits…' } })
+        await mark(projectId, { step: 'Tightening to limits' })
         for (const s of secs) {
           try {
             const res = await postJSON('/api/autopilot/tighten', { sectionId: s.id }, 25000)
@@ -116,6 +121,7 @@ export async function GET(req: NextRequest) {
 
         // Mock review → Fix list
         await send({ type: 'status', data: { step: 'review', label: 'Getting reviewer feedback…' } })
+        await mark(projectId, { step: 'Getting reviewer feedback' })
         await postJSON('/api/autopilot/mock-review', { projectId }, 35000)
         const p = await prisma.project.findUnique({ where: { id: projectId } })
         const fixes: any[] = (p as any)?.meta?.fixList || []
@@ -123,6 +129,7 @@ export async function GET(req: NextRequest) {
 
         // Apply all safe fixes
         await send({ type: 'status', data: { step: 'apply_fixes', label: 'Applying safe fixes…' } })
+        await mark(projectId, { step: 'Applying safe fixes' })
         if (fixes && Array.isArray(fixes) && fixes.length) {
           const sections = await prisma.section.findMany({ where: { projectId } })
           const byKey = new Map(sections.map(s => [s.key, s]))
@@ -140,6 +147,7 @@ export async function GET(req: NextRequest) {
 
         // Done
         await send({ type: 'done', data: {} })
+        await mark(projectId, { step: 'done' })
       } catch (e: any) {
         await controller.enqueue(new TextEncoder().encode(sseLine({ type: 'error', data: { message: String(e) } })))
       } finally {
@@ -149,6 +157,15 @@ export async function GET(req: NextRequest) {
   })
 
   return new Response(stream, {
+async function mark(projectId: string, entry: any) {
+  try {
+    const p = await prisma.project.findUnique({ where: { id: projectId } })
+    const meta: any = p?.meta || {}
+    const progress: any[] = Array.isArray(meta.progress) ? meta.progress : []
+    progress.push({ ...entry, t: new Date().toISOString() })
+    await prisma.project.update({ where: { id: projectId }, data: { meta: { ...meta, progress } } })
+  } catch {}
+}
     headers: {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache, no-transform',
