@@ -7,6 +7,7 @@ import FactsList from '@/components/FactsList'
 import DocumentsPanel from '@/components/sidebar/DocumentsPanel'
 import TopFixes from '@/components/TopFixes'
 import RunAutopilotClient from '@/components/RunAutopilotClient'
+import RightAssistantPanel from '@/components/RightAssistantPanel'
 
 // Always render server-fresh to show newly generated sections without manual refresh
 export const dynamic = 'force-dynamic'
@@ -20,7 +21,7 @@ export default async function DraftPage({ params, searchParams }: { params: { id
   const project = await prisma.project.findFirst({ where: { id: params.id, userId }, include: { sections: { orderBy: { order: 'asc' } }, uploads: true } })
   if (!project) notFound()
   return (
-    <div style={{display:'grid',gridTemplateColumns:'260px 1fr',gap:24}}>
+    <div style={{display:'grid',gridTemplateColumns:'260px 1fr 300px',gap:24}}>
       <aside style={{borderRight:'1px solid #eee',paddingRight:16}}>
         <div style={{fontWeight:600}}>Outline</div>
         <ul>
@@ -144,14 +145,8 @@ export default async function DraftPage({ params, searchParams }: { params: { id
               </div>
             </form>
             <details style={{marginTop:6}}>
-              <summary>Preview with citation markers</summary>
-              <pre style={{whiteSpace:'pre-wrap', lineHeight:1.5, fontFamily:'system-ui, -apple-system, Segoe UI, Roboto, Arial', padding:8, border:'1px solid #eee', borderRadius:8}}>
-{(s.contentMd || '').replace(/\{\{fact:([^}]+)\}\}/g, (_, id, idx) => {
-  const ids = Array.from(new Set((s.contentMd || '').match(/\{\{fact:([^}]+)\}\}/g)?.map(m => m.replace(/[^:]+:(.+)\}\}/,'$1')) || []))
-  const n = ids.indexOf(id) + 1
-  return n > 0 ? `[${n}]` : `[?]`
-})}
-              </pre>
+              <summary>Preview with citations</summary>
+              <div style={{padding:8, border:'1px solid #eee', borderRadius:8}} dangerouslySetInnerHTML={{__html: renderCitedHtml(s.contentMd || '', (project.factsJson as any[]) || [], project.uploads || [])}} />
             </details>
             {/* Inline source bubbles (list) when {{fact:ID}} markers are present */}
             {renderSources((project.factsJson as any[]) || [], project.uploads || [], s.contentMd || '')}
@@ -182,6 +177,7 @@ export default async function DraftPage({ params, searchParams }: { params: { id
           </div>
         ))}
       </section>
+      <RightAssistantPanel projectId={project.id} fixes={(project.meta as any)?.fixList || []} />
     </div>
   )
 }
@@ -214,6 +210,29 @@ function countFactMarkers(md: string){
   if (!md) return 0
   const matches = md.match(/\{\{fact:[^}]+\}\}/g)
   return matches ? matches.length : 0
+}
+
+function renderCitedHtml(md: string, facts: any[], uploads: { id:string; filename:string }[]){
+  const idsEncountered: string[] = []
+  const byId = new Map(facts.map(f => [String(f.id||''), f]))
+  function citeId(id: string){
+    if (!idsEncountered.includes(id)) idsEncountered.push(id)
+    const n = idsEncountered.indexOf(id) + 1
+    const f:any = byId.get(id)
+    const fn = f?.evidence?.uploadId ? (uploads.find(u => u.id === f.evidence.uploadId)?.filename || '') : ''
+    const tip = (fn ? `${fn}: ` : '') + (f?.evidence?.quote || f?.text || '')
+    return `<sup title="${escapeHtml(tip)}">[${n}]</sup>`
+  }
+  const body = escapeHtml(md).replace(/\{\{fact:([^}]+)\}\}/g, (_m, id) => citeId(String(id)))
+  return body
+}
+
+function escapeHtml(s: string){
+  return String(s || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/\"/g, '&quot;')
 }
 
 async function runAutodraft(projectId: string) {
