@@ -1,8 +1,9 @@
 import TopFixes from '@/components/TopFixes'
+import AssistantChat from '@/components/assistant/AssistantChat'
 
 type Cite = { sectionKey: string; sectionTitle: string; n: number; text: string; filename?: string }
 
-export default function RightAssistantPanel({ projectId, fixes, citations }: { projectId: string; fixes: any[]; citations?: Cite[] }){
+export default function RightAssistantPanel({ projectId, fixes, citations, chat }: { projectId: string; fixes: any[]; citations?: Cite[]; chat?: { role: string; content: string }[] }){
   const cites = citations || []
   const grouped = cites.reduce<Record<string, { title: string; items: Cite[] }>>((acc, c) => {
     const k = c.sectionKey
@@ -19,6 +20,10 @@ export default function RightAssistantPanel({ projectId, fixes, citations }: { p
           <TopFixes projectId={projectId} fixes={fixes} />
         </div>
       ) : null}
+      <div style={{marginBottom:12}}>
+        <div style={{fontWeight:600, marginBottom:6}}>Assistant</div>
+        <AssistantChat projectId={projectId} initial={chat} />
+      </div>
       <div>
         <div style={{fontWeight:600, marginBottom:6}}>Citations</div>
         {cites.length ? (

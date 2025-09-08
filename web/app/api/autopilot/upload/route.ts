@@ -49,7 +49,8 @@ export async function POST(req: NextRequest) {
     }
 
     const kind = classify(explicitKind, name, text.slice(0, 12000))
-    await prisma.upload.create({ data: { projectId, kind, filename: name, text } })
+    const meta = { parsedChars: text.length, confidence: 0.9, topReasons: [kind === 'rfp' ? 'RFP keywords detected' : 'Filename/text cues'] }
+    await prisma.upload.create({ data: { projectId, kind, filename: name, text, meta } as any })
   }
 
   if (files.length > 0) {

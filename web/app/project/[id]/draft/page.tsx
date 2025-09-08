@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import FactsList from '@/components/FactsList'
 import DocumentsPanel from '@/components/sidebar/DocumentsPanel'
+import OutlinePanel from '@/components/sidebar/OutlinePanel'
 import TopFixes from '@/components/TopFixes'
 import RunAutopilotClient from '@/components/RunAutopilotClient'
 import RightAssistantPanel from '@/components/RightAssistantPanel'
@@ -39,11 +40,7 @@ export default async function DraftPage({ params, searchParams }: { params: { id
     <div style={{display:'grid',gridTemplateColumns:'260px 1fr 300px',gap:24}}>
       <aside style={{borderRight:'1px solid #eee',paddingRight:16}}>
         <div style={{fontWeight:600}}>Outline</div>
-        <ul>
-          {project.sections.map(s => (
-            <li key={s.id}><a href={`#sec-${s.key}`} style={{textDecoration:'none'}}>{s.title}</a></li>
-          ))}
-        </ul>
+        <OutlinePanel sections={project.sections.map(s => ({ key: s.key, title: s.title }))} />
         <div style={{marginTop:12}}>
           <DocumentsPanel projectId={project.id} uploads={project.uploads.map(u => ({ id: u.id, filename: u.filename, kind: u.kind }))} />
         </div>
@@ -202,7 +199,7 @@ export default async function DraftPage({ params, searchParams }: { params: { id
           </div>
         ))}
       </section>
-      <RightAssistantPanel projectId={project.id} fixes={(project.meta as any)?.fixList || []} citations={citations} />
+      <RightAssistantPanel projectId={project.id} fixes={(project.meta as any)?.fixList || []} citations={citations} chat={(project.meta as any)?.chat || []} />
     </div>
   )
 }
