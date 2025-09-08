@@ -14,6 +14,9 @@ export default async function Home() {
           <Link href="/projects" style={{ marginRight: '1rem' }}>
             Go to Projects
           </Link>
+          <Link href="/demo" style={{ marginRight: '1rem' }}>
+            Try Sample
+          </Link>
           <Link href="/api/auth/signout">
             Sign Out
           </Link>
@@ -24,6 +27,9 @@ export default async function Home() {
           <Link href="/api/auth/signin">
             Sign In with Google
           </Link>
+          <div style={{marginTop:12}}>
+            <Link href="/demo">Try Sample (auto‑run)</Link>
+          </div>
         </div>
       )}
     </div>

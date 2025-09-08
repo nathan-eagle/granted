@@ -33,9 +33,11 @@ Progress checklist
 - [x] P0.2 Uploads accept .pdf/.docx/.txt/.md + auto‑classification; basic Documents panel; overlay lists parsed filenames
 - [x] Coverage bars + word counts per section
 - [x] Progress log panel (last run)
-- [ ] SSE reconnection with resume
-- [ ] Assistant right panel + Advanced drawer polish
-- [ ] Citations UI ([n] superscripts + panel; export later)
+- [x] SSE reconnect with event IDs (resume UI)
+- [x] Assistant right panel (Top Fixes) + Advanced tools tucked away
+- [x] Try Sample CTA on home
+- [x] DOCX export adds References section from citations
+- [ ] Citations UI polish ([n] superscripts inline everywhere + hovercards + dedicated panel)
 
 ### P0.1 FTUE Stepper + **Streaming** MagicOverlay (end‑to‑end wire‑up)
 **Files:** `web/app/new/page.tsx`, `web/components/MagicOverlay.tsx`, `web/app/api/autopilot/stream/route.ts`, `web/lib/pack/loader.ts`  
