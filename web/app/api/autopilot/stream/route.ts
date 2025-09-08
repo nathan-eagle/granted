@@ -8,8 +8,9 @@ export const dynamic = 'force-dynamic'
 
 type EventPayload = { type: string; data: any }
 
-function sseLine(obj: EventPayload) {
-  return `data: ${JSON.stringify(obj)}\n\n`
+function sseLine(obj: EventPayload, id?: number) {
+  const idPart = typeof id === 'number' ? `id: ${id}\n` : ''
+  return `${idPart}data: ${JSON.stringify(obj)}\n\n`
 }
 
 async function postJSON(path: string, body: any, timeoutMs = 30000) {
@@ -41,7 +42,8 @@ export async function GET(req: NextRequest) {
   const stream = new ReadableStream({
     start: async (controller) => {
       const enc = new TextEncoder()
-      async function send(ev: EventPayload) { controller.enqueue(enc.encode(sseLine(ev))) }
+      let eventId = 0
+      async function send(ev: EventPayload) { controller.enqueue(enc.encode(sseLine(ev, ++eventId))) }
       try {
         // t1: start
         await send({ type: 'status', data: { step: 'start', label: 'Starting…' } })

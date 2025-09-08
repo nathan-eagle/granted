@@ -143,6 +143,16 @@ export default async function DraftPage({ params, searchParams }: { params: { id
                 <button type="submit">Save</button>
               </div>
             </form>
+            <details style={{marginTop:6}}>
+              <summary>Preview with citation markers</summary>
+              <pre style={{whiteSpace:'pre-wrap', lineHeight:1.5, fontFamily:'system-ui, -apple-system, Segoe UI, Roboto, Arial', padding:8, border:'1px solid #eee', borderRadius:8}}>
+{(s.contentMd || '').replace(/\{\{fact:([^}]+)\}\}/g, (_, id, idx) => {
+  const ids = Array.from(new Set((s.contentMd || '').match(/\{\{fact:([^}]+)\}\}/g)?.map(m => m.replace(/[^:]+:(.+)\}\}/,'$1')) || []))
+  const n = ids.indexOf(id) + 1
+  return n > 0 ? `[${n}]` : `[?]`
+})}
+              </pre>
+            </details>
             {/* Inline source bubbles (list) when {{fact:ID}} markers are present */}
             {renderSources((project.factsJson as any[]) || [], project.uploads || [], s.contentMd || '')}
             {/* Fact usage count */}

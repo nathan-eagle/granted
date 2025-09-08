@@ -26,42 +26,51 @@ export default function MagicOverlay({ projectId, onClose }: { projectId: string
   useEffect(() => {
     if (!projectId) return
     let closed = false
-    const es = new EventSource(`/api/autopilot/stream?projectId=${projectId}`)
-    es.onmessage = (ev) => {
-      try {
-        const payload = JSON.parse(ev.data)
-        if (payload.type === 'status') {
-          const label = String(payload.data?.label || '')
-          if (label) setDoneSteps(prev => Array.from(new Set([...prev, label])))
-        } else if (payload.type === 'files') {
-          const names: string[] = Array.isArray(payload.data?.names) ? payload.data.names : []
-          setFiles(names)
-        } else if (payload.type === 'section_start') {
-          const { key, title } = payload.data || {}
-          if (!key) return
-          setActiveKey(String(key))
-          setToc(prev => prev.some(t => t.key === key) ? prev : [...prev, { key, title }])
-          setLive(prev => ({ ...prev, [key]: { title: String(title || key), text: '' } }))
-        } else if (payload.type === 'section_delta') {
-          const { key, delta } = payload.data || {}
-          if (!key || !delta) return
-          setLive(prev => ({ ...prev, [key]: { title: prev[key]?.title || key, text: (prev[key]?.text || '') + String(delta) } }))
-        } else if (payload.type === 'section_complete') {
-          // server persists; keep buffer visible
-        } else if (payload.type === 'done') {
-          setActive(false)
-          es.close()
-          try { router.refresh() } catch {}
-          if (!closed) { closed = true; onClose() }
-        } else if (payload.type === 'error') {
-          setError(String(payload.data?.message || 'Error'))
-        }
-      } catch {}
+    let attempt = 0
+    let es: EventSource | null = null
+    const subscribe = () => {
+      if (closed) return
+      attempt += 1
+      es = new EventSource(`/api/autopilot/stream?projectId=${projectId}`)
+      es.onmessage = (ev) => {
+        try {
+          const payload = JSON.parse(ev.data)
+          if (payload.type === 'status') {
+            const label = String(payload.data?.label || '')
+            if (label) setDoneSteps(prev => Array.from(new Set([...prev, label])))
+          } else if (payload.type === 'files') {
+            const names: string[] = Array.isArray(payload.data?.names) ? payload.data.names : []
+            setFiles(names)
+          } else if (payload.type === 'section_start') {
+            const { key, title } = payload.data || {}
+            if (!key) return
+            setActiveKey(String(key))
+            setToc(prev => prev.some(t => t.key === key) ? prev : [...prev, { key, title }])
+            setLive(prev => ({ ...prev, [key]: { title: String(title || key), text: '' } }))
+          } else if (payload.type === 'section_delta') {
+            const { key, delta } = payload.data || {}
+            if (!key || !delta) return
+            setLive(prev => ({ ...prev, [key]: { title: prev[key]?.title || key, text: (prev[key]?.text || '') + String(delta) } }))
+          } else if (payload.type === 'section_complete') {
+            // server persists; keep buffer visible
+          } else if (payload.type === 'done') {
+            setActive(false)
+            es?.close()
+            try { router.refresh() } catch {}
+            if (!closed) { closed = true; onClose() }
+          } else if (payload.type === 'error') {
+            setError(String(payload.data?.message || 'Error'))
+          }
+        } catch {}
+      }
+      es.onerror = () => {
+        setError('Connection lost')
+        try { es?.close() } catch {}
+        if (!closed) setTimeout(subscribe, Math.min(5000, 500 * attempt))
+      }
     }
-    es.onerror = () => {
-      setError('Connection lost')
-    }
-    return () => { closed = true; es.close() }
+    subscribe()
+    return () => { closed = true; try { es?.close() } catch {} }
   }, [projectId, onClose])
 
   if (!active) return null
