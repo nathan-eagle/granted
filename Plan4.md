@@ -40,7 +40,7 @@ Progress checklist
 - [x] Citations superscripts in default preview per section
 - [x] Citations UI hovercards on superscripts; grouped Citations panel by section
   - [x] Baseline hovercards on superscripts in section preview
-  - [ ] Dedicated Citations panel styling (group by section; quick jump)
+- [x] Dedicated Citations panel styling (group by section; quick jump)
 - [x] Documents panel: remove/change kind/rename
 
 ### P0.1 FTUE Stepper + **Streaming** MagicOverlay (end‑to‑end wire‑up)
