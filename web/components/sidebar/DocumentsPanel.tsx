@@ -47,17 +47,7 @@ export default function DocumentsPanel({ projectId, uploads }: { projectId: stri
               <div style={{fontWeight:600, color:'#374151'}}>{k} ({arr.length})</div>
               <ul style={{margin:0, paddingLeft:16}}>
                 {arr.map(u => (
-                  <li key={u.id} title={u.filename} style={{display:'flex', alignItems:'center', gap:6}}>
-                    <span style={{flex:1, overflow:'hidden', textOverflow:'ellipsis'}}>{u.filename}</span>
-                    <button onClick={async ()=>{ const name = prompt('Rename file', u.filename); if (name && name !== u.filename){ await fetch('/api/autopilot/update-upload', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ uploadId: u.id, filename: name }) }); try{ (window as any).location?.reload() }catch{} } }}>Rename</button>
-                    <select defaultValue={u.kind} onChange={async (e)=>{
-                      const kind = e.target.value
-                      await fetch('/api/autopilot/update-upload', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ uploadId: u.id, kind }) })
-                    }}>
-                      {['rfp','prior_proposal','cv','boilerplate','budget','facilities','other'].map(v => (<option key={v} value={v}>{v}</option>))}
-                    </select>
-                    <button onClick={async ()=>{ await fetch('/api/autopilot/delete-upload', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ uploadId: u.id }) }); try{ (window as any).location?.reload() }catch{} }}>Remove</button>
-                  </li>
+                  <RowUpload key={u.id} u={u} />
                 ))}
               </ul>
             </div>
@@ -82,5 +72,39 @@ export default function DocumentsPanel({ projectId, uploads }: { projectId: stri
         <button onClick={async ()=>{ setBusy(true); setMessage('Mining facts…'); try{ await fetch('/api/autopilot/mine-facts', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ projectId }) }); setMessage('Facts updated'); setTimeout(()=> setMessage(''), 1200) } finally { setBusy(false) } }}>Re‑mine facts</button>
       </div>
     </div>
+  )
+}
+
+function RowUpload({ u }: { u: Upload }){
+  const [editing, setEditing] = useState(false)
+  const [name, setName] = useState(u.filename)
+  const [busy, setBusy] = useState(false)
+  async function saveName(){
+    if (name && name !== u.filename){
+      setBusy(true)
+      await fetch('/api/autopilot/update-upload', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ uploadId: u.id, filename: name }) })
+      setBusy(false)
+      try{ (window as any).location?.reload() }catch{}
+    }
+    setEditing(false)
+  }
+  return (
+    <li title={u.filename} style={{display:'flex', alignItems:'center', gap:6}}>
+      <span style={{flex:1, overflow:'hidden', textOverflow:'ellipsis'}}>
+        {editing ? (
+          <input value={name} onChange={e=> setName(e.target.value)} onBlur={saveName} onKeyDown={(e)=>{ if(e.key==='Enter') saveName() }} style={{width:'100%'}} />
+        ) : (
+          <span>{u.filename}</span>
+        )}
+      </span>
+      <button onClick={()=> setEditing(v => !v)} disabled={busy}>{editing? 'Save' : 'Rename'}</button>
+      <select defaultValue={u.kind} onChange={async (e)=>{
+        const kind = e.target.value
+        await fetch('/api/autopilot/update-upload', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ uploadId: u.id, kind }) })
+      }}>
+        {['rfp','prior_proposal','cv','boilerplate','budget','facilities','other'].map(v => (<option key={v} value={v}>{v}</option>))}
+      </select>
+      <button onClick={async ()=>{ await fetch('/api/autopilot/delete-upload', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ uploadId: u.id }) }); try{ (window as any).location?.reload() }catch{} }}>Remove</button>
+    </li>
   )
 }
