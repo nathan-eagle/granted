@@ -86,6 +86,13 @@ export default async function DraftPage({ params, searchParams }: { params: { id
       </aside>
       <section>
         <h1>{project.name}</h1>
+        {/* Hovercard styles for citations */}
+        <style dangerouslySetInnerHTML={{__html: `
+          .cite{ position:relative; cursor:help; }
+          .cite sup{ color:#374151; }
+          .cite .tip{ display:none; position:absolute; left:0; top:1.4em; z-index:10; background:#111318; color:#E5E7EB; padding:8px 10px; border:1px solid #1f2430; border-radius:8px; width:260px; box-shadow:0 8px 16px rgba(0,0,0,0.35); }
+          .cite:hover .tip{ display:block; }
+        `}} />
         {(project.meta as any)?.progress?.length ? (
           <details style={{margin:'8px 0 12px'}} open>
             <summary>Last run progress</summary>
@@ -239,7 +246,8 @@ function renderCitedHtml(md: string, facts: any[], uploads: { id:string; filenam
     const f:any = byId.get(id)
     const fn = f?.evidence?.uploadId ? (uploads.find(u => u.id === f.evidence.uploadId)?.filename || '') : ''
     const tip = (fn ? `${fn}: ` : '') + (f?.evidence?.quote || f?.text || '')
-    return `<sup title="${escapeHtml(tip)}">[${n}]</sup>`
+    const safeTip = escapeHtml(tip)
+    return `<span class="cite"><sup>[${n}]</sup><span class="tip">${safeTip}</span></span>`
   }
   const body = escapeHtml(md).replace(/\{\{fact:([^}]+)\}\}/g, (_m, id) => citeId(String(id)))
   return body

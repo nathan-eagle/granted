@@ -39,6 +39,8 @@ Progress checklist
 - [x] DOCX export adds References section from citations
 - [x] Citations superscripts in default preview per section
 - [ ] Citations UI polish (hovercards + dedicated Citations panel)
+  - [x] Baseline hovercards on superscripts in section preview
+  - [ ] Dedicated Citations panel styling (group by section; quick jump)
 - [x] Documents panel: remove/change kind/rename
 
 ### P0.1 FTUE Stepper + **Streaming** MagicOverlay (end‑to‑end wire‑up)

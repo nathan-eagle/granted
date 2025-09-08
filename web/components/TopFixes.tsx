@@ -5,6 +5,7 @@ export default function TopFixes({ projectId, fixes }: { projectId: string; fixe
   async function apply(sectionKey: string, patch: string){
     const fd = new FormData(); fd.append('sectionKey', sectionKey); fd.append('patch', patch)
     await fetch(`/project/${projectId}/draft`, { method: 'POST', body: fd })
+    try { await fetch(`/api/autopilot/coverage`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ projectId }) }) } catch {}
     location.reload()
   }
   async function applyAll(){
@@ -23,7 +24,7 @@ export default function TopFixes({ projectId, fixes }: { projectId: string; fixe
       <ul style={{margin:8, paddingLeft:18}}>
         {list.map((f:any, idx:number)=> (
           <li key={idx} style={{margin:'6px 0'}}>
-            <button onClick={()=> apply(String(f.sectionKey||''), String(f.patch||''))} disabled={!f.patch}>Apply</button>
+            <button onClick={()=> apply(String(f.sectionKey||''), String(f.patch||''))} disabled={!f.patch}>Add to my grant</button>
             {' '}<a href={`#sec-${String(f.sectionKey||'')}`} style={{textDecoration:'none'}} title="Open section">Open</a>
             {' '}<strong>{String(f.sectionKey||'')}</strong>: {String(f.label||'')}
           </li>
