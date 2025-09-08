@@ -23,6 +23,16 @@ async function postJSON(path: string, body: any, timeoutMs = 30000) {
   } finally { clearTimeout(t) }
 }
 
+async function mark(projectId: string, entry: any) {
+  try {
+    const p = await prisma.project.findUnique({ where: { id: projectId } })
+    const meta: any = p?.meta || {}
+    const progress: any[] = Array.isArray(meta.progress) ? meta.progress : []
+    progress.push({ ...entry, t: new Date().toISOString() })
+    await prisma.project.update({ where: { id: projectId }, data: { meta: { ...meta, progress } } })
+  } catch {}
+}
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const projectId = searchParams.get('projectId')
@@ -157,15 +167,6 @@ export async function GET(req: NextRequest) {
   })
 
   return new Response(stream, {
-async function mark(projectId: string, entry: any) {
-  try {
-    const p = await prisma.project.findUnique({ where: { id: projectId } })
-    const meta: any = p?.meta || {}
-    const progress: any[] = Array.isArray(meta.progress) ? meta.progress : []
-    progress.push({ ...entry, t: new Date().toISOString() })
-    await prisma.project.update({ where: { id: projectId }, data: { meta: { ...meta, progress } } })
-  } catch {}
-}
     headers: {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache, no-transform',
