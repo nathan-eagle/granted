@@ -28,6 +28,15 @@
 
 # P0 — Biggest Wins (ship this week)
 
+Progress checklist
+- [x] P0.1 Streaming Overlay + Live Draft Pane (end‑to‑end)
+- [x] P0.2 Uploads accept .pdf/.docx/.txt/.md + auto‑classification; basic Documents panel; overlay lists parsed filenames
+- [x] Coverage bars + word counts per section
+- [x] Progress log panel (last run)
+- [ ] SSE reconnection with resume
+- [ ] Assistant right panel + Advanced drawer polish
+- [ ] Citations UI ([n] superscripts + panel; export later)
+
 ### P0.1 FTUE Stepper + **Streaming** MagicOverlay (end‑to‑end wire‑up)
 **Files:** `web/app/new/page.tsx`, `web/components/MagicOverlay.tsx`, `web/app/api/autopilot/stream/route.ts`, `web/lib/pack/loader.ts`  
 **What & Why:** Replace `/new` with a **3‑step wizard** and run **Autopilot streaming** with a **Magic Overlay** (timeline + Live Draft Pane). Users watch the draft materialize (Grantable vibe) while we do more (coverage, gaps, tighten, review) in the background.

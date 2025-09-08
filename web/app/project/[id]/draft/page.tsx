@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import FactsList from '@/components/FactsList'
+import DocumentsPanel from '@/components/sidebar/DocumentsPanel'
 import TopFixes from '@/components/TopFixes'
 import RunAutopilotClient from '@/components/RunAutopilotClient'
 
@@ -27,18 +28,8 @@ export default async function DraftPage({ params, searchParams }: { params: { id
             <li key={s.id}>{s.title}</li>
           ))}
         </ul>
-        {/* Uploaded documents */}
         <div style={{marginTop:12}}>
-          <div style={{fontWeight:600}}>Documents</div>
-          {project.uploads.length ? (
-            <ul>
-              {project.uploads.map(u => (
-                <li key={u.id} title={u.filename}>{u.filename}</li>
-              ))}
-            </ul>
-          ) : (
-            <div style={{color:'#6b7280'}}>No documents uploaded</div>
-          )}
+          <DocumentsPanel projectId={project.id} uploads={project.uploads.map(u => ({ id: u.id, filename: u.filename, kind: u.kind }))} />
         </div>
         <div style={{marginTop:12}}>
           <form action={recomputeCoverage.bind(null, project.id)}>
@@ -49,14 +40,7 @@ export default async function DraftPage({ params, searchParams }: { params: { id
           </div>
         </div>
         <div style={{marginTop:16}}>
-          <div style={{fontWeight:600, marginBottom:4}}>Upload (.pdf/.docx/.txt/.md)</div>
-          <form action="/api/autopilot/upload" method="post" encType="multipart/form-data">
-            <input type="hidden" name="projectId" value={project.id} />
-            <input type="text" name="kind" placeholder="kind (e.g., boilerplate)" />
-            <input type="file" name="file" accept=".pdf,.docx,.txt,.md" />
-            <button type="submit" style={{marginTop:6}}>Upload</button>
-          </form>
-          <form action={mineFacts.bind(null, project.id)} style={{marginTop:8}}>
+          <form action={mineFacts.bind(null, project.id)}>
             <button type="submit">Extract Facts</button>
           </form>
         </div>
@@ -165,10 +149,13 @@ export default async function DraftPage({ params, searchParams }: { params: { id
             <div style={{marginTop:4, fontSize:12, color:'#6b7280'}}>
               Facts used in this section: {countFactMarkers(s.contentMd || '')}
             </div>
-            <div style={{marginTop:8,display:'flex',gap:8}}>
-              <form action={fixNext.bind(null, s.id)}><button type="submit">Fix next</button></form>
-              <form action={tighten.bind(null, s.id)}><button type="submit">Tighten to limit</button></form>
-            </div>
+            <details style={{marginTop:8}}>
+              <summary>Advanced tools</summary>
+              <div style={{marginTop:6,display:'flex',gap:8}}>
+                <form action={fixNext.bind(null, s.id)}><button type="submit">Fix next</button></form>
+                <form action={tighten.bind(null, s.id)}><button type="submit">Tighten to limit</button></form>
+              </div>
+            </details>
             {/* Append each fact to this section, if available */}
             {(project.factsJson as any[])?.length ? (
               <details style={{marginTop:8}}>
@@ -190,23 +177,25 @@ export default async function DraftPage({ params, searchParams }: { params: { id
 }
 
 function renderSources(facts: any[], uploads: { id: string; filename: string }[], md: string){
-  const m = Array.from(md.matchAll(/\{\{fact:([^}]+)\}\}/g)).map(x => String(x[1]))
-  if (!m.length) return null
+  const markers = Array.from(md.matchAll(/\{\{fact:([^}]+)\}\}/g)).map(x => String(x[1]))
+  if (!markers.length) return null
   const byId = new Map(facts.map(f => [String(f.id || ''), f]))
-  const unique = Array.from(new Set(m))
-  const items = unique.map(id => {
+  const unique = Array.from(new Set(markers))
+  const refs = unique.map((id, idx) => {
     const f = byId.get(id)
-    const fn = f?.evidence?.uploadId ? (uploads.find(u => u.id === f.evidence.uploadId)?.filename || '') : ''
-    return { id, text: f?.text || '', filename: fn }
-  }).filter(it => it.text)
-  if (!items.length) return null
+    if (!f) return null
+    const up = f.evidence?.uploadId ? uploads.find(u => u.id === f.evidence.uploadId) : undefined
+    return { n: idx+1, id, text: f.text || '', filename: up?.filename || '', quote: f.evidence?.quote || '' }
+  }).filter(Boolean) as { n:number; id:string; text:string; filename:string; quote:string }[]
+  if (!refs.length) return null
   return (
-    <div style={{marginTop:6, fontSize:12, color:'#9CA3AF'}}>
-      Sources used: {items.map((it, i) => (
-        <span key={it.id} style={{marginRight:8}}>
-          ({it.filename ? `Source: ${it.filename}` : `Fact ${it.id}`})
-        </span>
-      ))}
+    <div style={{marginTop:6, fontSize:12, color:'#6b7280'}}>
+      <div style={{fontWeight:600, color:'#374151'}}>Citations</div>
+      <ol style={{marginTop:4, paddingLeft:16}}>
+        {refs.map(r => (
+          <li key={r.id}>[{r.n}] {r.text} {r.filename ? `(Source: ${r.filename})` : ''}</li>
+        ))}
+      </ol>
     </div>
   )
 }
