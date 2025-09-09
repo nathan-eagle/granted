@@ -321,12 +321,14 @@ async function applyFix(projectId: string, formData: FormData) {
   const section = await prisma.section.findFirst({ where: { projectId, key: sectionKey } })
   if (!section) return
   await prisma.section.update({ where: { id: section.id }, data: { contentMd: (section.contentMd || '') + '\n\n' + patch } })
+  await fetch(`${process.env.APP_URL || 'http://localhost:3000'}/api/autopilot/coverage`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ projectId }) })
 }
 
 async function saveSection(sectionId: string, formData: FormData) {
   'use server'
   const content = String(formData.get('content') || '')
-  await prisma.section.update({ where: { id: sectionId }, data: { contentMd: content } })
+  const s = await prisma.section.update({ where: { id: sectionId }, data: { contentMd: content } })
+  await fetch(`${process.env.APP_URL || 'http://localhost:3000'}/api/autopilot/coverage`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ projectId: s.projectId }) })
 }
 
 async function addBudgetItem(projectId: string, formData: FormData) {
