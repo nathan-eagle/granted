@@ -4,7 +4,7 @@ import { useToast } from '@/components/ui/Toast'
 
 type Upload = { id: string; filename: string; kind: string }
 
-export default function DocumentsPanel({ projectId, uploads }: { projectId: string; uploads: Upload[] }){
+export default function DocumentsPanel({ projectId, uploads, sections }: { projectId: string; uploads: Upload[]; sections?: { id:string; key:string; title:string }[] }){
   const [dragOver, setDragOver] = useState(false)
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
