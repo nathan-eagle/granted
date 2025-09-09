@@ -8,6 +8,7 @@ import DocumentsPanel from '@/components/sidebar/DocumentsPanel'
 import OutlinePanel from '@/components/sidebar/OutlinePanel'
 import TopFixes from '@/components/TopFixes'
 import RunAutopilotClient from '@/components/RunAutopilotClient'
+import ActionButtons from '@/components/ActionButtons'
 import RightAssistantPanel from '@/components/RightAssistantPanel'
 
 // Always render server-fresh to show newly generated sections without manual refresh
@@ -177,10 +178,8 @@ export default async function DraftPage({ params, searchParams }: { params: { id
             </div>
             <details style={{marginTop:8}}>
               <summary>Advanced tools</summary>
-              <div style={{marginTop:6,display:'flex',gap:8}}>
-                <form action={fixNext.bind(null, s.id)}><button type="submit">Fix next</button></form>
-                <form action={tighten.bind(null, s.id)}><button type="submit">Tighten to limit</button></form>
-                <form action={regenerateSection.bind(null, s.id)}><button type="submit">Regenerate section</button></form>
+              <div style={{marginTop:6}}>
+                <ActionButtons sectionId={s.id} projectId={project.id} />
               </div>
             </details>
             {/* Append each fact to this section, if available */}
