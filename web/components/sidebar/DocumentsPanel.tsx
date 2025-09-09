@@ -1,5 +1,6 @@
 'use client'
 import { useCallback, useMemo, useRef, useState } from 'react'
+import { useToast } from '@/components/ui/Toast'
 
 type Upload = { id: string; filename: string; kind: string }
 
@@ -28,8 +29,10 @@ export default function DocumentsPanel({ projectId, uploads }: { projectId: stri
       fd.append('projectId', projectId)
       Array.from(files as unknown as File[]).forEach((f: File) => fd.append('file', f))
       const res = await fetch('/api/autopilot/upload', { method:'POST', body: fd })
-      if (!res.ok) throw new Error('Upload failed')
-      setMessage('Uploaded')
+      const data = await res.json().catch(()=> ({}))
+      if (!res.ok) throw new Error(data?.error || 'Upload failed')
+      const summary = Array.isArray(data?.results) ? data.results.map((r:any)=> `${r.filename} → ${r.kind}`).slice(0,3).join(', ') : ''
+      setMessage(summary ? `Uploaded: ${summary}` : 'Uploaded')
       setTimeout(()=> setMessage(''), 1200)
       // best-effort refresh
       try { (window as any).location?.reload() } catch {}

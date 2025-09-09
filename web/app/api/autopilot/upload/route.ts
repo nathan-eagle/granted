@@ -13,6 +13,7 @@ export async function POST(req: NextRequest) {
   const file = (files[0] as any) as File | null
   if (!projectId || (!file && files.length === 0)) return NextResponse.json({ error: 'Missing projectId or file' }, { status: 400 })
 
+  const results: any[] = []
   async function parseOne(f: File) {
     const buf = Buffer.from(await f.arrayBuffer())
     const name = f.name || 'upload.txt'
@@ -50,6 +51,7 @@ export async function POST(req: NextRequest) {
 
     const kind = classify(explicitKind, name, text.slice(0, 12000))
     await prisma.upload.create({ data: { projectId, kind, filename: name, text } })
+    results.push({ filename: name, kind, parsedChars: text.length })
   }
 
   if (files.length > 0) {
@@ -64,5 +66,5 @@ export async function POST(req: NextRequest) {
     await parseOne(file)
   }
 
-  return NextResponse.json({ ok: true })
+  return NextResponse.json({ ok: true, results })
 }

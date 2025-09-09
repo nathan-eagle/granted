@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useToast } from '@/components/ui/Toast'
 import PrimaryButton from './ui/PrimaryButton'
 
 const steps = [
@@ -22,6 +23,7 @@ export default function MagicOverlay({ projectId, onClose, mode }: { projectId: 
   const [toc, setToc] = useState<{ key: string; title: string }[]>([])
   const [activeKey, setActiveKey] = useState<string | null>(null)
   const router = useRouter()
+  const { show } = useToast()
 
   useEffect(() => {
     if (!projectId) return
@@ -59,8 +61,11 @@ export default function MagicOverlay({ projectId, onClose, mode }: { projectId: 
             es?.close()
             try { router.refresh() } catch {}
             if (!closed) { closed = true; onClose() }
+            try { show('Autopilot complete') } catch {}
           } else if (payload.type === 'error') {
-            setError(String(payload.data?.message || 'Error'))
+            const msg = String(payload.data?.message || 'Error')
+            setError(msg)
+            try { show('Error: ' + msg) } catch {}
           }
         } catch {}
       }

@@ -347,3 +347,10 @@ npm install framer-motion
 - **Run completion rate** ≥ 95% without manual retries.  
 - **Fix adoption**: ≥ 60% of users click “Apply a fix” once per project.  
 - **Export success** ≥ 99%.
+Progress checklist
+- [x] P0.1 Buttons wired + feedback (Run disabled + toasts; Export DOCX button)
+- [x] P0.2 Uploads Node runtime + PDF/DOCX/TXT/MD + size cap
+- [x] P0.3 Outline clickable + smooth scroll + active + keyboard nav
+- [x] P0.4 Smarter modes (rerun_smart, first_run) + per‑section regenerate
+- [x] P0.5 Assistant chat + Conversational FTUE (Quick Intake)
+- [x] P0.6 DOCX export (with References)
