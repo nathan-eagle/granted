@@ -240,7 +240,10 @@ function renderCitedHtml(md: string, facts: any[], uploads: { id:string; filenam
     const n = idsEncountered.indexOf(id) + 1
     const f:any = byId.get(id)
     const fn = f?.evidence?.uploadId ? (uploads.find(u => u.id === f.evidence.uploadId)?.filename || '') : ''
-    const tip = (fn ? `${fn}: ` : '') + (f?.evidence?.quote || f?.text || '')
+    const pg = f?.evidence?.page ? `p.${f.evidence.page}` : ''
+    const strength = typeof f?.strength === 'number' ? (f.strength >= 0.75 ? 'strong' : f.strength >= 0.6 ? 'med' : 'weak') : ''
+    const extra = [pg, strength].filter(Boolean).join(' • ')
+    const tip = (fn ? `${fn}` : '') + (extra ? ` — ${extra}` : '') + `\n` + (f?.evidence?.quote || f?.text || '')
     const safeTip = escapeHtml(tip)
     return `<span class="cite"><sup>[${n}]</sup><span class="tip">${safeTip}</span></span>`
   }

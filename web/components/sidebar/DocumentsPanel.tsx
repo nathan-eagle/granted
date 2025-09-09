@@ -87,10 +87,24 @@ function RowUpload({ u, projectId, sections }: { u: Upload; projectId?: string; 
   const [snippet, setSnippet] = useState('')
   const [preview, setPreview] = useState('')
   const previewRef = useRef<HTMLDivElement>(null)
+  const [page, setPage] = useState(1)
+  const [pageCount, setPageCount] = useState(1)
   async function loadPreview(){
-    const r = await fetch(`/api/uploads/get?id=${u.id}&limit=8000`)
+    const r = await fetch(`/api/uploads/get?id=${u.id}&mode=pages&limit=4000`)
     const j = await r.json().catch(()=> ({}))
-    if (j?.text) setPreview(j.text)
+    if (Array.isArray(j?.pages)) {
+      setPageCount(j.pages.length || 1)
+      setPage(1)
+      setPreview(j.pages[0] || '')
+    } else if (j?.text) { setPreview(j.text) }
+  }
+  async function go(delta:number){
+    const next = Math.min(pageCount, Math.max(1, page + delta))
+    if (next === page) return
+    setPage(next)
+    const r = await fetch(`/api/uploads/get?id=${u.id}&mode=pages&limit=4000`)
+    const j = await r.json().catch(()=> ({}))
+    if (Array.isArray(j?.pages)) setPreview(j.pages[next-1] || '')
   }
   async function insert(){
     if (!projectId || !target || !snippet) return
@@ -136,7 +150,14 @@ function RowUpload({ u, projectId, sections }: { u: Upload; projectId?: string; 
               <div style={{fontWeight:700}}>{u.filename}</div>
               <button onClick={()=> setOpen(false)}>Close</button>
             </div>
-            <div ref={previewRef} style={{marginTop:8, maxHeight:260, overflow:'auto', background:'#0b0d12', padding:8, borderRadius:8, border:'1px solid #1f2430', whiteSpace:'pre-wrap'}}>
+            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:8}}>
+              <div>Page {page}/{pageCount}</div>
+              <div style={{display:'flex', gap:6}}>
+                <button onClick={()=> go(-1)} disabled={page<=1}>Prev</button>
+                <button onClick={()=> go(1)} disabled={page>=pageCount}>Next</button>
+              </div>
+            </div>
+            <div ref={previewRef} style={{marginTop:6, maxHeight:260, overflow:'auto', background:'#0b0d12', padding:8, borderRadius:8, border:'1px solid #1f2430', whiteSpace:'pre-wrap'}}>
               {preview ? preview : <em>Loading preview…</em>}
             </div>
             <div style={{marginTop:8}}>

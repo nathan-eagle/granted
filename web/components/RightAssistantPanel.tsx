@@ -45,8 +45,10 @@ export default function RightAssistantPanel({ projectId, fixes, citations, chat,
                 <div style={{fontWeight:600, color:'#D1D5DB'}}><a href={`#sec-${key}`} style={{textDecoration:'none'}}>{g.title}</a></div>
                 <ul style={{paddingLeft:16, marginTop:6}}>
                   {g.items.map((c, i) => (
-                    <li key={i} style={{margin:'4px 0'}}>
-                      <a href={`#sec-${c.sectionKey}`} title="Jump to section" style={{textDecoration:'none'}}>[{c.n}]</a> {c.text} {c.filename ? `(Source: ${c.filename})` : ''}
+                    <li key={i} style={{margin:'6px 0'}}>
+                      <a href={`#sec-${c.sectionKey}`} title="Jump to section" style={{textDecoration:'none'}}>[{c.n}]</a>
+                      {' '}{c.text}
+                      {' '}{c.filename ? `(Source: ${c.filename})` : ''}
                     </li>
                   ))}
                 </ul>
