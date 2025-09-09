@@ -11,6 +11,8 @@ import RunAutopilotClient from '@/components/RunAutopilotClient'
 import ActionButtons from '@/components/ActionButtons'
 import RightAssistantPanel from '@/components/RightAssistantPanel'
 import ExportDocxButton from '@/components/ExportDocxButton'
+import Omnibox from '@/components/Omnibox'
+import SimpleEditorToolbar from '@/components/SimpleEditorToolbar'
 
 // Always render server-fresh to show newly generated sections without manual refresh
 export const dynamic = 'force-dynamic'
@@ -40,6 +42,8 @@ export default async function DraftPage({ params, searchParams }: { params: { id
 
   return (
     <div style={{display:'grid',gridTemplateColumns:'260px 1fr 300px',gap:24}}>
+      {/* Global Omnibox (Cmd/Ctrl-K) */}
+      <Omnibox projectId={project.id} sections={project.sections.map(s => ({ id: s.id, key: s.key, title: s.title, contentMd: s.contentMd })) as any} facts={((project.factsJson as any[])||[]).map((f:any)=>({ id:String(f.id||''), text:String(f.text||'') })) as any} />
       <aside style={{borderRight:'1px solid #eee',paddingRight:16}}>
         <div style={{fontWeight:600}}>Outline</div>
         <OutlinePanel sections={project.sections.map(s => ({ key: s.key, title: s.title }))} />
@@ -162,6 +166,7 @@ export default async function DraftPage({ params, searchParams }: { params: { id
             <details style={{marginTop:8}}>
               <summary>Edit content</summary>
               <form action={saveSection.bind(null, s.id)} style={{marginTop:6}}>
+                <SimpleEditorToolbar targetId={`edit-${s.key}`} />
                 <textarea id={`edit-${s.key}`} name="content" defaultValue={s.contentMd || ''} rows={12} style={{width:'100%'}} />
                 <div style={{marginTop:6}}>
                   <button type="submit">Save</button>
