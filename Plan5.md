@@ -362,3 +362,7 @@ Progress checklist
 - [x] P0.4 Smarter modes (rerun_smart, first_run) + per‑section regenerate
 - [x] P0.5 Assistant chat + Conversational FTUE (Quick Intake)
 - [x] P0.6 DOCX export (with References)
+ - [x] P1.3 Documents sidebar: insert with citation, rename/change kind/remove, preview pages, copy selection
+ - [x] P2.1 Omnibox (Phase 1): search sections + facts; Copy/Insert
+ - [x] P2.2 Editor toolbar (basic B/I/link/list)
+ - [x] P2.3 Home dashboard + Tasks drawer (lean)
