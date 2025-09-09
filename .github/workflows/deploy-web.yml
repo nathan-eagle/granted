@@ -1,0 +1,63 @@
+name: Deploy web to Vercel
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Vercel CLI
+        run: npm i -g vercel@latest
+
+      - name: Extract Vercel config and token from repo files
+        id: vars
+        run: |
+          echo "VERCEL_PROJECT_ID=$(jq -r .projectId web/.vercel/project.json)" >> $GITHUB_ENV
+          echo "VERCEL_ORG_ID=$(jq -r .orgId web/.vercel/project.json)" >> $GITHUB_ENV
+          TOKEN=$(sed -n 's/^VERCEL_TOKEN="\(.*\)"/\1/p' web/.env.local)
+          echo "Got token length: ${#TOKEN}"
+          echo "VERCEL_TOKEN=$TOKEN" >> $GITHUB_ENV
+
+      - name: Deploy to Vercel (production)
+        working-directory: web
+        env:
+          VERCEL_TOKEN: ${{ env.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ env.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ env.VERCEL_PROJECT_ID }}
+        run: |
+          vercel pull --yes --environment=production --token "$VERCEL_TOKEN"
+          vercel deploy --prod --yes --token "$VERCEL_TOKEN"
+
+      - name: Wait and check READY status (up to 60s)
+        env:
+          VERCEL_TOKEN: ${{ env.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ env.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ env.VERCEL_PROJECT_ID }}
+        run: |
+          set -e
+          BASE=https://api.vercel.com
+          for i in $(seq 1 30); do
+            sleep 2
+            LIST=$(curl -fsS "$BASE/v6/deployments?projectId=$VERCEL_PROJECT_ID&teamId=$VERCEL_ORG_ID&limit=1" -H "Authorization: Bearer $VERCEL_TOKEN")
+            STATE=$(echo "$LIST" | jq -r '.deployments[0].readyState // .deployments[0].state')
+            URL=$(echo "$LIST" | jq -r '.deployments[0].url')
+            echo "State=$STATE url=$URL"
+            if [ "$STATE" = "READY" ]; then
+              echo "DEPLOY_URL=$URL" >> $GITHUB_ENV
+              exit 0
+            fi
+          done
+          echo "Timed out waiting for READY" >&2
+          exit 1
+
