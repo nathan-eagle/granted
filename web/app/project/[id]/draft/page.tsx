@@ -44,7 +44,7 @@ export default async function DraftPage({ params, searchParams }: { params: { id
         <div style={{fontWeight:600}}>Outline</div>
         <OutlinePanel sections={project.sections.map(s => ({ key: s.key, title: s.title }))} />
         <div style={{marginTop:12}}>
-          <DocumentsPanel projectId={project.id} uploads={project.uploads.map(u => ({ id: u.id, filename: u.filename, kind: u.kind }))} />
+          <DocumentsPanel projectId={project.id} uploads={project.uploads.map(u => ({ id: u.id, filename: u.filename, kind: u.kind }))} sections={project.sections.map(s => ({ id: s.id, key: s.key, title: s.title })) as any} />
         </div>
         <div style={{marginTop:12}}>
           <form action={recomputeCoverage.bind(null, project.id)}>

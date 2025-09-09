@@ -41,6 +41,7 @@ export async function POST(req: NextRequest) {
     filename: u.filename,
     text: (u.text || ''),
     lower: (u.text || '').toLowerCase(),
+    pages: (u.text || '').split('\f'),
   }))
   for (const f of normFacts) {
     const needle = String(f.text || '').slice(0, 200).toLowerCase()
@@ -50,11 +51,27 @@ export async function POST(req: NextRequest) {
       if (idx >= 0) {
         const start = Math.max(0, idx - 80)
         const end = Math.min(up.text.length, idx + needle.length + 80)
-        linked = { uploadId: up.id, quote: up.text.slice(start, end) }
+        // infer page number by cumulative lengths of pages if present
+        let page = undefined as number | undefined
+        if (up.pages.length > 1) {
+          let acc = 0
+          for (let p = 0; p < up.pages.length; p++) {
+            const len = up.pages[p].length + 1 // account for separator approx
+            if (idx < acc + len) { page = p + 1; break }
+            acc += len
+          }
+        }
+        linked = { uploadId: up.id, quote: up.text.slice(start, end) } as any
+        if (page) (linked as any).page = page
         break
       }
     }
     if (linked) f.evidence = linked
+    // simple strength heuristic
+    const t = String(f.text || '')
+    const hasNum = /\d/.test(t)
+    const strength = hasNum ? 0.8 : 0.5
+    f.strength = strength
   }
   await prisma.project.update({ where: { id: projectId }, data: { factsJson: normFacts } })
   return NextResponse.json({ ok: true, count: normFacts.length })
