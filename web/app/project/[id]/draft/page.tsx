@@ -10,6 +10,7 @@ import TopFixes from '@/components/TopFixes'
 import RunAutopilotClient from '@/components/RunAutopilotClient'
 import ActionButtons from '@/components/ActionButtons'
 import RightAssistantPanel from '@/components/RightAssistantPanel'
+import ExportDocxButton from '@/components/ExportDocxButton'
 
 // Always render server-fresh to show newly generated sections without manual refresh
 export const dynamic = 'force-dynamic'
@@ -106,9 +107,7 @@ export default async function DraftPage({ params, searchParams }: { params: { id
         <div style={{display:'flex',gap:8,margin:'8px 0 16px'}}>
           {/* Full regenerate triggers overlay in first_run mode */}
           <a href={`?run=1&mode=first_run`}><button type="button">Full Regenerate</button></a>
-          <form action={exportDocx.bind(null, project.id)}>
-            <button type="submit">Export DOCX</button>
-          </form>
+          <ExportDocxButton projectId={project.id} />
           {/* Magic overlay trigger */}
           {/* Client trigger */}
           <RunAutopilotClient projectId={project.id} auto={searchParams?.run === '1'} mode={String(searchParams?.mode || '')} />
