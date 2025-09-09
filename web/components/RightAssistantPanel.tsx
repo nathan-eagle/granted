@@ -2,7 +2,7 @@ import TopFixes from '@/components/TopFixes'
 import AssistantChat from '@/components/assistant/AssistantChat'
 import CharterIntake from '@/components/assistant/CharterIntake'
 
-type Cite = { sectionKey: string; sectionTitle: string; n: number; text: string; filename?: string }
+type Cite = { sectionKey: string; sectionTitle: string; n: number; text: string; filename?: string; page?: number; strength?: number }
 
 export default function RightAssistantPanel({ projectId, fixes, citations, chat, charter }: { projectId: string; fixes: any[]; citations?: Cite[]; chat?: { role: string; content: string }[]; charter?: any }){
   const cites = citations || []
@@ -45,10 +45,10 @@ export default function RightAssistantPanel({ projectId, fixes, citations, chat,
                 <div style={{fontWeight:600, color:'#D1D5DB'}}><a href={`#sec-${key}`} style={{textDecoration:'none'}}>{g.title}</a></div>
                 <ul style={{paddingLeft:16, marginTop:6}}>
                   {g.items.map((c, i) => (
-                    <li key={i} style={{margin:'6px 0'}}>
+                    <li key={i} style={{margin:'6px 0', display:'flex', gap:6}}>
                       <a href={`#sec-${c.sectionKey}`} title="Jump to section" style={{textDecoration:'none'}}>[{c.n}]</a>
-                      {' '}{c.text}
-                      {' '}{c.filename ? `(Source: ${c.filename})` : ''}
+                      <span style={{flex:1}}>{c.text} {c.filename ? `(Source: ${c.filename}${c.page?` p.${c.page}`:''})` : ''}</span>
+                      <span title={typeof c.strength==='number' ? `strength ${c.strength}` : ''} style={{width:8, height:8, borderRadius:999, background: (c.strength||0)>=0.75? '#10b981' : (c.strength||0)>=0.6? '#f59e0b' : '#ef4444'}} />
                     </li>
                   ))}
                 </ul>

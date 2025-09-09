@@ -24,7 +24,7 @@ export default async function DraftPage({ params, searchParams }: { params: { id
   const project = await prisma.project.findFirst({ where: { id: params.id, userId }, include: { sections: { orderBy: { order: 'asc' } }, uploads: true } })
   if (!project) notFound()
   // Build citations list for Assistant panel (flattened)
-  const citations: { sectionKey:string; sectionTitle:string; n:number; text:string; filename?:string }[] = []
+  const citations: { sectionKey:string; sectionTitle:string; n:number; text:string; filename?:string; page?:number; strength?:number }[] = []
   const facts: any[] = (project.factsJson as any[]) || []
   const byFact = new Map(facts.map(f => [String(f.id||''), f]))
   for (const s of project.sections) {
@@ -33,7 +33,7 @@ export default async function DraftPage({ params, searchParams }: { params: { id
       const f: any = byFact.get(id)
       if (f && f.text) {
         const fn = f?.evidence?.uploadId ? project.uploads.find(u => u.id === f.evidence.uploadId)?.filename : undefined
-        citations.push({ sectionKey: s.key, sectionTitle: s.title, n: idx+1, text: f.text, filename: fn })
+        citations.push({ sectionKey: s.key, sectionTitle: s.title, n: idx+1, text: f.text, filename: fn, page: f?.evidence?.page, strength: f?.strength })
       }
     })
   }
