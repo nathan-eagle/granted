@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import Link from 'next/link'
+import ProjectsGrid from '@/components/ProjectsGrid'
 import { redirect } from 'next/navigation'
 
 export const dynamic = 'force-dynamic'
@@ -24,14 +25,7 @@ export default async function ProjectsPage() {
         <input type="text" name="name" placeholder="New project name" required />
         <button type="submit" style={{marginLeft:8}}>Create</button>
       </form>
-      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(280px, 1fr))', gap:12}}>
-        {projects.map(p => (
-          <Link key={p.id} href={`/project/${p.id}/draft`} style={{border:'1px solid #eee', padding:12, borderRadius:8}}>
-            <div style={{fontWeight:600}}>{p.name}</div>
-            <div style={{fontSize:12, color:'#666'}}>Created: {new Date(p.createdAt).toLocaleString()}</div>
-          </Link>
-        ))}
-      </div>
+      <ProjectsGrid items={projects as any} />
     </div>
   )
 }
