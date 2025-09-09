@@ -2,13 +2,15 @@
 import { useEffect, useMemo, useState } from 'react'
 
 type Section = { id: string; key: string; title: string; contentMd?: string }
+type Upload = { id: string; filename: string }
 type Fact = { id: string; text: string }
 
-export default function Omnibox({ projectId, sections, facts }: { projectId: string; sections: Section[]; facts: Fact[] }){
+export default function Omnibox({ projectId, sections, facts, uploads }: { projectId: string; sections: Section[]; facts: Fact[]; uploads?: Upload[] }){
   const [open, setOpen] = useState(false)
   const [q, setQ] = useState('')
   const [target, setTarget] = useState(sections[0]?.id || '')
   const [busy, setBusy] = useState(false)
+  const [uploadSnips, setUploadSnips] = useState<Record<string, string>>({})
 
   useEffect(() => {
     function onKey(e: KeyboardEvent){
@@ -24,7 +26,7 @@ export default function Omnibox({ projectId, sections, facts }: { projectId: str
   const results = useMemo(() => {
     const needle = q.trim().toLowerCase()
     if (!needle) return [] as { type:'section'|'fact'; id:string; label:string; snippet:string }[]
-    const out: { type:'section'|'fact'; id:string; label:string; snippet:string }[] = []
+    const out: { type:'section'|'fact'|'upload'; id:string; label:string; snippet:string }[] = []
     for (const s of sections) {
       const text = String((s as any).contentMd || '')
       if (s.title.toLowerCase().includes(needle) || text.toLowerCase().includes(needle)) {
@@ -41,15 +43,49 @@ export default function Omnibox({ projectId, sections, facts }: { projectId: str
         out.push({ type:'fact', id: f.id, label: `Fact ${f.id}`, snippet: snip })
       }
     }
+    // uploads phase 2: include snippet from preloaded pages
+    if (uploads && Object.keys(uploadSnips).length) {
+      for (const u of uploads) {
+        const txt = (uploadSnips[u.id] || '').toLowerCase()
+        if (!txt) continue
+        const idx = txt.indexOf(needle)
+        if (idx >= 0) {
+          const raw = uploadSnips[u.id]
+          const snip = raw.slice(Math.max(0, idx-60), idx + needle.length + 60)
+          out.push({ type:'upload', id: u.id, label: u.filename, snippet: snip })
+        }
+      }
+    }
     return out.slice(0, 30)
   }, [q, sections, facts])
 
-  async function insertFact(text: string){
+  async function insertFact(text: string, uploadId?: string){
     if (!target || !text) return
     setBusy(true)
-    try{ await fetch('/api/autopilot/insert-citation', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ sectionId: target, text }) }) } finally { setBusy(false); setOpen(false) }
+    try{ await fetch('/api/autopilot/insert-citation', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ sectionId: target, text, uploadId }) }) } finally { setBusy(false); setOpen(false) }
     try { (window as any).location?.reload() } catch {}
   }
+
+  // Preload limited pages from uploads when query is active
+  useEffect(() => {
+    let canceled = false
+    async function go(){
+      const needle = q.trim()
+      if (!uploads || needle.length < 3) return
+      const top = uploads.slice(0, 5)
+      const pairs = await Promise.all(top.map(async (u) => {
+        try{
+          const r = await fetch(`/api/uploads/get?id=${u.id}&mode=pages&limit=4000`)
+          const j = await r.json().catch(()=> ({}))
+          const txt = Array.isArray(j?.pages) ? j.pages.join('\n\n') : (j?.text || '')
+          return [u.id, txt] as const
+        } catch { return [u.id, ''] as const }
+      }))
+      if (!canceled) setUploadSnips(Object.fromEntries(pairs))
+    }
+    go()
+    return () => { canceled = true }
+  }, [q, uploads])
 
   if (!open) return null
   return (
@@ -74,6 +110,8 @@ export default function Omnibox({ projectId, sections, facts }: { projectId: str
                 <button onClick={()=> navigator.clipboard?.writeText(r.snippet)} disabled={busy}>Copy</button>
                 {r.type==='fact' ? (
                   <button onClick={()=> insertFact(r.snippet)} disabled={busy || !target}>Insert with citation</button>
+                ) : r.type==='upload' ? (
+                  <button onClick={()=> insertFact(r.snippet, r.id)} disabled={busy || !target}>Insert with citation</button>
                 ) : null}
               </div>
             </div>
@@ -83,4 +121,3 @@ export default function Omnibox({ projectId, sections, facts }: { projectId: str
     </div>
   )
 }
-

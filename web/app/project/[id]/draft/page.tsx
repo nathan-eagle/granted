@@ -44,7 +44,7 @@ export default async function DraftPage({ params, searchParams }: { params: { id
   return (
     <div style={{display:'grid',gridTemplateColumns:'280px minmax(680px,1fr) 340px',gap:24, alignItems:'start'}}>
       {/* Global Omnibox (Cmd/Ctrl-K) */}
-      <Omnibox projectId={project.id} sections={project.sections.map(s => ({ id: s.id, key: s.key, title: s.title, contentMd: s.contentMd })) as any} facts={((project.factsJson as any[])||[]).map((f:any)=>({ id:String(f.id||''), text:String(f.text||'') })) as any} />
+      <Omnibox projectId={project.id} sections={project.sections.map(s => ({ id: s.id, key: s.key, title: s.title, contentMd: s.contentMd })) as any} facts={((project.factsJson as any[])||[]).map((f:any)=>({ id:String(f.id||''), text:String(f.text||'') })) as any} uploads={project.uploads.map(u => ({ id: u.id, filename: u.filename })) as any} />
       <aside style={{borderRight:'1px solid #eee',paddingRight:16}}>
         <div style={{position:'sticky', top:16}}>
         <div style={{fontWeight:600}}>Outline</div>
