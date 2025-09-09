@@ -162,7 +162,7 @@ export default async function DraftPage({ params, searchParams }: { params: { id
             <details style={{marginTop:8}}>
               <summary>Edit content</summary>
               <form action={saveSection.bind(null, s.id)} style={{marginTop:6}}>
-                <textarea name="content" defaultValue={s.contentMd || ''} rows={12} style={{width:'100%'}} />
+                <textarea id={`edit-${s.key}`} name="content" defaultValue={s.contentMd || ''} rows={12} style={{width:'100%'}} />
                 <div style={{marginTop:6}}>
                   <button type="submit">Save</button>
                 </div>
@@ -197,7 +197,7 @@ export default async function DraftPage({ params, searchParams }: { params: { id
           </div>
         ))}
       </section>
-      <RightAssistantPanel projectId={project.id} fixes={(project.meta as any)?.fixList || []} citations={citations} chat={(project.meta as any)?.chat || []} />
+      <RightAssistantPanel projectId={project.id} fixes={(project.meta as any)?.fixList || []} citations={citations} chat={(project.meta as any)?.chat || []} charter={project.charterJson || {}} />
     </div>
   )
 }

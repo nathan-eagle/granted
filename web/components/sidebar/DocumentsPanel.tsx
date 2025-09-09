@@ -44,7 +44,7 @@ export default function DocumentsPanel({ projectId, uploads }: { projectId: stri
         <div style={{fontSize:12, color:'#6b7280', marginBottom:8}}>
           {Object.entries(byKind).map(([k, arr]) => (
             <div key={k} style={{marginBottom:4}}>
-              <div style={{fontWeight:600, color:'#374151'}}>{k} ({arr.length})</div>
+              <div style={{fontWeight:600, color:'#374151'}}><span style={{display:'inline-block', padding:'2px 6px', border:'1px solid #1f2430', borderRadius:999, marginRight:6}}>{k}</span> ({arr.length})</div>
               <ul style={{margin:0, paddingLeft:16}}>
                 {arr.map(u => (
                   <RowUpload key={u.id} u={u} />
