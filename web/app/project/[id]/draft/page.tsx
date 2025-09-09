@@ -202,7 +202,7 @@ export default async function DraftPage({ params, searchParams }: { params: { id
           </div>
         ))}
       </section>
-      <RightAssistantPanel projectId={project.id} fixes={(project.meta as any)?.fixList || []} citations={citations} chat={(project.meta as any)?.chat || []} charter={project.charterJson || {}} />
+      <RightAssistantPanel projectId={project.id} fixes={(project.meta as any)?.fixList || []} citations={citations} chat={(project.meta as any)?.chat || []} charter={project.charterJson || {}} sections={project.sections.map(s => ({ id: s.id, title: s.title }))} />
     </div>
   )
 }

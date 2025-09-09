@@ -4,7 +4,7 @@ import CharterIntake from '@/components/assistant/CharterIntake'
 
 type Cite = { sectionKey: string; sectionTitle: string; n: number; text: string; filename?: string; page?: number; strength?: number }
 
-export default function RightAssistantPanel({ projectId, fixes, citations, chat, charter }: { projectId: string; fixes: any[]; citations?: Cite[]; chat?: { role: string; content: string }[]; charter?: any }){
+export default function RightAssistantPanel({ projectId, fixes, citations, chat, charter, sections }: { projectId: string; fixes: any[]; citations?: Cite[]; chat?: { role: string; content: string }[]; charter?: any, sections?: { id:string; title:string }[] }){
   const cites = citations || []
   const grouped = cites.reduce<Record<string, { title: string; items: Cite[] }>>((acc, c) => {
     const k = c.sectionKey
@@ -26,7 +26,7 @@ export default function RightAssistantPanel({ projectId, fixes, citations, chat,
         {(!charter || Object.values(charter||{}).every(v => !String(v||'').trim())) ? (
           <CharterIntake projectId={projectId} initial={charter} />
         ) : (
-          <AssistantChat projectId={projectId} initial={chat} />
+          <AssistantChat projectId={projectId} initial={chat} sections={sections} />
         )}
       </div>
       <div>
