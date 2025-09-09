@@ -13,6 +13,7 @@ import RightAssistantPanel from '@/components/RightAssistantPanel'
 import ExportDocxButton from '@/components/ExportDocxButton'
 import Omnibox from '@/components/Omnibox'
 import SimpleEditorToolbar from '@/components/SimpleEditorToolbar'
+import DraftHeaderActions from '@/components/DraftHeaderActions'
 
 // Always render server-fresh to show newly generated sections without manual refresh
 export const dynamic = 'force-dynamic'
@@ -110,13 +111,8 @@ export default async function DraftPage({ params, searchParams }: { params: { id
         ) : null}
         {/* Top fixes panel */}
         { (project.meta as any)?.fixList?.length ? <TopFixes projectId={project.id} fixes={(project.meta as any).fixList} /> : null }
-        <div style={{display:'flex',gap:8,margin:'8px 0 16px'}}>
-          {/* Full regenerate triggers overlay in first_run mode */}
-          <a href={`?run=1&mode=first_run`}><button type="button">Full Regenerate</button></a>
-          <ExportDocxButton projectId={project.id} />
-          {/* Magic overlay trigger */}
-          {/* Client trigger */}
-          <RunAutopilotClient projectId={project.id} auto={searchParams?.run === '1'} mode={String(searchParams?.mode || '')} />
+        <div style={{margin:'8px 0 16px'}}>
+          <DraftHeaderActions projectId={project.id} auto={searchParams?.run === '1'} mode={String(searchParams?.mode || '')} />
         </div>
         <details style={{marginBottom:16}}>
           <summary>Budget (simple)</summary>
@@ -151,15 +147,18 @@ export default async function DraftPage({ params, searchParams }: { params: { id
         </details>
         {project.sections.map(s => (
           <div key={s.id} style={{margin:'16px 0'}}>
-            <h2 id={`sec-${s.key}`} style={{display:'flex', alignItems:'center', gap:12}}>
+            <h2 id={`sec-${s.key}`} style={{display:'flex', alignItems:'center', gap:12, justifyContent:'space-between'}}>
               <span>{s.title}</span>
               {/* Coverage bar + words */}
-              <span style={{display:'inline-flex', alignItems:'center', gap:6, fontSize:12, color:'#6b7280'}}>
+              <span style={{display:'inline-flex', alignItems:'center', gap:10, fontSize:12, color:'#6b7280'}}>
                 <span style={{width:120, height:6, background:'#e5e7eb', borderRadius:999, overflow:'hidden', display:'inline-block'}}>
                   <span style={{display:'block', width:`${Math.min(100, Number((s.coverage as any)?.completionPct || 0))}%`, height:'100%', background:'#10b981'}} />
                 </span>
                 <span>{Number((s.coverage as any)?.completionPct || 0)}%</span>
                 <span>• {String(((s.coverage as any)?.length?.words) || (s.contentMd || '').trim().split(/\s+/).filter(Boolean).length)} words</span>
+                <span style={{marginLeft:8}}>
+                  <ActionButtons sectionId={s.id} projectId={project.id} />
+                </span>
               </span>
             </h2>
             {/* Default: Preview with citations */}
@@ -182,12 +181,6 @@ export default async function DraftPage({ params, searchParams }: { params: { id
             <div style={{marginTop:4, fontSize:12, color:'#6b7280'}}>
               Facts used in this section: {countFactMarkers(s.contentMd || '')}
             </div>
-            <details style={{marginTop:8}}>
-              <summary>Advanced tools</summary>
-              <div style={{marginTop:6}}>
-                <ActionButtons sectionId={s.id} projectId={project.id} />
-              </div>
-            </details>
             {/* Append each fact to this section, if available */}
             {(project.factsJson as any[])?.length ? (
               <details style={{marginTop:8}}>

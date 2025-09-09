@@ -32,7 +32,7 @@ export default function RightAssistantPanel({ projectId, fixes, citations, chat,
       <div>
         <div style={{fontWeight:600, marginBottom:6}}>Citations</div>
         {cites.length ? (
-          <div style={{fontSize:12, color:'#6b7280', border:'1px solid #1f2430', borderRadius:12, padding:10}}>
+          <div style={{fontSize:12, color:'#9CA3AF', border:'1px solid #1f2430', borderRadius:12, padding:10}}>
             {/* Quick jump nav */}
             <div style={{marginBottom:8}}>
               {Object.entries(grouped).map(([key, g]) => (
@@ -45,9 +45,9 @@ export default function RightAssistantPanel({ projectId, fixes, citations, chat,
                 <div style={{fontWeight:600, color:'#D1D5DB'}}><a href={`#sec-${key}`} style={{textDecoration:'none'}}>{g.title}</a></div>
                 <ul style={{paddingLeft:16, marginTop:6}}>
                   {g.items.map((c, i) => (
-                    <li key={i} style={{margin:'6px 0', display:'flex', gap:6}}>
-                      <a href={`#sec-${c.sectionKey}`} title="Jump to section" style={{textDecoration:'none'}}>[{c.n}]</a>
-                      <span style={{flex:1}}>{c.text} {c.filename ? `(Source: ${c.filename}${c.page?` p.${c.page}`:''})` : ''}</span>
+                    <li key={i} style={{margin:'6px 0', display:'grid', gridTemplateColumns:'28px 1fr 8px', gap:6, alignItems:'center'}}>
+                      <a href={`#sec-${c.sectionKey}`} title="Jump to section" style={{textDecoration:'none', color:'#D1D5DB'}}>[{c.n}]</a>
+                      <span style={{flex:1, color:'#E5E7EB'}}>{c.filename ? `${c.filename}${c.page?` p.${c.page}`:''}: ` : ''}{c.text}</span>
                       <span title={typeof c.strength==='number' ? `strength ${c.strength}` : ''} style={{width:8, height:8, borderRadius:999, background: (c.strength||0)>=0.75? '#10b981' : (c.strength||0)>=0.6? '#f59e0b' : '#ef4444'}} />
                     </li>
                   ))}
