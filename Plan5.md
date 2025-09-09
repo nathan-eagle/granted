@@ -140,6 +140,8 @@ This plan builds on **Plan3B** (Live Draft Pane, Coverage Bars, Progress Log, Ad
 **Acceptance**  
 - Within seconds of **Run Autopilot**, users watch the draft being written; overlay closes on done.
 
+Progress: [x] Implemented (Plan4): streaming SSE overlay + Live Draft Pane, reconnect, event IDs.
+
 ---
 
 ### P1.2 Smart citations (inline [1], hovercards, Citations panel, DOCX references)
@@ -151,6 +153,8 @@ This plan builds on **Plan3B** (Live Draft Pane, Coverage Bars, Progress Log, Ad
 **Acceptance**  
 - Inline [1] hover shows source; Citations tab accurate; DOCX has references.
 
+Progress: [x] Inline [1] superscripts with hovercards; [x] Citations panel; [x] DOCX references; [ ] Page numbers/strength inference.
+
 ---
 
 ### P1.3 Documents sidebar parity
@@ -160,6 +164,8 @@ This plan builds on **Plan3B** (Live Draft Pane, Coverage Bars, Progress Log, Ad
 **Acceptance**  
 - Sidebar matches Grantable vibe; actions work.
 
+Progress: [x] Grouped Documents with kind badges, rename/change kind/remove; [ ] Open source modal; [ ] Copy snippet; [ ] Insert with citation (drag‑insert).
+
 ---
 
 ### P1.4 Coverage + Tighten Guard (auto refresh)
@@ -167,6 +173,8 @@ This plan builds on **Plan3B** (Live Draft Pane, Coverage Bars, Progress Log, Ad
 
 **Acceptance**  
 - Bars never stale; shorten never deletes required content.
+
+Progress: [x] Coverage recompute after mutations; [x] Tighten guard revert (no coverage drop).
 
 ---
 
