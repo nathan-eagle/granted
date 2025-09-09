@@ -85,6 +85,13 @@ function RowUpload({ u, projectId, sections }: { u: Upload; projectId?: string; 
   const [open, setOpen] = useState(false)
   const [target, setTarget] = useState(sections?.[0]?.id || '')
   const [snippet, setSnippet] = useState('')
+  const [preview, setPreview] = useState('')
+  const previewRef = useRef<HTMLDivElement>(null)
+  async function loadPreview(){
+    const r = await fetch(`/api/uploads/get?id=${u.id}&limit=8000`)
+    const j = await r.json().catch(()=> ({}))
+    if (j?.text) setPreview(j.text)
+  }
   async function insert(){
     if (!projectId || !target || !snippet) return
     setBusy(true)
@@ -111,7 +118,7 @@ function RowUpload({ u, projectId, sections }: { u: Upload; projectId?: string; 
         )}
       </span>
       {projectId && sections?.length ? (
-        <button onClick={()=> setOpen(true)} disabled={busy}>Preview</button>
+        <button onClick={()=> { setOpen(true); loadPreview() }} disabled={busy}>Preview</button>
       ) : null}
       <button onClick={()=> setEditing(v => !v)} disabled={busy}>{editing? 'Save' : 'Rename'}</button>
       <select defaultValue={u.kind} onChange={async (e)=>{
@@ -124,13 +131,13 @@ function RowUpload({ u, projectId, sections }: { u: Upload; projectId?: string; 
 
       {open ? (
         <div style={{position:'fixed', inset:0, background:'rgba(0,0,0,0.55)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000}}>
-          <div style={{width:600, maxWidth:'92vw', background:'#111318', color:'#E5E7EB', border:'1px solid #1f2430', borderRadius:12, padding:12}}>
+          <div style={{width:740, maxWidth:'92vw', background:'#111318', color:'#E5E7EB', border:'1px solid #1f2430', borderRadius:12, padding:12}}>
             <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
               <div style={{fontWeight:700}}>{u.filename}</div>
               <button onClick={()=> setOpen(false)}>Close</button>
             </div>
-            <div style={{marginTop:8, maxHeight:240, overflow:'auto', background:'#0b0d12', padding:8, borderRadius:8, border:'1px solid #1f2430'}}>
-              <em>Paste or type a snippet to insert with a citation.</em>
+            <div ref={previewRef} style={{marginTop:8, maxHeight:260, overflow:'auto', background:'#0b0d12', padding:8, borderRadius:8, border:'1px solid #1f2430', whiteSpace:'pre-wrap'}}>
+              {preview ? preview : <em>Loading preview…</em>}
             </div>
             <div style={{marginTop:8}}>
               <select value={target} onChange={e=> setTarget(e.target.value)}>
@@ -139,6 +146,10 @@ function RowUpload({ u, projectId, sections }: { u: Upload; projectId?: string; 
             </div>
             <textarea value={snippet} onChange={e=> setSnippet(e.target.value)} placeholder="Snippet to insert" rows={4} style={{width:'100%', marginTop:8}} />
             <div style={{textAlign:'right', marginTop:8}}>
+              <button onClick={()=>{
+                const sel = window.getSelection?.()?.toString?.() || ''
+                if (sel && previewRef.current && sel.length > 0) { setSnippet(sel) }
+              }} style={{marginRight:8}}>Use selection</button>
               <button onClick={insert} disabled={busy || !snippet || !target}>Insert with citation</button>
             </div>
           </div>
