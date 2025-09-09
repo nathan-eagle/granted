@@ -41,10 +41,11 @@ export default async function DraftPage({ params, searchParams }: { params: { id
   }
 
   return (
-    <div style={{display:'grid',gridTemplateColumns:'260px 1fr 300px',gap:24}}>
+    <div style={{display:'grid',gridTemplateColumns:'280px minmax(680px,1fr) 340px',gap:24, alignItems:'start'}}>
       {/* Global Omnibox (Cmd/Ctrl-K) */}
       <Omnibox projectId={project.id} sections={project.sections.map(s => ({ id: s.id, key: s.key, title: s.title, contentMd: s.contentMd })) as any} facts={((project.factsJson as any[])||[]).map((f:any)=>({ id:String(f.id||''), text:String(f.text||'') })) as any} />
       <aside style={{borderRight:'1px solid #eee',paddingRight:16}}>
+        <div style={{position:'sticky', top:16}}>
         <div style={{fontWeight:600}}>Outline</div>
         <OutlinePanel sections={project.sections.map(s => ({ key: s.key, title: s.title }))} />
         <div style={{marginTop:12}}>
@@ -86,6 +87,7 @@ export default async function DraftPage({ params, searchParams }: { params: { id
             <button type="submit">Run Mock Review</button>
           </form>
         )}
+        </div>
       </aside>
       <section>
         <h1>{project.name}</h1>
@@ -97,7 +99,7 @@ export default async function DraftPage({ params, searchParams }: { params: { id
           .cite:hover .tip{ display:block; }
         `}} />
         {(project.meta as any)?.progress?.length ? (
-          <details style={{margin:'8px 0 12px'}} open>
+          <details style={{margin:'8px 0 12px'}}>
             <summary>Last run progress</summary>
             <ul style={{fontSize:12, color:'#6b7280'}}>
               {((project.meta as any).progress as any[]).slice(-12).map((p:any, i:number) => (
@@ -161,7 +163,7 @@ export default async function DraftPage({ params, searchParams }: { params: { id
               </span>
             </h2>
             {/* Default: Preview with citations */}
-            <div style={{padding:8, border:'1px solid #eee', borderRadius:8}} dangerouslySetInnerHTML={{__html: renderCitedHtml(s.contentMd || '', (project.factsJson as any[]) || [], project.uploads || [])}} />
+            <div style={{padding:12, border:'1px solid #eee', borderRadius:10, fontSize:16, lineHeight:1.6}} dangerouslySetInnerHTML={{__html: renderCitedHtml(s.contentMd || '', (project.factsJson as any[]) || [], project.uploads || [])}} />
             {/* Edit content (collapsed by default) */}
             <details style={{marginTop:8}}>
               <summary>Edit content</summary>

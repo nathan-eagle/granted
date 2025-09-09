@@ -22,7 +22,7 @@ export default function RightAssistantPanel({ projectId, fixes, citations, chat,
         </div>
       ) : null}
       <div style={{marginBottom:12}}>
-        <div style={{fontWeight:600, marginBottom:6}}>Assistant</div>
+        <div style={{fontWeight:600, marginBottom:6}}>Chat</div>
         {(!charter || Object.values(charter||{}).every(v => !String(v||'').trim())) ? (
           <CharterIntake projectId={projectId} initial={charter} />
         ) : (
