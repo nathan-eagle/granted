@@ -94,6 +94,48 @@ model Upload {
 - Push to `main`. Vercel auto‑deploys Production.
 - Build runs `prisma migrate deploy` to keep DB in sync.
 
+## Hands‑Free Iteration Flow (for AI agents)
+
+Goal: implement a task, push, wait ~60 seconds, verify Vercel is green, then immediately continue to the next task without asking for confirmation.
+
+- Token and IDs
+  - The Vercel API token is stored in `web/.env.local` as `VERCEL_TOKEN=...`.
+  - Project/Org IDs are in `web/.vercel/project.json` (`projectId`, `orgId`).
+
+- Push changes
+  - `git add -A && git commit -m "<short message>" && git push origin HEAD`
+
+- Check deploy status (poll up to ~60s)
+  - Get latest deployment for the project:
+    - `curl -s -H "Authorization: Bearer $VERCEL_TOKEN" "https://api.vercel.com/v6/deployments?projectId=<PROJECT_ID>&teamId=<ORG_ID>&limit=1"`
+  - Inspect `readyState`:
+    - `READY` → green; proceed to next task.
+    - `ERROR`/`FAILED` → fetch build events for details:
+      - `curl -s -H "Authorization: Bearer $VERCEL_TOKEN" "https://api.vercel.com/v2/deployments/<DEPLOYMENT_UID>/events?teamId=<ORG_ID>&limit=300"`
+      - Fix the root cause, push again, and re‑check.
+
+- Example bash snippet
+```
+TOKEN=$(sed -n 's/^VERCEL_TOKEN="\(.*\)"/\1/p' web/.env.local)
+PROJ=$(jq -r .projectId web/.vercel/project.json)
+TEAM=$(jq -r .orgId web/.vercel/project.json)
+for i in {1..30}; do
+  sleep 2
+  curl -s -H "Authorization: Bearer $TOKEN" \
+    "https://api.vercel.com/v6/deployments?projectId=$PROJ&teamId=$TEAM&limit=1" \
+    -o /tmp/deploy.json
+  STATE=$(node -e 'const d=require("fs").readFileSync("/tmp/deploy.json","utf8"); const x=JSON.parse(d).deployments?.[0]||{}; console.log((x.readyState||x.state||"?"), x.url||"")')
+  echo "$STATE" | grep -Eq "READY|ERROR|FAILED" && break
+done
+```
+
+- Rules of engagement
+  - Do not pause for manual confirmation between tasks.
+  - If deploy is green: immediately start the next item in Plan4/Plan5.
+  - If deploy fails: fetch logs, fix the root cause, push again, re‑check.
+  - Prefer small, iterative commits; keep the app running at all times.
+
+
 ## Measuring Success
 
 - Log `t1` (Autodraft click) and `t2` (first complete draft) in `Project.meta`.
