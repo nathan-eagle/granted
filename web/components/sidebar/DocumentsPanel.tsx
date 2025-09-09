@@ -2,7 +2,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { useToast } from '@/components/ui/Toast'
 
-type Upload = { id: string; filename: string; kind: string }
+type Upload = { id: string; filename: string; kind: string; url?: string }
 
 export default function DocumentsPanel({ projectId, uploads, sections }: { projectId: string; uploads: Upload[]; sections?: { id:string; key:string; title:string }[] }){
   const [dragOver, setDragOver] = useState(false)
@@ -131,6 +131,7 @@ function RowUpload({ u, projectId, sections }: { u: Upload; projectId?: string; 
           <span>{u.filename}</span>
         )}
       </span>
+      {u.url ? (<a href={u.url} target="_blank" rel="noreferrer">Open</a>) : null}
       {projectId && sections?.length ? (
         <button onClick={()=> { setOpen(true); loadPreview() }} disabled={busy}>Preview</button>
       ) : null}
@@ -171,6 +172,7 @@ function RowUpload({ u, projectId, sections }: { u: Upload; projectId?: string; 
                 const sel = window.getSelection?.()?.toString?.() || ''
                 if (sel && previewRef.current && sel.length > 0) { setSnippet(sel) }
               }} style={{marginRight:8}}>Use selection</button>
+              <button onClick={()=>{ navigator.clipboard?.writeText(snippet || (window.getSelection?.()?.toString?.() || '')) }} style={{marginRight:8}}>Copy</button>
               <button onClick={insert} disabled={busy || !snippet || !target}>Insert with citation</button>
             </div>
           </div>

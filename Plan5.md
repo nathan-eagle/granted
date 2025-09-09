@@ -153,7 +153,7 @@ Progress: [x] Implemented (Plan4): streaming SSE overlay + Live Draft Pane, reco
 **Acceptance**  
 - Inline [1] hover shows source; Citations tab accurate; DOCX has references.
 
-Progress: [x] Inline [1] superscripts with hovercards; [x] Citations panel; [x] DOCX references; [ ] Page numbers/strength inference.
+Progress: [x] Inline [1] superscripts with hovercards; [x] Citations panel; [x] DOCX references; [x] Page numbers + strength attached to facts.
 
 ---
 
@@ -164,7 +164,7 @@ Progress: [x] Inline [1] superscripts with hovercards; [x] Citations panel; [x] 
 **Acceptance**  
 - Sidebar matches Grantable vibe; actions work.
 
-Progress: [x] Grouped Documents with kind badges, rename/change kind/remove; [ ] Open source modal; [ ] Copy snippet; [ ] Insert with citation (drag‑insert).
+Progress: [x] Grouped Documents with kind badges, rename/change kind/remove; [x] Open source (link if available); [x] Copy selection/snippet; [x] Insert with citation (click); [ ] Drag‑insert (nice to have).
 
 ---
 
