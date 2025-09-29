@@ -1,3 +1,8 @@
+"use client"
+
+import React from "react"
+import { toast } from "sonner"
+import ConfirmDialog from "../../../../components/ui/ConfirmDialog"
 import PageShell from "../../../../components/layout/PageShell"
 
 function ExampleCallout({ children }: { children: React.ReactNode }) {
@@ -5,6 +10,8 @@ function ExampleCallout({ children }: { children: React.ReactNode }) {
 }
 
 export default function DraftEditor() {
+  const [openDelete, setOpenDelete] = React.useState(false)
+
   return (
     <PageShell>
       <div className="grid grid-cols-12 gap-4 h-[calc(100vh-5rem)]">
@@ -45,6 +52,18 @@ export default function DraftEditor() {
               <button className="rounded-md bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-sm px-3 py-2 hover:opacity-90">
                 Write for me
               </button>
+              <button
+                onClick={() => toast.success("Export queued")}
+                className="rounded-md border px-3 py-2 text-sm"
+              >
+                Export DOCX
+              </button>
+              <button
+                onClick={() => toast("Autopilot running...", { description: "We'll notify you when done" })}
+                className="rounded-md border px-3 py-2 text-sm"
+              >
+                Run Autopilot
+              </button>
             </div>
           </div>
 
@@ -72,6 +91,24 @@ export default function DraftEditor() {
               <textarea className="mt-2 w-full rounded-md border px-3 py-2 min-h-[160px]" placeholder="Draft your objectives..." />
             </div>
           </div>
+
+          <div className="px-6 pb-6">
+            <button
+              onClick={() => setOpenDelete(true)}
+              className="rounded-md text-red-600 border border-red-200 px-3 py-2 text-sm"
+            >
+              Delete section
+            </button>
+          </div>
+
+          <ConfirmDialog
+            open={openDelete}
+            onOpenChange={setOpenDelete}
+            title="Delete section?"
+            description="This will remove the current section."
+            confirmText="Delete"
+            onConfirm={() => toast.success("Section deleted")}
+          />
         </section>
 
         {/* RIGHT: assistant */}
