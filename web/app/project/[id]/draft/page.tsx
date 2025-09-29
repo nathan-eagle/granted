@@ -6,12 +6,13 @@ import ConfirmDialog from "../../../../components/ui/ConfirmDialog"
 import PageShell from "../../../../components/layout/PageShell"
 import RightRail from "../../../../components/right-rail/RightRail"
 import RichEditor from "../../../../components/editor/RichEditor"
+import InlineAI from "../../../../components/editor/InlineAI"
 
 function ExampleCallout({ children }: { children: React.ReactNode }) {
   return <div className="border rounded-md bg-gray-50 p-3 text-sm text-gray-700">{children}</div>
 }
 
-export default function DraftEditor() {
+export default function DraftEditor({ params }: { params: { id: string } }) {
   const [openDelete, setOpenDelete] = React.useState(false)
 
   return (
@@ -92,6 +93,10 @@ export default function DraftEditor() {
               </ExampleCallout>
               <RichEditor content="<p></p>" />
             </div>
+          </div>
+
+          <div className="px-6 pb-4">
+            <InlineAI projectId={params.id} />
           </div>
 
           <div className="px-6 pb-6">
