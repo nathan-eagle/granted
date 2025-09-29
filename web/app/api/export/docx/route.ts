@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
   }
 
   const doc = new Document({ sections: [ { children: [] } ] })
-  const children = doc.Sections[0].children
+  const children = (doc as any).Sections[0].children as any[]
 
   // Title
   children.push(new Paragraph({ text: project.name, heading: HeadingLevel.HEADING_1, alignment: AlignmentType.CENTER, spacing: { after: 320 } }))
@@ -77,4 +77,3 @@ export async function GET(req: NextRequest) {
     },
   })
 }
-
