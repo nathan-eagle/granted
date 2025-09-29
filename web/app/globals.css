@@ -22,3 +22,6 @@
 * { border-color: hsl(var(--border)); }
 html, body { height: 100%; }
 body { @apply bg-background text-foreground antialiased; }
+/* TipTap base */
+.ProseMirror:focus { outline: none; }
+.prose :where(p,ul,ol,h1,h2,h3){ margin-top: .5rem; margin-bottom: .5rem; }

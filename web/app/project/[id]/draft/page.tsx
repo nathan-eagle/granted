@@ -5,6 +5,7 @@ import { toast } from "sonner"
 import ConfirmDialog from "../../../../components/ui/ConfirmDialog"
 import PageShell from "../../../../components/layout/PageShell"
 import RightRail from "../../../../components/right-rail/RightRail"
+import RichEditor from "../../../../components/editor/RichEditor"
 
 function ExampleCallout({ children }: { children: React.ReactNode }) {
   return <div className="border rounded-md bg-gray-50 p-3 text-sm text-gray-700">{children}</div>
@@ -81,7 +82,7 @@ export default function DraftEditor() {
               <ExampleCallout>
                 Leverage the unique capabilities of your technology to mitigate key risks and deliver a rapid, scalable solution.
               </ExampleCallout>
-              <textarea className="mt-2 w-full rounded-md border px-3 py-2 min-h-[120px]" placeholder="Type your innovation here..." />
+              <RichEditor content="<p></p>" />
             </div>
 
             <div>
@@ -89,7 +90,7 @@ export default function DraftEditor() {
               <ExampleCallout>
                 • Design primers and probes…\n• Validate diagnostic prototype analytically and clinically…
               </ExampleCallout>
-              <textarea className="mt-2 w-full rounded-md border px-3 py-2 min-h-[160px]" placeholder="Draft your objectives..." />
+              <RichEditor content="<p></p>" />
             </div>
           </div>
 
