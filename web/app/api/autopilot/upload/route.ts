@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
     const kind = classify(explicitKind, name, head)
     // very simple confidence heuristic
     const confidence = kind === 'other' ? 0.5 : 0.9
-    const created = await prisma.upload.create({ data: { projectId, kind, filename: name, text, meta: { parsedChars: text.length, confidence } as any } })
+    const created = await prisma.upload.create({ data: { projectId, kind, filename: name, text } })
     results.push({ uploadId: created.id, filename: name, kind, confidence, parsedChars: text.length })
   }
 
