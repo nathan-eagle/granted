@@ -4,6 +4,7 @@ import React from "react"
 import { toast } from "sonner"
 import ConfirmDialog from "../../../../components/ui/ConfirmDialog"
 import PageShell from "../../../../components/layout/PageShell"
+import RightRail from "../../../../components/right-rail/RightRail"
 
 function ExampleCallout({ children }: { children: React.ReactNode }) {
   return <div className="border rounded-md bg-gray-50 p-3 text-sm text-gray-700">{children}</div>
@@ -113,35 +114,7 @@ export default function DraftEditor() {
 
         {/* RIGHT: assistant */}
         <aside className="col-span-3 rounded-lg border bg-white p-4 overflow-y-auto">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="font-semibold">Assistant</h3>
-            <button className="text-sm rounded-md border px-2 py-1">Settings</button>
-          </div>
-
-          <div className="text-sm text-gray-600 mb-3">Suggested actions</div>
-          <ul className="text-sm space-y-2">
-            <li className="rounded-md border p-2 hover:bg-gray-50">Summarize this document</li>
-            <li className="rounded-md border p-2 hover:bg-gray-50">Suggest sources for this section</li>
-            <li className="rounded-md border p-2 hover:bg-gray-50">Create a list of action items</li>
-          </ul>
-
-          <div className="mt-6">
-            <div className="mb-2 text-sm text-gray-600">Add sources</div>
-            <div className="rounded-md border p-2">
-              <input className="w-full outline-none text-sm" placeholder="How can I help you with this document?" />
-            </div>
-          </div>
-
-          <div className="mt-6">
-            <h4 className="font-semibold mb-2">Citations</h4>
-            <div className="rounded-md border p-3 text-sm text-gray-700">
-              <div className="mb-2">Commercialization Plan</div>
-              <div className="h-px bg-gray-200 my-2" />
-              <div className="mb-2">Team & Facilities</div>
-              <div className="h-px bg-gray-200 my-2" />
-              <div>Budget Justification</div>
-            </div>
-          </div>
+          <RightRail />
         </aside>
       </div>
     </PageShell>
