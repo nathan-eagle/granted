@@ -69,7 +69,8 @@ export async function GET(req: NextRequest) {
   }
 
   const buf = await Packer.toBuffer(doc)
-  return new Response(buf, {
+  const arrayBuffer = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength)
+  return new Response(arrayBuffer, {
     headers: {
       'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       'Content-Disposition': `attachment; filename="${encodeURIComponent(project.name || 'proposal')}.docx"`,
