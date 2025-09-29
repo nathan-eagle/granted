@@ -255,6 +255,7 @@ model Section {
 }
 
 model Upload {
+  createdAt  DateTime @default(now())
   id         String   @id @default(cuid())
   projectId  String
   kind       String
