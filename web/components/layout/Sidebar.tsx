@@ -1,7 +1,20 @@
 import Link from "next/link"
+import type { LucideIcon } from "lucide-react"
 import { FileText, Folder, StickyNote, Search, Users, Handshake, Target, ListChecks, Globe, HelpCircle, Settings, LayoutGrid } from "lucide-react"
 
-const groups = [
+type NavItem = {
+  href: string
+  icon: LucideIcon
+  label: string
+  badge?: string
+}
+
+type NavGroup = {
+  title: string | null
+  items: NavItem[]
+}
+
+const groups: NavGroup[] = [
   {
     title: null,
     items: [
