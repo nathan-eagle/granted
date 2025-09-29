@@ -1,32 +1,18 @@
-import './globals.css'
-import { ReactNode } from 'react'
-import { getServerSession } from 'next-auth'
-import { ToastProvider } from '@/components/ui/Toast'
-import { authOptions } from '@/lib/auth'
-import Link from 'next/link'
+import "./globals.css"
+import { Inter } from "next/font/google"
+import type { Metadata } from "next"
 
-export const metadata = {
-  title: 'Granted',
+const inter = Inter({ subsets: ["latin"] })
+
+export const metadata: Metadata = {
+  title: "Granted",
+  description: "Grant writing workspace",
 }
 
-export default async function RootLayout({ children }: { children: ReactNode }) {
-  const session = await getServerSession(authOptions)
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>
-        <header style={{display:'flex',justifyContent:'space-between',padding:'12px 16px',borderBottom:'1px solid #eee'}}>
-          <div style={{fontWeight:600}}>Granted</div>
-          <nav style={{display:'flex',gap:12}}>
-            <Link href="/projects">Projects</Link>
-            {session ? <a href="/api/auth/signout">Sign out</a> : <a href="/api/auth/signin?callbackUrl=/projects">Sign in</a>}
-          </nav>
-        </header>
-        <ToastProvider>
-          <main style={{maxWidth:960, margin:'24px auto', padding:'0 16px'}}>
-            {children}
-          </main>
-        </ToastProvider>
-      </body>
+      <body className={inter.className}>{children}</body>
     </html>
   )
 }
