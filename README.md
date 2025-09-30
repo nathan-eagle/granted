@@ -144,3 +144,9 @@ done
 ---
 
 See PLAN.md for step‑by‑step sprint tasks and acceptance criteria.
+
+### Data & Storage
+- Database: Prisma -> Supabase Postgres (`DATABASE_URL`)
+- File storage: Supabase Storage bucket `uploads`
+- AI: OpenAI Responses API (default `OPENAI_MODEL=gpt-5-mini`)
+
