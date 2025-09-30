@@ -1,6 +1,7 @@
 "use client"
 import * as Tabs from "@radix-ui/react-tabs"
 import CitationPopover from "../citations/CitationPopover"
+import ChatBox from "./ChatBox"
 
 export default function RightRail() {
   return (
@@ -23,6 +24,9 @@ export default function RightRail() {
           <div className="rounded-md border p-2">
             <input className="w-full outline-none text-sm" placeholder="How can I help you with this document?" />
           </div>
+        </div>
+        <div className="mt-6">
+          <ChatBox />
         </div>
       </Tabs.Content>
 
