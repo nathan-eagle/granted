@@ -243,15 +243,21 @@ model MockReview {
 
 // Autopilot models
 model Section {
-  id         String   @id @default(cuid())
-  projectId  String
-  key        String
-  title      String
-  order      Int
-  contentMd  String   @default("")
-  slotsJson  Json?
-  coverage   Json?
-  Project    Project  @relation(fields: [projectId], references: [id])
+  id          String   @id @default(cuid())
+  projectId   String
+  key         String
+  title       String
+  order       Int
+  contentMd   String   @default("")
+  contentJson Json?
+  contentHtml String?
+  wordCount   Int      @default(0)
+  slotsJson   Json?
+  coverage    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  Project     Project  @relation(fields: [projectId], references: [id])
+  sources     SectionSource[]
 }
 
 model Upload {
@@ -263,4 +269,15 @@ model Upload {
   url        String?
   text       String?
   Project    Project  @relation(fields: [projectId], references: [id])
+  SectionSource SectionSource[]
+}
+
+model SectionSource {
+  id        String  @id @default(cuid())
+  sectionId String
+  uploadId  String
+  Section   Section @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  Upload    Upload  @relation(fields: [uploadId], references: [id], onDelete: Cascade)
+
+  @@unique([sectionId, uploadId])
 }
