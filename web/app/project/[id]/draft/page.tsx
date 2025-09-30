@@ -14,6 +14,7 @@ function ExampleCallout({ children }: { children: React.ReactNode }) {
 
 export default function DraftEditor({ params }: { params: { id: string } }) {
   const [openDelete, setOpenDelete] = React.useState(false)
+  const [selectedSources, setSelectedSources] = React.useState<string[]>([])
 
   return (
     <PageShell>
@@ -96,7 +97,7 @@ export default function DraftEditor({ params }: { params: { id: string } }) {
           </div>
 
           <div className="px-6 pb-4">
-            <InlineAI projectId={params.id} />
+            <InlineAI projectId={params.id} getSelectedSourceIds={() => selectedSources} />
           </div>
 
           <div className="px-6 pb-6">
@@ -120,7 +121,7 @@ export default function DraftEditor({ params }: { params: { id: string } }) {
 
         {/* RIGHT: assistant */}
         <aside className="col-span-3 rounded-lg border bg-white p-4 overflow-y-auto">
-          <RightRail />
+          <RightRail projectId={params.id} onSourcesChange={setSelectedSources} />
         </aside>
       </div>
     </PageShell>
