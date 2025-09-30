@@ -1,16 +1,24 @@
 "use client"
-import React from "react"
+
+import React, { useImperativeHandle } from "react"
 import { EditorContent, useEditor } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
 import Link from "@tiptap/extension-link"
 
-export default function RichEditor({
-  content,
-  onUpdate,
-}: {
+export type RichEditorHandle = {
+  insertHTMLBelowSelection: (html: string) => void
+  replaceSelectionWithHTML: (html: string) => void
+}
+
+type Props = {
   content?: string
   onUpdate?: (html: string) => void
-}) {
+}
+
+const RichEditor = React.forwardRef<RichEditorHandle, Props>(function RichEditor(
+  { content, onUpdate },
+  ref
+) {
   const editor = useEditor({
     extensions: [
       StarterKit.configure({ bulletList: { keepMarks: true }, orderedList: { keepMarks: true } }),
@@ -21,6 +29,21 @@ export default function RichEditor({
       onUpdate?.(editor.getHTML())
     },
   })
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      insertHTMLBelowSelection(html: string) {
+        if (!editor) return
+        editor.chain().focus().insertContent(`<p>${html}</p>`).run()
+      },
+      replaceSelectionWithHTML(html: string) {
+        if (!editor) return
+        editor.chain().focus().deleteSelection().insertContent(`<p>${html}</p>`).run()
+      },
+    }),
+    [editor]
+  )
 
   if (!editor) return null
 
@@ -66,4 +89,6 @@ export default function RichEditor({
       </div>
     </div>
   )
-}
+})
+
+export default RichEditor
