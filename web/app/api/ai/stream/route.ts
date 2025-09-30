@@ -28,7 +28,29 @@ export async function POST(req: NextRequest) {
     ],
   } as any)
 
-  const readable = streamed.toReadableStream()
+  const maybeReadable = (streamed as any).toReadableStream?.()
+
+  if (maybeReadable) {
+    return new Response(maybeReadable as ReadableStream<Uint8Array>, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": "no-store",
+      },
+    })
+  }
+
+  const encoder = new TextEncoder()
+  const readable = new ReadableStream<Uint8Array>({
+    start(controller) {
+      const streamAny = streamed as any
+      streamAny.on?.("message", (message: any) => {
+        const chunk = message?.output_text ?? ""
+        if (chunk) controller.enqueue(encoder.encode(chunk))
+      })
+      streamAny.on?.("end", () => controller.close())
+      streamAny.on?.("error", (err: unknown) => controller.error(err))
+    },
+  })
 
   return new Response(readable, {
     headers: {
