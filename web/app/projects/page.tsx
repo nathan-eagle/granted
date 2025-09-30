@@ -1,25 +1,11 @@
+import { prisma } from "@/lib/prisma"
 import PageShell from "../../components/layout/PageShell"
 import NewGrantDialog from "../../components/projects/NewGrantDialog"
 
-async function getProjects() {
-  const envBase = (process.env.NEXT_PUBLIC_BASE_URL || "").replace(/\/$/, "")
-  const vercelBase = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : ""
-  const base = envBase || vercelBase
-  const url = base ? `${base}/api/projects` : "/api/projects"
-  const res = await fetch(url, {
-    cache: "no-store",
-    next: { revalidate: 0 },
-  })
-  if (!res.ok) {
-    console.error("Failed to load projects", res.statusText)
-    return []
-  }
-  const json = await res.json()
-  return (json.projects as any[]) || []
-}
-
 export default async function ProjectsPage() {
-  const projects = await getProjects()
+  const projects = await prisma.project.findMany({
+    orderBy: { createdAt: "desc" },
+  })
   return (
     <PageShell>
       <div className="mx-auto max-w-screen-2xl">
