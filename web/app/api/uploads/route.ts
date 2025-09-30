@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { supabaseServer } from "@/lib/supabaseServer"
+import { createSupabaseServerClient } from "@/lib/supabaseServer"
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
@@ -21,23 +21,26 @@ export async function POST(req: NextRequest) {
   }
 
   const arrayBuffer = await file.arrayBuffer()
-  const bytes = new Uint8Array(arrayBuffer)
-  const storagePath = `projects/${projectId}/${Date.now()}_${file.name}`
+  const supabase = createSupabaseServerClient()
+  let fileUrl: string | undefined
 
-  const { error: uploadError } = await supabaseServer.storage
-    .from("uploads")
-    .upload(storagePath, bytes, {
-      contentType: file.type || "application/octet-stream",
-      upsert: false,
-    })
+  if (supabase) {
+    const bytes = new Uint8Array(arrayBuffer)
+    const storagePath = `projects/${projectId}/${Date.now()}_${file.name}`
+    const { error: uploadError } = await supabase.storage
+      .from("uploads")
+      .upload(storagePath, bytes, {
+        contentType: file.type || "application/octet-stream",
+        upsert: false,
+      })
 
-  if (uploadError) {
-    console.error("Supabase storage error", uploadError)
-    return NextResponse.json({ error: "storage upload failed" }, { status: 500 })
+    if (uploadError) {
+      console.error("Supabase storage error", uploadError)
+    } else {
+      const { data: publicUrlData } = supabase.storage.from("uploads").getPublicUrl(storagePath)
+      fileUrl = publicUrlData?.publicUrl
+    }
   }
-
-  const { data: publicUrlData } = supabaseServer.storage.from("uploads").getPublicUrl(storagePath)
-  const fileUrl = publicUrlData?.publicUrl
 
   let text: string | undefined
 
