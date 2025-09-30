@@ -64,7 +64,17 @@ export default function DraftEditorClient({ projectId }: { projectId: string }) 
   const activeSection = sections.find((s) => s.id === activeSectionId) || null
 
   return (
-    <div className="grid grid-cols-12 gap-4 h-[calc(100vh-5rem)]">
+    <div className="space-y-4">
+      <div className="flex justify-end">
+        <a
+          href={`/api/projects/${projectId}/export/docx`}
+          className="inline-flex items-center rounded-md border px-3 py-2 text-sm hover:bg-gray-50"
+        >
+          Export DOCX
+        </a>
+      </div>
+
+      <div className="grid grid-cols-12 gap-4 h-[calc(100vh-5rem)]">
       <aside className="col-span-3 rounded-lg border bg-white p-4 overflow-y-auto">
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-semibold">Outline</h3>
@@ -134,6 +144,7 @@ export default function DraftEditorClient({ projectId }: { projectId: string }) 
           }}
         />
       </aside>
+      </div>
     </div>
   )
 }
