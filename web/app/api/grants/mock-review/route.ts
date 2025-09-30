@@ -2,9 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import OpenAI from 'openai'
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+import { client, defaultModel } from '@/lib/ai'
 
 const REVIEWER_PERSONAS = [
   {
@@ -122,8 +120,8 @@ SUGGESTIONS:
 [Provide 3-5 specific, actionable suggestions for improvement]`
 
   try {
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4',
+    const completion = await client.chat.completions.create({
+      model: defaultModel,
       messages: [
         {
           role: 'system',

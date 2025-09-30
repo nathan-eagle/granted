@@ -1,10 +1,8 @@
 import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
-import OpenAI from 'openai'
+import { client, defaultModel } from '@/lib/ai'
 
 export const maxDuration = 300 // 5 minutes (Vercel Pro limit)
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
 export async function POST(req: NextRequest) {
   const { searchParams } = new URL(req.url)
@@ -25,8 +23,8 @@ export async function POST(req: NextRequest) {
     const prompt = renderPrompt(template.prompt, job.inputs as Record<string, string>)
 
     // Call OpenAI (simple single-call; chunking can be added if needed)
-    const completion = await openai.chat.completions.create({
-      model: (template.model || 'gpt-4o-mini') as any,
+    const completion = await client.chat.completions.create({
+      model: (template.model || defaultModel) as any,
       messages: [
         { role: 'system', content: 'You are a helpful grant writing assistant.' },
         { role: 'user', content: prompt },
@@ -43,7 +41,7 @@ export async function POST(req: NextRequest) {
         templateId: job.templateId,
         inputs: job.inputs as any,
         output: text,
-        model: template.model || 'gpt-4o-mini',
+        model: template.model || defaultModel,
         tokenUsage: usage ? { prompt: usage.prompt_tokens, completion: usage.completion_tokens, total: usage.total_tokens } : undefined,
       },
     })
@@ -76,4 +74,3 @@ function renderPrompt(template: string, inputs: Record<string, string>): string 
 function escapeRegExp(s: string) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
-

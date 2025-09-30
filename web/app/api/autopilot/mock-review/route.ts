@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import OpenAI from 'openai'
+import { client, defaultModel } from '@/lib/ai'
 import { loadPackForProject } from '@/lib/agencyPacks'
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
 export async function POST(req: NextRequest) {
   const { projectId } = await req.json()
@@ -12,8 +10,8 @@ export async function POST(req: NextRequest) {
   const pack = await loadPackForProject(project)
   const payload = { sections: project.sections.map(s => ({ key: s.key, title: s.title, md: s.contentMd })), rubric: pack?.rubric || [] }
   const system = 'Act as SBIR reviewers using provided rubric. Propose fixes that raise score. Return JSON: {fixes:[{sectionKey,label,rationale,impact:"High|Med|Low",criterionId?:string,patch?:string}]}. Prefer including criterionId that maps to rubric.id.'
-  const r = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
+  const r = await client.chat.completions.create({
+    model: defaultModel,
     messages: [ { role: 'system', content: system }, { role: 'user', content: JSON.stringify(payload) } ],
     temperature: 0.2,
   })

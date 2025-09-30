@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { loadPackForProject } from '@/lib/agencyPacks'
-import OpenAI from 'openai'
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+import { client, defaultModel } from '@/lib/ai'
 
 export async function POST(req: NextRequest) {
   try {
@@ -30,15 +28,14 @@ Return ONLY valid JSON in the schema provided by the user. Use the agency pack:
       },
     }
 
-  const model = process.env.OPENAI_MODEL || 'gpt-4o-mini'
-  const completion = await openai.chat.completions.create({
-      model,
+    const completion = await client.chat.completions.create({
+      model: defaultModel,
       messages: [
         { role: 'system', content: system },
         { role: 'user', content: JSON.stringify(user) },
       ],
       temperature: 0.2,
-  })
+    })
     const raw = completion.choices[0]?.message?.content || '{}'
     let parsed: any
     try { parsed = JSON.parse(raw) } catch { parsed = { title: 'Draft', sections: [] } }

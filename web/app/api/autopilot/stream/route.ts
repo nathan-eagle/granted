@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { loadPackForProject } from '@/lib/agencyPacks'
-import OpenAI from 'openai'
+import { client, defaultModel } from '@/lib/ai'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -70,9 +70,6 @@ export async function GET(req: NextRequest) {
         // Determine which sections to write based on mode
         const existing = await prisma.section.findMany({ where: { projectId }, orderBy: { order: 'asc' } })
         const byKeyExisting = new Map(existing.map(s => [s.key, s]))
-        const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-        const model = process.env.OPENAI_MODEL || 'gpt-4o-mini'
-
         for (let i = 0; i < pack.sections.length; i++) {
           const spec = pack.sections[i]
           // Skip non-targeted sections in rerun_smart mode
@@ -89,8 +86,8 @@ export async function GET(req: NextRequest) {
           await send({ type: 'section_start', data: { key: spec.id, title: spec.title } })
           const system = `You write SBIR/STTR-style grant sections for non-technical founders.\nWrite ONLY Markdown prose for the section "${spec.title}".\nUse CHARTER and FACTS. When using a fact, embed {{fact:ID}} inline.\nStay within ~${spec.limitWords || 800} words (±10%). Clear, reviewer-friendly voice.`
           const userPayload = { SECTION_ID: spec.id, SECTION_TITLE: spec.title, MUST_COVER: spec.mustCover || [], CHARTER: charter, FACTS: facts }
-          const resp = await openai.chat.completions.create({
-            model,
+          const resp = await client.chat.completions.create({
+            model: defaultModel,
             messages: [ { role:'system', content: system }, { role:'user', content: JSON.stringify(userPayload) }],
             temperature: 0.2,
             stream: true as any,

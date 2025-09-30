@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import OpenAI from 'openai'
+import { client, defaultModel } from '@/lib/ai'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
 async function fetchUrlText(url: string): Promise<{ text: string; contentType: string | null }> {
   const res = await fetch(url)
@@ -48,8 +46,7 @@ export async function POST(req: NextRequest) {
     "attachments": [{"name":string,"required":boolean}...]
   }\nPrefer clear, generic section names if not specified by the RFP.`
   const user = { RFP_TEXT: rfpText }
-  const model = process.env.OPENAI_MODEL || 'gpt-4o-mini'
-  const resp = await openai.chat.completions.create({ model, messages: [ { role: 'system', content: system }, { role: 'user', content: JSON.stringify(user) } ], temperature: 0 })
+  const resp = await client.chat.completions.create({ model: defaultModel, messages: [ { role: 'system', content: system }, { role: 'user', content: JSON.stringify(user) } ], temperature: 0 })
   let pack: any
   try { pack = JSON.parse(resp.choices[0]?.message?.content || '{}') } catch { pack = {} }
   if (!pack || !pack.sections) return NextResponse.json({ error: 'Failed to generate pack' }, { status: 500 })
@@ -59,4 +56,3 @@ export async function POST(req: NextRequest) {
   await prisma.project.update({ where: { id: projectId }, data: { meta, agencyPackId: 'auto' } })
   return NextResponse.json({ ok: true, packId: pack.id || 'auto' })
 }
-

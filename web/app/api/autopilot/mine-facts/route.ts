@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import OpenAI from 'openai'
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+import { client, defaultModel } from '@/lib/ai'
 
 export async function POST(req: NextRequest) {
   const { projectId } = await req.json()
@@ -13,8 +11,8 @@ export async function POST(req: NextRequest) {
 
   const system = 'Extract atomic facts useful for SBIR writing. Prefer quantitative evidence, resources, prior work, team capabilities. Each fact <= 220 chars. Return JSON array of {id,text,kind}. '
   const user = { texts }
-  const r = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
+  const r = await client.chat.completions.create({
+    model: defaultModel,
     messages: [ { role: 'system', content: system }, { role: 'user', content: JSON.stringify(user) } ],
     temperature: 0,
   })

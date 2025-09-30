@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { loadPackForProject } from '@/lib/agencyPacks'
-import OpenAI from 'openai'
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+import { client, defaultModel } from '@/lib/ai'
 
 export async function POST(req: NextRequest) {
   try {
@@ -19,8 +17,7 @@ export async function POST(req: NextRequest) {
     const charter = project.charterJson ?? {}
     const system = `You write SBIR/STTR-style grant sections. Write ONLY Markdown for "${spec.title}". Use CHARTER and FACTS. Embed {{fact:ID}} when using a fact. Stay within ~${spec.limitWords || 800} words (±10%).`
     const userPayload = { SECTION_ID: section.key, SECTION_TITLE: spec.title, MUST_COVER: (spec as any).mustCover || [], CHARTER: charter, FACTS: facts }
-    const model = process.env.OPENAI_MODEL || 'gpt-4o-mini'
-    const r = await openai.chat.completions.create({ model, messages: [ {role:'system', content: system}, {role:'user', content: JSON.stringify(userPayload)} ], temperature: 0.2 })
+    const r = await client.chat.completions.create({ model: defaultModel, messages: [ {role:'system', content: system}, {role:'user', content: JSON.stringify(userPayload)} ], temperature: 0.2 })
     const md = r.choices[0]?.message?.content || ''
     await prisma.section.update({ where: { id: sectionId }, data: { contentMd: md } })
     // recompute coverage
@@ -30,4 +27,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: String(e) }, { status: 500 })
   }
 }
-

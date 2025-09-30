@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { parse } from 'csv-parse/sync'
 import { prisma } from '@/lib/prisma'
+import { defaultModel } from '@/lib/ai'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 
@@ -31,7 +32,7 @@ export async function POST(req: NextRequest) {
         title: r.title || slug,
         about: r.about || null,
         prompt: r.prompt || r["Prompt"] || '',
-        model: r.language_model || 'gpt-4o-mini',
+        model: r.language_model || defaultModel,
         order: Number(r.order || 0),
         emoji: r.emoji || null,
         icon: r.icon || null,
@@ -42,7 +43,7 @@ export async function POST(req: NextRequest) {
         title: r.title || slug,
         about: r.about || null,
         prompt: r.prompt || r["Prompt"] || '',
-        model: r.language_model || 'gpt-4o-mini',
+        model: r.language_model || defaultModel,
         order: Number(r.order || 0),
         emoji: r.emoji || null,
         icon: r.icon || null,
@@ -79,4 +80,3 @@ function guessLabelAroundPrompt(prompt: string, key: string) {
   // Fallback: title case of key
   return key.replace(/q(\d+)input/, 'Field $1')
 }
-

@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { loadPackForProject } from '@/lib/agencyPacks'
-import OpenAI from 'openai'
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+import { client, defaultModel } from '@/lib/ai'
 
 export async function POST(req: NextRequest) {
   const { sectionId } = await req.json()
@@ -17,9 +15,8 @@ export async function POST(req: NextRequest) {
   const beforePct = (section.coverage as any)?.completionPct || 0
   const system = 'Compress section to <= LIMIT words without removing sentences that satisfy required elements.'
   const user = { LIMIT: limit, sectionMarkdown: section.contentMd }
-  const model = process.env.OPENAI_MODEL || 'gpt-4o-mini'
-  const r = await openai.chat.completions.create({
-    model,
+  const r = await client.chat.completions.create({
+    model: defaultModel,
     messages: [{ role: 'system', content: system }, { role: 'user', content: JSON.stringify(user) }],
     temperature: 0.2,
   })

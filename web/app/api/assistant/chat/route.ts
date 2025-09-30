@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { loadPackForProject } from '@/lib/agencyPacks'
-import OpenAI from 'openai'
+import { client, defaultModel } from '@/lib/ai'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -17,13 +17,10 @@ export async function POST(req: NextRequest) {
     const charter = project.charterJson ?? {}
     const facts: any[] = (project as any).factsJson || []
 
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-    const model = process.env.OPENAI_MODEL || 'gpt-4o-mini'
-
     const system = 'Be a concise, helpful grant-writing assistant. Use the project\'s CHARTER, AGENCY_PACK, and FACTS. Offer specific suggestions. When the user asks to add content, produce a short patch suitable for the current section.'
     const userPayload = { CHARTER: charter, AGENCY_PACK: pack, FACTS: facts, USER_MESSAGE: String(message) }
-    const r = await openai.chat.completions.create({
-      model,
+    const r = await client.chat.completions.create({
+      model: defaultModel,
       messages: [
         { role: 'system', content: system },
         { role: 'user', content: JSON.stringify(userPayload) },
@@ -43,4 +40,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: String(e?.message || e) }, { status: 500 })
   }
 }
-

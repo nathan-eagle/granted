@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import OpenAI from 'openai'
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+import { client, defaultModel } from '@/lib/ai'
 
 export async function POST(req: NextRequest) {
   const { sectionId } = await req.json()
@@ -13,9 +11,8 @@ export async function POST(req: NextRequest) {
   const gap = missing[0] || 'General'
   const system = 'Patch one missing slot in SBIR section. Write 2–5 concise sentences in markdown. Avoid repetition.'
   const user = { gapLabel: gap, sectionMarkdown: section.contentMd }
-  const model = process.env.OPENAI_MODEL || 'gpt-4o-mini'
-  const r = await openai.chat.completions.create({
-    model,
+  const r = await client.chat.completions.create({
+    model: defaultModel,
     messages: [{ role: 'system', content: system }, { role: 'user', content: JSON.stringify(user) }],
     temperature: 0.2,
   })

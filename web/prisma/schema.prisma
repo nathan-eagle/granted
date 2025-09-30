@@ -94,7 +94,7 @@ model Template {
   title      String
   about      String? @db.Text
   prompt     String  @db.Text
-  model      String  @default("gpt-4o-mini")
+  model      String  @default("gpt-5-mini")
   order      Int     @default(0)
   emoji      String?
   icon       String?
