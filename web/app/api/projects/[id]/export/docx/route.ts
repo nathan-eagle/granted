@@ -61,7 +61,8 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   })
 
   const buffer = await Packer.toBuffer(doc)
-  return new Response(buffer, {
+  const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength) as ArrayBuffer
+  return new Response(arrayBuffer, {
     headers: {
       "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
       "Content-Disposition": `attachment; filename="grant-${projectId}.docx"`,
