@@ -150,3 +150,13 @@ See PLAN.md for step‑by‑step sprint tasks and acceptance criteria.
 - File storage: Supabase Storage bucket `uploads`
 - AI: OpenAI Responses API (default `OPENAI_MODEL=gpt-5-mini`)
 
+
+### Supabase (storage + Postgres)
+Set these in `web/.env.local`:
+```
+DATABASE_URL=postgresql://...  # Supabase Postgres connection
+SUPABASE_URL=https://<project>.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=...
+SUPABASE_ANON_KEY=...
+```
+Create a bucket named `uploads` (public) in Supabase Storage.
