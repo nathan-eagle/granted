@@ -7,6 +7,7 @@ import PageShell from "../../../../components/layout/PageShell"
 import RightRail from "../../../../components/right-rail/RightRail"
 import RichEditor from "../../../../components/editor/RichEditor"
 import InlineAI from "../../../../components/editor/InlineAI"
+import OutlineToggler from "../../../../components/editor/OutlineToggler"
 
 function ExampleCallout({ children }: { children: React.ReactNode }) {
   return <div className="border rounded-md bg-gray-50 p-3 text-sm text-gray-700">{children}</div>
@@ -41,6 +42,8 @@ export default function DraftEditor({ params }: { params: { id: string } }) {
               <li className="rounded-md px-2 py-1 hover:bg-gray-50">3. Narrative</li>
             </ul>
           </div>
+
+          <OutlineToggler />
 
           <div className="mt-6">
             <a href="/projects" className="text-sm text-gray-600 underline">Back to Projects</a>
