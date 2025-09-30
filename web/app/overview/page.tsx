@@ -1,3 +1,4 @@
+import Link from "next/link"
 import PageShell from "../../components/layout/PageShell"
 
 function Card({ title, children }: { title?: string; children: React.ReactNode }) {
@@ -17,40 +18,40 @@ export default function OverviewPage() {
 
         {/* Capabilities */}
         <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card>
+          <Link href="/projects" className="block rounded-lg border bg-white shadow-card p-6 hover:bg-gray-50">
             <div className="text-lg font-semibold mb-1">Start writing a document</div>
-            <p className="text-sm text-gray-600">Start writing LOIs, emails, reports, and other documents</p>
-          </Card>
-          <Card>
+            <p className="text-sm text-gray-600">Create a project and open the AI-assisted editor.</p>
+          </Link>
+          <Link href="/projects" className="block rounded-lg border bg-white shadow-card p-6 hover:bg-gray-50">
             <div className="text-lg font-semibold mb-1">Work on an Application</div>
-            <p className="text-sm text-gray-600">Create and refine grant proposals with AI assistance</p>
-          </Card>
-          <Card>
+            <p className="text-sm text-gray-600">Seed grant sections from a model or continue drafting.</p>
+          </Link>
+          <Link href="/files" className="block rounded-lg border bg-white shadow-card p-6 hover:bg-gray-50">
             <div className="text-lg font-semibold mb-1">Explore Funders</div>
-            <p className="text-sm text-gray-600">Discover funding opportunities that match your mission</p>
-          </Card>
+            <p className="text-sm text-gray-600">Review uploaded materials and source libraries.</p>
+          </Link>
         </section>
 
         {/* Quick Access / Continue Working / Learn */}
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <Card title="Quick Access">
             <div className="grid grid-cols-2 gap-4 mt-2">
-              <div className="rounded-md border p-4">
+              <Link href="/projects" className="rounded-md border p-4 hover:bg-gray-50">
                 <div className="font-medium">Grants</div>
                 <p className="text-sm text-gray-600">Create grants and work on applications</p>
-              </div>
-              <div className="rounded-md border p-4">
+              </Link>
+              <Link href="/files" className="rounded-md border p-4 hover:bg-gray-50">
                 <div className="font-medium">Files</div>
                 <p className="text-sm text-gray-600">Upload and curate files</p>
-              </div>
-              <div className="rounded-md border p-4">
+              </Link>
+              <Link href="/profile" className="rounded-md border p-4 hover:bg-gray-50">
                 <div className="font-medium">Organization Profile</div>
                 <p className="text-sm text-gray-600">Update organization info</p>
-              </div>
-              <div className="rounded-md border p-4">
+              </Link>
+              <Link href="/settings" className="rounded-md border p-4 hover:bg-gray-50">
                 <div className="font-medium">Settings</div>
                 <p className="text-sm text-gray-600">Manage settings</p>
-              </div>
+              </Link>
             </div>
           </Card>
 
@@ -60,7 +61,12 @@ export default function OverviewPage() {
                 <div className="font-medium">NSF SBIR</div>
                 <div className="text-xs text-gray-600">Last edited recently</div>
               </div>
-              <button className="rounded-md border px-3 py-2 text-sm">Go to Grants →</button>
+              <Link
+                href="/projects"
+                className="rounded-md border px-3 py-2 text-sm hover:bg-gray-50"
+              >
+                Go to Grants →
+              </Link>
             </div>
           </Card>
 

@@ -2,7 +2,9 @@ import PageShell from "../../components/layout/PageShell"
 import NewGrantDialog from "../../components/projects/NewGrantDialog"
 
 async function getProjects() {
-  const base = (process.env.NEXT_PUBLIC_BASE_URL || "").replace(/\/$/, "")
+  const envBase = (process.env.NEXT_PUBLIC_BASE_URL || "").replace(/\/$/, "")
+  const vercelBase = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : ""
+  const base = envBase || vercelBase
   const url = base ? `${base}/api/projects` : "/api/projects"
   const res = await fetch(url, {
     cache: "no-store",
