@@ -4,6 +4,7 @@ import * as Tabs from "@radix-ui/react-tabs"
 import CitationPopover from "../citations/CitationPopover"
 import ChatBox from "./ChatBox"
 import SourcesTab from "./SourcesTab"
+import Suggestions from "./Suggestions"
 
 type RightRailProps = {
   projectId: string
@@ -26,13 +27,9 @@ export default function RightRail({ projectId, onSourcesChange }: RightRailProps
       </Tabs.List>
 
       <Tabs.Content value="assistant" className="flex-1 overflow-auto space-y-4">
-        <div>
-          <div className="text-sm text-gray-600 mb-3">Suggested actions</div>
-          <ul className="text-sm space-y-2">
-            <li className="rounded-md border p-2 hover:bg-gray-50">Summarize this document</li>
-            <li className="rounded-md border p-2 hover:bg-gray-50">Suggest sources for this section</li>
-            <li className="rounded-md border p-2 hover:bg-gray-50">Create a list of action items</li>
-          </ul>
+        <div className="space-y-2">
+          <div className="text-sm text-gray-600">Suggested actions</div>
+          <Suggestions />
         </div>
         <div>
           <div className="mb-2 text-sm text-gray-600">Add sources</div>
