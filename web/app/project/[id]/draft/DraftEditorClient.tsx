@@ -1,9 +1,9 @@
-import EditorHeader from "../../../../components/editor/EditorHeader"
 "use client"
 
 import React from "react"
 import { toast } from "sonner"
 import SectionCard from "../../../../components/editor/SectionCard"
+import EditorHeader from "../../../../components/editor/EditorHeader"
 import InlineAI from "../../../../components/editor/InlineAI"
 import RightRail from "../../../../components/right-rail/RightRail"
 
@@ -12,8 +12,7 @@ async function fetchSectionSources(sectionId: string) {
     const res = await fetch(`/api/sections/${sectionId}/sources`, { cache: "no-store" })
     if (!res.ok) return []
     const json = await res.json()
-    return (<>
-    <EditorHeader projectId={projectId} />json.uploadIds as string[]) || []
+    return (json.uploadIds as string[]) || []
   } catch (error) {
     console.error("Failed to load section sources", error)
     return []
@@ -94,14 +93,9 @@ export default function DraftEditorClient({ projectId }: { projectId: string }) 
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4">
+      <EditorHeader projectId={projectId} />
       <div className="flex items-center justify-between">
         <span className="text-sm text-gray-500">Outline</span>
-        <a
-          href={`/api/projects/${projectId}/export/docx`}
-          className="inline-flex items-center rounded-md border px-3 py-2 text-sm hover:bg-gray-50"
-        >
-          Export DOCX
-        </a>
       </div>
 
       {error && (
