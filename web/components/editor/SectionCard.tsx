@@ -25,6 +25,7 @@ export default function SectionCard({ section, onChanged }: SectionCardProps) {
   const [wordCount, setWordCount] = React.useState<number>(section?.wordCount || 0)
   const [charCount, setCharCount] = React.useState<number>(initialHtml.replace(/<[^>]+>/g, " ").trim().length)
   const [writing, setWriting] = React.useState(false)
+  const [limit, setLimit] = React.useState<number | undefined>(section?.limitWords ?? undefined)
   const editorRef = React.useRef<RichEditorHandle>(null)
 
   function extractMeta(value: any) {
@@ -52,21 +53,91 @@ export default function SectionCard({ section, onChanged }: SectionCardProps) {
           body: JSON.stringify({ contentHtml: nextHtml, wordCount: words }),
         })
         setSaving(false)
-        onChanged?.({ ...section, contentHtml: nextHtml, wordCount: words })
+        onChanged?.({ ...section, contentHtml: nextHtml, wordCount: words, limitWords: limit })
       }),
+    [section, onChanged, limit]
+  )
+
+  const saveLimit = React.useCallback(
+    async (nextLimit: number | undefined) => {
+      setLimit(nextLimit)
+      await fetch(`/api/sections/${section.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ limitWords: nextLimit ?? null }),
+      })
+      onChanged?.({ ...section, limitWords: nextLimit })
+      toast.success("Limit saved")
+    },
     [section, onChanged]
   )
 
+  const trimToLimit = React.useCallback(async () => {
+    if (!limit) return
+    const projectId = section.projectId || window.location.pathname.split("/")[2] || ""
+    const text = html.replace(/<[^>]+>/g, " ").trim()
+    if (!text) return
+    try {
+      toast("Trimming section…")
+      const prompt = `Rewrite the following grant section so it is at most ${limit} words while preserving key facts and clarity. Return only the rewritten text.`
+      const res = await fetch("/api/ai/complete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ projectId, prompt: `${prompt}\n\n${text}`, sourceIds: [] }),
+      })
+      const json = await res.json()
+      if (!json?.output) {
+        toast.error("Trim assistant did not return content")
+        return
+      }
+      const nextHtml = `<p>${json.output.replace(/\n\n/g, "</p><p>").replace(/\n/g, "<br/>")}</p>`
+      setHtml(nextHtml)
+      persist(nextHtml)
+      toast.success("Trimmed to limit")
+    } catch (error) {
+      console.error("Failed to trim to limit", error)
+      toast.error("Couldn't trim this section")
+    }
+  }, [limit, html, section, persist])
+
   return (
-    <div className="bg-white border rounded-lg shadow-card p-6">
-      <div className="flex items-center justify-between mb-2">
+    <div className="rounded-lg border bg-white p-6 shadow-card">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-xl font-semibold">{section.title}</h2>
-        <div className="flex items-center gap-3 text-xs text-gray-600">
-          {saving ? <span>Saving…</span> : <span>Saved</span>}
-          <CountsBar words={wordCount} chars={charCount} />
+        <div className="flex flex-wrap items-center gap-3 text-xs text-gray-600">
+          <div className="flex items-center gap-2 text-sm">
+            <span>Limit</span>
+            <input
+              type="number"
+              value={limit ?? ""}
+              onChange={(event) => {
+                const value = event.target.value
+                setLimit(value ? Number(value) : undefined)
+              }}
+              className="w-20 rounded-md border px-2 py-1"
+              placeholder="250"
+            />
+            <button
+              onClick={() => saveLimit(limit)}
+              className="rounded-md border px-2 py-1"
+            >
+              Save
+            </button>
+            <button
+              onClick={trimToLimit}
+              disabled={!limit}
+              className="rounded-md bg-[hsl(var(--primary))] px-2 py-1 text-[hsl(var(--primary-foreground))] disabled:opacity-40"
+            >
+              Trim
+            </button>
+          </div>
+          <div className="flex items-center gap-3">
+            {saving ? <span>Saving…</span> : <span>Saved</span>}
+            <CountsBar words={wordCount} chars={charCount} />
+          </div>
         </div>
       </div>
-      <div className="flex flex-wrap gap-2 mb-3">
+      <div className="mb-3 flex flex-wrap gap-2">
         <button
           onClick={async () => {
             if (writing) return

@@ -160,3 +160,12 @@ SUPABASE_SERVICE_ROLE_KEY=...
 SUPABASE_ANON_KEY=...
 ```
 Create a bucket named `uploads` (public) in Supabase Storage.
+
+### Importing NSF prompts from CSV
+Export your Google Sheet as CSV with columns: `key,title,targetWords,promptTemplate`, then run:
+
+```bash
+node web/scripts/import_prompts_from_csv.mjs prompts.csv > web/lib/blueprints/nsf_sbir.ts
+```
+
+Commit the updated blueprint and re-run the **Apply NSF SBIR** action.

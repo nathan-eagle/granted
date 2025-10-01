@@ -5,7 +5,7 @@ import Link from "next/link"
 import PageShell from "../../../../components/layout/PageShell"
 
 export default function SetupPage({ params }: { params: { id: string } }) {
-  const { id } = params
+  const projectId = params.id
   const [models, setModels] = React.useState<{ slug: string; name: string }[]>([])
   const [modelSlug, setModelSlug] = React.useState<string>("nsf-sbir-phase-i")
   const [seeding, setSeeding] = React.useState(false)
@@ -31,12 +31,12 @@ export default function SetupPage({ params }: { params: { id: string } }) {
     if (!modelSlug) return
     setSeeding(true)
     try {
-      await fetch(`/api/projects/${id}/seed`, {
+      await fetch(`/api/projects/${projectId}/seed`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ modelSlug }),
       })
-      window.location.href = `/project/${id}/draft`
+      window.location.href = `/project/${projectId}/draft`
     } finally {
       setSeeding(false)
     }
@@ -47,9 +47,9 @@ export default function SetupPage({ params }: { params: { id: string } }) {
       <div className="mx-auto max-w-4xl space-y-6">
         <h1 className="text-xl font-semibold">Start your application</h1>
 
-        <div className="rounded-lg border bg-white p-6 space-y-4">
+        <div className="space-y-4 rounded-lg border bg-white p-6">
           <div>
-            <label className="block text-sm font-medium mb-1">Grant model</label>
+            <label className="mb-1 block text-sm font-medium">Grant model</label>
             <select
               value={modelSlug}
               onChange={(event) => setModelSlug(event.target.value)}
@@ -68,44 +68,61 @@ export default function SetupPage({ params }: { params: { id: string } }) {
             <button
               onClick={seedFromModel}
               disabled={seeding || !modelSlug}
-              className="rounded-md bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] px-3 py-2 text-sm disabled:opacity-60"
+              className="rounded-md bg-[hsl(var(--primary))] px-3 py-2 text-sm text-[hsl(var(--primary-foreground))] disabled:opacity-60"
             >
               {seeding ? "Seeding…" : "Use this model"}
             </button>
-            <Link href={`/project/${id}/materials`} className="rounded-md border px-3 py-2 text-sm">
+            <Link href={`/project/${projectId}/materials`} className="rounded-md border px-3 py-2 text-sm">
               Start from a document (.docx)
             </Link>
           </div>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid gap-6 md:grid-cols-2">
           <Link
-            href={`/project/${id}/draft`}
-            className="rounded-lg border bg-white shadow-card p-6 hover:bg-gray-50"
+            href={`/project/${projectId}/draft`}
+            className="rounded-lg border bg-white p-6 shadow-card hover:bg-gray-50"
           >
-            <div className="text-lg font-semibold mb-2">Blank document</div>
+            <div className="mb-2 text-lg font-semibold">Blank document</div>
             <p className="text-sm text-gray-600">
               Paste the application text from a web portal and start writing.
             </p>
           </Link>
           <Link
-            href={`/project/${id}/materials`}
-            className="rounded-lg border bg-white shadow-card p-6 hover:bg-gray-50"
+            href={`/project/${projectId}/materials`}
+            className="rounded-lg border bg-white p-6 shadow-card hover:bg-gray-50"
           >
-            <div className="text-lg font-semibold mb-2">Start from an existing document</div>
+            <div className="mb-2 text-lg font-semibold">Start from an existing document</div>
             <p className="text-sm text-gray-600">Upload a .docx application to edit directly.</p>
+          </Link>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-2">
+          <form
+            action={`/api/projects/${projectId}/apply-blueprint`}
+            method="post"
+            className="rounded-lg border bg-white p-6 shadow-card"
+          >
+            <div className="mb-2 text-lg font-semibold">Apply NSF SBIR Phase I</div>
+            <p className="mb-4 text-sm text-gray-600">Seed the outline and prompts in a single click.</p>
+            <button className="rounded-md bg-[hsl(var(--primary))] px-3 py-2 text-sm text-[hsl(var(--primary-foreground))]">
+              Apply &amp; open draft →
+            </button>
+          </form>
+          <Link
+            href={`/project/${projectId}/setup/wizard`}
+            className="rounded-lg border bg-white p-6 shadow-card hover:bg-gray-50"
+          >
+            <div className="mb-2 text-lg font-semibold">Guided setup</div>
+            <p className="text-sm text-gray-600">
+              Walk the 3-step checklist: apply a blueprint, import your document, and load sources.
+            </p>
+            <span className="mt-4 inline-flex items-center text-sm text-[hsl(var(--primary))]">
+              Open wizard →
+            </span>
           </Link>
         </div>
       </div>
     </PageShell>
   )
 }
-
-{/* NSF SBIR card */}
-<div className="mt-8 grid md:grid-cols-2 gap-6">
-  <form action="/api/projects/'${id}'/apply-blueprint" method="post" className="rounded-lg border bg-white shadow-card p-6">
-    <div className="text-lg font-semibold mb-2">Apply NSF SBIR Phase I</div>
-    <p className="text-sm text-gray-600 mb-4">Seed the outline and prompts.</p>
-    <button className="rounded-md bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-sm px-3 py-2">Apply & Open Draft →</button>
-  </form>
-</div>

@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
-import { PrismaClient } from "@prisma/client"
-import { NSF_SBIR_PHASE_I } from "../../../../lib/blueprints/nsf_sbir"
-
-const prisma = new PrismaClient()
+import { prisma } from "@/lib/prisma"
+import { NSF_SBIR_PHASE_I } from "@/lib/blueprints/nsf_sbir"
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const projectId = params.id

@@ -66,10 +66,10 @@ model Project {
   name      String
   createdAt DateTime @default(now())
 
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  responses Response[]
-  jobs      Job[]
-  grants    Grant[]
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  responses    Response[]
+  jobs         Job[]
+  grants       Grant[]
   // Autopilot extensions
   agencyPackId String?
   status       String?
@@ -78,6 +78,7 @@ model Project {
   meta         Json?
   sections     Section[]
   uploads      Upload[]
+  projectMeta  ProjectMeta?
 }
 
 model TemplateCategory {
@@ -164,41 +165,41 @@ model Job {
 
 // Grant Writing Models
 model Grant {
-  id          String    @id @default(cuid())
-  projectId   String
-  userId      String
-  
+  id        String @id @default(cuid())
+  projectId String
+  userId    String
+
   // Grant Information
-  title       String
-  agency      String?
-  rfpUrl      String?   @db.Text
-  deadline    DateTime?
-  amount      String?
-  rfpContent  String?   @db.Text
-  
+  title      String
+  agency     String?
+  rfpUrl     String?   @db.Text
+  deadline   DateTime?
+  amount     String?
+  rfpContent String?   @db.Text
+
   // Applicant Information
-  applicantInfo    Json?  // CVs, LinkedIn, organization info
-  teamMembers      Json?  // Array of team member details
-  
+  applicantInfo Json? // CVs, LinkedIn, organization info
+  teamMembers   Json? // Array of team member details
+
   // Proposal Information
-  proposalIdea     String?  @db.Text
-  keywords         String?
-  
+  proposalIdea String? @db.Text
+  keywords     String?
+
   // Sections
-  sections         GrantSection[]
-  
+  sections GrantSection[]
+
   // Review
-  mockReviews      MockReview[]
-  
+  mockReviews MockReview[]
+
   // Status
-  status           GrantStatus @default(DRAFT)
-  currentStep      Int         @default(1)
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status      GrantStatus @default(DRAFT)
+  currentStep Int         @default(1)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 enum GrantStatus {
@@ -210,65 +211,66 @@ enum GrantStatus {
 }
 
 model GrantSection {
-  id         String   @id @default(cuid())
+  id         String  @id @default(cuid())
   grantId    String
   title      String
   order      Int
-  content    String?  @db.Text
-  aiDraft    String?  @db.Text
-  userEdits  String?  @db.Text
-  isComplete Boolean  @default(false)
-  
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  
-  grant      Grant    @relation(fields: [grantId], references: [id], onDelete: Cascade)
+  content    String? @db.Text
+  aiDraft    String? @db.Text
+  userEdits  String? @db.Text
+  isComplete Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  grant Grant @relation(fields: [grantId], references: [id], onDelete: Cascade)
 }
 
 model MockReview {
-  id         String   @id @default(cuid())
-  grantId    String
-  
-  reviewerName    String
-  reviewerRole    String
-  score           Int?
-  strengths       String?  @db.Text
-  weaknesses      String?  @db.Text
-  suggestions     String?  @db.Text
-  
-  createdAt  DateTime @default(now())
-  
-  grant      Grant    @relation(fields: [grantId], references: [id], onDelete: Cascade)
+  id      String @id @default(cuid())
+  grantId String
+
+  reviewerName String
+  reviewerRole String
+  score        Int?
+  strengths    String? @db.Text
+  weaknesses   String? @db.Text
+  suggestions  String? @db.Text
+
+  createdAt DateTime @default(now())
+
+  grant Grant @relation(fields: [grantId], references: [id], onDelete: Cascade)
 }
 
 // Autopilot models
 model Section {
-  id          String   @id @default(cuid())
+  id          String          @id @default(cuid())
   projectId   String
   key         String
   title       String
   order       Int
-  contentMd   String   @default("")
+  contentMd   String          @default("")
   contentJson Json?
   contentHtml String?
-  wordCount   Int      @default(0)
+  wordCount   Int             @default(0)
+  limitWords  Int?
   slotsJson   Json?
   coverage    Json?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  Project     Project  @relation(fields: [projectId], references: [id])
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  Project     Project         @relation(fields: [projectId], references: [id])
   sources     SectionSource[]
 }
 
 model Upload {
-  createdAt  DateTime @default(now())
-  id         String   @id @default(cuid())
-  projectId  String
-  kind       String
-  filename   String
-  url        String?
-  text       String?
-  Project    Project  @relation(fields: [projectId], references: [id])
+  createdAt     DateTime        @default(now())
+  id            String          @id @default(cuid())
+  projectId     String
+  kind          String
+  filename      String
+  url           String?
+  text          String?
+  Project       Project         @relation(fields: [projectId], references: [id])
   SectionSource SectionSource[]
 }
 
@@ -280,4 +282,26 @@ model SectionSource {
   Upload    Upload  @relation(fields: [uploadId], references: [id], onDelete: Cascade)
 
   @@unique([sectionId, uploadId])
+}
+
+model Embedding {
+  id        String   @id @default(cuid())
+  projectId String
+  uploadId  String
+  chunk     String
+  vector    Json
+  createdAt DateTime @default(now())
+}
+
+model ProjectMeta {
+  id              String    @id @default(cuid())
+  projectId       String    @unique
+  status          String?
+  dueDate         DateTime?
+  amountRequested String?
+  amountAwarded   String?
+  funder          String?
+  programs        String?
+  submissionLinks String?
+  project         Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }

@@ -10,7 +10,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
 }
 
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
-  const { title, order, contentJson, contentHtml, wordCount } = await req.json()
+  const { title, order, contentJson, contentHtml, wordCount, limitWords } = await req.json()
   const section = await prisma.section.update({
     where: { id: params.id },
     data: {
@@ -19,6 +19,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       ...(contentJson === undefined ? {} : { contentJson }),
       ...(contentHtml === undefined ? {} : { contentHtml }),
       ...(wordCount === undefined ? {} : { wordCount }),
+      ...(limitWords === undefined ? {} : { limitWords }),
     },
   })
   return NextResponse.json({ section })

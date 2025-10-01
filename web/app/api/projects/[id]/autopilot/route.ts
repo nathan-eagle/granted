@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
-import { PrismaClient } from "@prisma/client"
-import { renderTemplate } from "../../../../lib/promptEngine"
-import { completeFromSources } from "../../../../lib/ai"
-
-const prisma = new PrismaClient()
+import { prisma } from "@/lib/prisma"
+import { renderTemplate } from "@/lib/promptEngine"
+import { completeFromSources } from "@/lib/ai"
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const projectId = params.id

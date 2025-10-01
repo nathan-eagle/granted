@@ -31,7 +31,7 @@ const groups: NavGroup[] = [
       { href: "/funders", icon: Handshake, label: "Funders" },
       { href: "/people", icon: Users, label: "People" },
       { href: "/opportunities", icon: Target, label: "Opportunities" },
-      { href: "/projects", icon: ListChecks, label: "Grants" },
+      { href: "/grants", icon: ListChecks, label: "Grants" },
       { href: "/programs", icon: Globe, label: "Programs" },
     ],
   },

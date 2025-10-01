@@ -25,6 +25,7 @@ type Section = {
   order: number
   contentHtml?: string | null
   wordCount?: number | null
+  limitWords?: number | null
 }
 
 export default function DraftEditorClient({ projectId }: { projectId: string }) {
