@@ -1,71 +1,31 @@
 import { NextRequest } from "next/server"
-import { prisma } from "@/lib/prisma"
-import { Document, HeadingLevel, Packer, Paragraph, TextRun } from "docx"
+import { PrismaClient } from "@prisma/client"
+import { Document, Packer, Paragraph, HeadingLevel } from "docx"
 
-export const runtime = "nodejs"
-export const dynamic = "force-dynamic"
+const prisma = new PrismaClient()
 
-function stripHtml(html: string) {
-  return (html || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()
-}
-
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_: NextRequest, { params }: { params: { id: string } }) {
   const projectId = params.id
-  if (!projectId) {
-    return new Response("Missing projectId", { status: 400 })
-  }
-
-  const sections = await prisma.section.findMany({
-    where: { projectId },
-    orderBy: { order: "asc" },
-  })
-
-  if (!sections.length) {
-    return new Response("No sections", { status: 404 })
-  }
+  const sections = await prisma.section.findMany({ where: { projectId }, orderBy: { order: "asc" } })
 
   const doc = new Document({
     sections: [
       {
-        properties: {},
-        children: sections.flatMap((section) => {
-          const content: Paragraph[] = []
-          content.push(
-            new Paragraph({
-              text: section.title,
-              heading: HeadingLevel.HEADING_2,
-            })
-          )
-
-          const raw = section.contentHtml || section.contentMd || ""
-          const stripped = stripHtml(raw)
-          if (stripped.length) {
-            for (const part of stripped.split(/\n+/)) {
-              if (part.trim().length) {
-                content.push(
-                  new Paragraph({
-                    children: [new TextRun(part.trim())],
-                  })
-                )
-              }
-            }
-          } else {
-            content.push(new Paragraph({ children: [new TextRun(" ")] }))
-          }
-
-          content.push(new Paragraph({}))
-          return content
+        children: sections.flatMap((s) => {
+          const title = new Paragraph({ text: s.title, heading: HeadingLevel.HEADING_1 })
+          const text = (s.contentHtml || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()
+          const paras = text ? text.split(/\n\n+/).map(t => new Paragraph(t)) : [new Paragraph("")]
+          return [title, ...paras, new Paragraph("")]
         }),
       },
     ],
   })
 
-  const buffer = await Packer.toBuffer(doc)
-  const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength) as ArrayBuffer
-  return new Response(arrayBuffer, {
+  const buf = await Packer.toBuffer(doc)
+  return new Response(buf, {
     headers: {
       "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      "Content-Disposition": `attachment; filename="grant-${projectId}.docx"`,
+      "Content-Disposition": `attachment; filename=\"grant_${projectId}.docx\"`,
       "Cache-Control": "no-store",
     },
   })
