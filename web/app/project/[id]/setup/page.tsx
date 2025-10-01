@@ -100,3 +100,12 @@ export default function SetupPage({ params }: { params: { id: string } }) {
     </PageShell>
   )
 }
+
+{/* NSF SBIR card */}
+<div className="mt-8 grid md:grid-cols-2 gap-6">
+  <form action="/api/projects/'${id}'/apply-blueprint" method="post" className="rounded-lg border bg-white shadow-card p-6">
+    <div className="text-lg font-semibold mb-2">Apply NSF SBIR Phase I</div>
+    <p className="text-sm text-gray-600 mb-4">Seed the outline and prompts.</p>
+    <button className="rounded-md bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-sm px-3 py-2">Apply & Open Draft →</button>
+  </form>
+</div>
