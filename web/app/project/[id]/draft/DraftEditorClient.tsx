@@ -93,16 +93,19 @@ export default function DraftEditorClient({ projectId }: { projectId: string }) 
   const activeSection = sections.find((s) => s.id === activeSectionId) || null
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div className="flex min-h-0 flex-1 flex-col gap-4">
       <EditorHeader projectId={projectId} />
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-gray-500">Outline</span>
+      </div>
 
       {error && (
-        <div className="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
           {error}
         </div>
       )}
 
-      <div className="mt-4 grid min-h-0 flex-1 grid-cols-12 gap-4">
+      <div className="grid min-h-0 flex-1 grid-cols-12 gap-4">
         <aside className="col-span-3 rounded-lg border bg-white p-4 overflow-y-auto">
           <div className="mb-3 flex items-center justify-between">
             <h3 className="font-semibold">Sections</h3>
