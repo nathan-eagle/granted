@@ -22,7 +22,9 @@ export async function agentRun(config: AgentConfig) {
     await log("info", "Created project", { projectId: project.id })
 
     // 2) Seed a single default section for demo purposes
-    const section = await prisma.section.create({ data: { projectId: project.id, title: "Specific Aims", order: 0 } })
+    const section = await prisma.section.create({
+      data: { projectId: project.id, key: "specific_aims", title: "Specific Aims", order: 0 },
+    })
     await log("info", "Created section", { sectionId: section.id })
 
     // 3) Add sources (if provided)
