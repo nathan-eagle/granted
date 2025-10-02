@@ -18,6 +18,11 @@ Deploy notes
 - Admin helper: `/project/:id/map` surfaces a simple form so you can trigger the mapper after ingesting an RFP.
 - Maps `Requirement` rows onto blueprint sections (currently NSF SBIR) using OpenAI classification when available and lexical similarity fallback, updating section limits + stored requirements.
 
+### Agent full-run orchestrator
+- Endpoint: `POST /api/agent/full-run` with `{ keyword, projectName, simplerId?, opportunityId?, blueprintId? }`.
+- Runs search → ingest → attachments → apply blueprint → map → autopilot → export DOCX → scorecard and uploads artifacts to Supabase Storage at `artifacts/runs/<runId>/`.
+- `/admin` exposes a simple form so you can kick off the flow without crafting requests manually.
+
 ### RFP attachments fetcher
 - Endpoint: `POST /api/rfp/attachments` with either `{ source: "simpler", simplerId, projectId }` or `{ source: "grants", opportunityId, projectId }`.
 - `simpler` downloads attachments (requires `SIMPLER_API_KEY`) and stores them in Supabase Storage under `uploads/rfp/...`, indexing them as `Upload` records with kind `rfp-attachment` plus extracted text for PDF/DOCX.
