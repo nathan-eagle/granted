@@ -74,3 +74,5 @@ export const NSF_SBIR_PHASE_I: Blueprint = {
     }
   ]
 }
+
+export default NSF_SBIR_PHASE_I

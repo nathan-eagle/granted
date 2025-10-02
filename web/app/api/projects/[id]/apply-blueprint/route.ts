@@ -17,8 +17,10 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     await prisma.section.create({
       data: {
         projectId,
+        key: s.key,
         title: s.title,
         order: i,
+        limitWords: s.targetWords ?? null,
         contentJson: { key: s.key, targetWords: s.targetWords, promptTemplate: s.promptTemplate, variables },
         contentHtml: "<p></p>",
         wordCount: 0,
