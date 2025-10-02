@@ -305,3 +305,30 @@ model ProjectMeta {
   submissionLinks String?
   project         Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }
+
+model RFP {
+  id          String   @id @default(cuid())
+  source      String
+  oppNumber   String?
+  title       String?
+  agency      String?
+  postedDate  DateTime?
+  closeDate   DateTime?
+  synopsis    String?
+  raw         Json?
+  attachments Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  requirements Requirement[]
+}
+
+model Requirement {
+  id         String   @id @default(cuid())
+  rfpId      String
+  key        String?
+  title      String
+  targetWords Int?
+  required   Boolean  @default(true)
+  instructions String?
+  RFP        RFP      @relation(fields: [rfpId], references: [id])
+}
