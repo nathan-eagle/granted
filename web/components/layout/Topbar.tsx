@@ -17,7 +17,7 @@ export default function Topbar() {
 
   React.useEffect(() => {
     let mounted = true
-    fetch("/api/auth/session")
+    fetch("/api/auth/session", { credentials: "same-origin" })
       .then(res => (res.ok ? res.json() : null))
       .then(data => {
         if (mounted) setSession(data)

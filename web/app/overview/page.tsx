@@ -1,20 +1,28 @@
 import Link from "next/link"
+import { getServerSession } from "next-auth"
+
 import PageShell from "../../components/layout/PageShell"
+import { authOptions } from "@/lib/auth"
+
+export const dynamic = "force-dynamic"
 
 function Card({ title, children }: { title?: string; children: React.ReactNode }) {
   return (
-    <div className="bg-white border rounded-lg shadow-card p-6">
-      {title && <h3 className="font-semibold mb-2">{title}</h3>}
+    <div className="rounded-lg border bg-white p-6 shadow-card">
+      {title && <h3 className="mb-2 font-semibold">{title}</h3>}
       {children}
     </div>
   )
 }
 
-export default function OverviewPage() {
+export default async function OverviewPage() {
+  const session = await getServerSession(authOptions)
+  const displayName = session?.user?.name || session?.user?.email || "Guest"
+
   return (
     <PageShell>
       <div className="mx-auto max-w-screen-2xl space-y-6">
-        <h1 className="text-xl font-semibold">Welcome, Nathan</h1>
+        <h1 className="text-xl font-semibold">Welcome, {displayName}</h1>
 
         {/* Capabilities */}
         <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
