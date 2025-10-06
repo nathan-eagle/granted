@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getBaseUrl } from "@/lib/baseUrl"
 import { uploadArtifact } from "@/lib/artifacts"
+import { getDefaultUserId } from "@/lib/defaultUser"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -125,8 +126,9 @@ export async function POST(req: NextRequest) {
     }
 
     try {
+      const userId = await getDefaultUserId()
       const project = await prisma.project.create({
-        data: { name: projectName, status: "drafting" } as any,
+        data: { name: projectName, status: "drafting", userId },
       })
       projectId = project.id
       recordStep({ name: "project.create", ok: true, details: { projectId } })

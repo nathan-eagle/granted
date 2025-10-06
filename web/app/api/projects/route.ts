@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { getDefaultUserId } from "@/lib/defaultUser"
 
 export async function GET(req: NextRequest) {
   const projects = await prisma.project.findMany({ orderBy: { createdAt: "desc" } })
@@ -9,6 +10,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const { name } = await req.json()
   if (!name) return NextResponse.json({ error: "name required" }, { status: 400 })
-  const project = await prisma.project.create({ data: { name, status: "drafting" } as any })
+  const userId = await getDefaultUserId()
+  const project = await prisma.project.create({ data: { name, status: "drafting", userId } })
   return NextResponse.json({ project })
 }

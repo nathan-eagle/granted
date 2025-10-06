@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client"
 import { completeFromSources } from "../ai"
+import { getDefaultUserId } from "../defaultUser"
 
 const prisma = new PrismaClient()
 
@@ -17,7 +18,10 @@ export async function agentRun(config: AgentConfig) {
   }
   try {
     // 1) Create a project
-    const project = await prisma.project.create({ data: { name: `Agent Project ${new Date().toISOString()}`, status: "drafting" } as any })
+    const userId = await getDefaultUserId()
+    const project = await prisma.project.create({
+      data: { name: `Agent Project ${new Date().toISOString()}`, status: "drafting", userId },
+    })
     await prisma.agentRun.update({ where: { id: run.id }, data: { projectId: project.id } })
     await log("info", "Created project", { projectId: project.id })
 
