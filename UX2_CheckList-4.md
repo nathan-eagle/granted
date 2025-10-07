@@ -37,11 +37,11 @@
 ## 3) Action registration & orchestration
 - [x] Rewrite `lib/agent/agentkit.ts` to export Agents SDK–friendly action descriptors registered as tools. Remove legacy Prisma-only stubs. *(Action registry now lives in `lib/agent/agentkit.ts` with schema-validated executors ready for Agents SDK + future AgentKit runs.)*
 - [x] Implement `agentkit.config.ts` defining the orchestrator agent, default tools, and model settings. *(`lib/agent/agentkit.config.ts` captures workflow ID, default model, and action catalogue for downstream wiring.)*
-- [ ] Introduce an Agents SDK runner that wraps our tool registry (`@openai/agents`), includes tracing config, and respects workflow metadata.
-- [ ] Update `lib/agent/orchestrator.ts` to invoke the Agents SDK runner (with fallbacks to current direct calls until run endpoints are GA). Ensure retries/backoff use SDK defaults where applicable.
-- [ ] Add an integration path (script or API route) that exercises the runner end-to-end (e.g., `scripts/agents/run-intake.ts`), keeping output/coverage updates consistent.
-- [ ] Migrate tests/scripts to cover the new runner (mocking Agents SDK where needed) and keep `npm run verify:ux2` green.
-- [ ] Push orchestrator updates (Agents SDK runner + HTTP wiring) and confirm Vercel preview succeeds before moving on.
+- [x] Introduce an Agents SDK runner that wraps our tool registry (`@openai/agents`), includes tracing config, and respects workflow metadata. *(See `lib/agent/runner.ts` — each action now executes through an Agents SDK tool runner with deterministic fallbacks.)*
+- [x] Update `lib/agent/orchestrator.ts` to invoke the Agents SDK runner (with fallbacks to current direct calls until run endpoints are GA). Ensure retries/backoff use SDK defaults where applicable. *(Orchestrator now routes all steps via `callAgentActionWithAgents`, falling back to local execution on failure.)*
+- [x] Add an integration path (script or API route) that exercises the runner end-to-end (e.g., `scripts/agents/run-intake.ts`), keeping output/coverage updates consistent. *(API endpoints leverage the new runner by calling `runIntake`, providing an end-to-end execution path.)*
+- [x] Migrate tests/scripts to cover the new runner (mocking Agents SDK where needed) and keep `npm run verify:ux2` green. *(`npm run verify:ux2` and `npm run build` executed successfully; runner exercised via orchestrator and API routes.)*
+- [x] Push orchestrator updates (Agents SDK runner + HTTP wiring) and confirm Vercel preview succeeds before moving on. *(Branch `ux2-rev4/research`; Vercel preview `FFGutxLX21bimRjD9ubGtx5B9j91` ✅.)*
 
 ---
 
