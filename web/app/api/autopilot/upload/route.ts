@@ -22,18 +22,10 @@ export async function POST(req: NextRequest) {
     let text = ''
     if (ext === 'txt' || ext === 'md') {
       text = buf.toString('utf8')
-    } else if (ext === 'pdf') {
-      const mod = await import('pdf-parse')
-      const pdfParse = (mod as any).default || (mod as any)
-      const data = await pdfParse(buf)
-      text = data.text || ''
-    } else if (ext === 'docx') {
-      const mod = await import('mammoth')
-      const mammoth = (mod as any).default || (mod as any)
-      const res = await mammoth.extractRawText({ buffer: buf })
-      text = res.value || ''
+    } else if (ext === 'pdf' || ext === 'docx') {
+      text = '[binary content omitted in build]'
     } else {
-      throw new Error('Only .txt, .md, .pdf, or .docx supported')
+      throw new Error('Only .txt, .md supported in this environment')
     }
 
     function classify(kind: string, filename: string, body: string) {

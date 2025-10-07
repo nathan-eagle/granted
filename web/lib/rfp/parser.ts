@@ -1,8 +1,6 @@
-import pdf from "pdf-parse"
-
-export async function extractTextFromPdf(buffer: ArrayBuffer) {
-  const data = await pdf(Buffer.from(buffer))
-  return data.text || ""
+export async function extractTextFromPdf(_buffer: ArrayBuffer) {
+  // PDF parsing disabled in this build; rely on AgentKit ingestion tools instead.
+  return ""
 }
 
 export function naiveRequirementExtraction(text: string) {

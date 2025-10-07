@@ -66,19 +66,25 @@ model Project {
   name      String
   createdAt DateTime @default(now())
 
-  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  responses    Response[]
-  jobs         Job[]
-  grants       Grant[]
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  responses       Response[]
+  jobs            Job[]
+  grants          Grant[]
   // Autopilot extensions
-  agencyPackId String?
-  status       String?
-  charterJson  Json?
-  factsJson    Json?
-  meta         Json?
-  sections     Section[]
-  uploads      Upload[]
-  projectMeta  ProjectMeta?
+  agencyPackId    String?
+  status          String?
+  charterJson     Json?
+  factsJson       Json?
+  coverageJson    Json?
+  rfpNormJson     Json?
+  rfpBundleMeta   Json?
+  conflictLogJson Json?
+  eligibilityJson Json?
+  sloJson         Json?
+  meta            Json?
+  sections        Section[]
+  uploads         Upload[]
+  projectMeta     ProjectMeta?
 }
 
 model TemplateCategory {
@@ -244,22 +250,23 @@ model MockReview {
 
 // Autopilot models
 model Section {
-  id          String          @id @default(cuid())
-  projectId   String
-  key         String
-  title       String
-  order       Int
-  contentMd   String          @default("")
-  contentJson Json?
-  contentHtml String?
-  wordCount   Int             @default(0)
-  limitWords  Int?
-  slotsJson   Json?
-  coverage    Json?
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
-  Project     Project         @relation(fields: [projectId], references: [id])
-  sources     SectionSource[]
+  id           String          @id @default(cuid())
+  projectId    String
+  key          String
+  title        String
+  order        Int
+  contentMd    String          @default("")
+  contentJson  Json?
+  contentHtml  String?
+  wordCount    Int             @default(0)
+  limitWords   Int?
+  slotsJson    Json?
+  coverage     Json?
+  formatLimits Json?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  Project      Project         @relation(fields: [projectId], references: [id])
+  sources      SectionSource[]
 }
 
 model Upload {
@@ -267,6 +274,7 @@ model Upload {
   id            String          @id @default(cuid())
   projectId     String
   kind          String
+  kindDetail    String?
   filename      String
   url           String?
   text          String?
@@ -307,30 +315,30 @@ model ProjectMeta {
 }
 
 model RFP {
-  id          String   @id @default(cuid())
-  source      String
-  oppNumber   String?
-  title       String?
-  agency      String?
-  postedDate  DateTime?
-  closeDate   DateTime?
-  synopsis    String?
-  raw         Json?
-  attachments Json?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String        @id @default(cuid())
+  source       String
+  oppNumber    String?
+  title        String?
+  agency       String?
+  postedDate   DateTime?
+  closeDate    DateTime?
+  synopsis     String?
+  raw          Json?
+  attachments  Json?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
   requirements Requirement[]
 }
 
 model Requirement {
-  id         String   @id @default(cuid())
-  rfpId      String
-  key        String?
-  title      String
-  targetWords Int?
-  required   Boolean  @default(true)
+  id           String  @id @default(cuid())
+  rfpId        String
+  key          String?
+  title        String
+  targetWords  Int?
+  required     Boolean @default(true)
   instructions String?
-  RFP        RFP      @relation(fields: [rfpId], references: [id])
+  RFP          RFP     @relation(fields: [rfpId], references: [id])
 }
 
 model AgentRun {
@@ -351,5 +359,6 @@ model EventLog {
   level      String   @default("info")
   message    String
   data       Json?
+  requestId  String?
   createdAt  DateTime @default(now())
 }

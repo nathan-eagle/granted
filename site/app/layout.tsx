@@ -55,17 +55,19 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       </head>
       <body className="min-h-dvh flex flex-col font-roboto">
         <header className="border-b bg-black text-white">
-          <div className="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between">
-            <a href="/" className="flex items-center gap-2">
+          <div className="mx-auto grid max-w-7xl grid-cols-[auto_1fr_auto] items-center gap-4 px-4 py-3">
+            <a href="/" className="flex items-center">
               <Image src="/images/imgi_2_granted-logo-stars.png" alt="Granted" width={118} height={28} />
             </a>
-            <nav className="flex items-center gap-6 text-sm">
-              <a href="/pricing" className="hover:opacity-80">Pricing</a>
-              <a href="/tech" className="hover:opacity-80">Technology</a>
-              <a href="/blog" className="hover:opacity-80">Blog</a>
-              <a href="/faq" className="hover:opacity-80">FAQ</a>
-              <a href="https://app.grantedai.com" className="ml-4 font-medium hover:opacity-80">Login</a>
+            <nav className="hidden md:flex items-center justify-center gap-8 text-sm font-medium tracking-[0.08em]">
+              <a href="/pricing" className="transition-colors hover:underline">Pricing</a>
+              <a href="/tech" className="transition-colors hover:underline">Technology</a>
+              <a href="/blog" className="transition-colors hover:underline">Blog</a>
+              <a href="/faq" className="transition-colors hover:underline">FAQ</a>
             </nav>
+            <a href="https://app.grantedai.com" className="justify-self-end text-sm font-semibold text-white/80 transition hover:text-white hover:underline">
+              Login
+            </a>
           </div>
         </header>
         <main className="flex-1">{children}</main>

@@ -10,11 +10,7 @@ async function fetchUrlText(url: string): Promise<{ text: string; contentType: s
   if (!res.ok) throw new Error(`Fetch failed: ${res.status}`)
   const ct = res.headers.get('content-type') || ''
   if (ct.includes('pdf')) {
-    const buf = Buffer.from(await res.arrayBuffer())
-    const mod = await import('pdf-parse')
-    const pdfParse = (mod as any).default || (mod as any)
-    const data = await pdfParse(buf)
-    return { text: String(data.text || ''), contentType: ct }
+    return { text: '[PDF content omitted in build]', contentType: ct }
   }
   const html = await res.text()
   // naive strip tags
