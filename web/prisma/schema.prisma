@@ -85,6 +85,8 @@ model Project {
   sections        Section[]
   uploads         Upload[]
   projectMeta     ProjectMeta?
+  agentWorkflowRuns AgentWorkflowRun[]
+  chatKitSessions  ChatKitSession[]
 }
 
 model TemplateCategory {
@@ -299,6 +301,9 @@ model Embedding {
   chunk     String
   vector    Json
   createdAt DateTime @default(now())
+
+  @@index([projectId])
+  @@index([uploadId])
 }
 
 model ProjectMeta {
@@ -312,6 +317,55 @@ model ProjectMeta {
   programs        String?
   submissionLinks String?
   project         Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model AgentWorkflowRun {
+  id          String   @id @default(cuid())
+  workflowId  String
+  projectId   String?
+  status      String   @default("pending")
+  input       Json?
+  result      Json?
+  error       String?
+  startedAt   DateTime @default(now())
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  project Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  events  AgentWorkflowRunEvent[]
+
+  @@index([workflowId])
+  @@index([projectId])
+}
+
+model AgentWorkflowRunEvent {
+  id        String   @id @default(cuid())
+  runId     String
+  type      String
+  payload   Json?
+  createdAt DateTime @default(now())
+
+  run AgentWorkflowRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([runId, createdAt])
+}
+
+model ChatKitSession {
+  id                String   @id @default(cuid())
+  projectId         String?
+  workflowId        String
+  clientSecretHash  String
+  status            String   @default("active")
+  metadata          Json?
+  createdAt         DateTime @default(now())
+  expiresAt         DateTime?
+  revokedAt         DateTime?
+
+  project Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([workflowId])
+  @@index([projectId])
 }
 
 model RFP {
@@ -351,6 +405,7 @@ model AgentRun {
   docxUrl   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  eventLogs EventLog[]
 }
 
 model EventLog {
@@ -361,4 +416,8 @@ model EventLog {
   data       Json?
   requestId  String?
   createdAt  DateTime @default(now())
+
+  agentRun AgentRun? @relation(fields: [agentRunId], references: [id], onDelete: SetNull)
+
+  @@index([agentRunId])
 }

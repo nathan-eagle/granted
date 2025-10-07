@@ -46,12 +46,12 @@
 ---
 
 ## 4) State, storage & migrations
-- [ ] Audit Prisma models vs AgentKit state stores. Remove redundant JSON columns now covered by AgentKit memory (e.g., `rfpNormJson` if persisted in AgentKit) or document why they remain.
-- [ ] Add new tables/indices for bridging data (e.g., `agentkit_run_events`, `chatkit_sessions`). Generate migrations and run locally.
-- [ ] Implement backfill for existing projects (script to sync AgentKit state from Prisma legacy data once).
-- [ ] Write migration playbook in `docs/ux2-migration.md` describing rollback steps and data validation queries.
+- [ ] Audit Prisma models vs AgentKit state stores. Remove redundant JSON columns now covered by AgentKit (e.g., `rfpNormJson`, `coverageJson`, `factsJson`, `conflictLogJson`, `eligibilityJson`) or document why they remain.
+- [ ] Add new bridging tables for AgentKit runs (`AgentWorkflowRun`, `AgentWorkflowRunEvent`) and ChatKit sessions (`ChatKitSession`), including indices for workflow IDs and project references.
+- [ ] Generate migrations, apply locally, and implement backfill scripts to port existing `Project` JSON state into the new tables or AgentKit memory via the registry.
+- [ ] Document migration + rollback steps in `docs/ux2-migration.md`, including data validation queries and fallback procedures.
 - [ ] Run Playwright smoke tests + `npm run verify:ux2` to ensure schema changes do not break flows.
-- [ ] Push migration commits, check GitHub checks + Vercel preview (database migrations included) are green before continuing.
+- [ ] Push migration commits, wait for Vercel preview (with migrations) to go green, and resolve any issues before advancing.
 
 ---
 
