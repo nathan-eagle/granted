@@ -9,7 +9,7 @@
 - [x] Read the **ChatKit workspace guide** and component API docs. Record required providers, hooks, and layout guidelines in the same notes file. *(See ChatKit embedding details captured in `docs/agentkit-notes.md`.)*
 - [x] Sync with Product/Support on Rev‑4 scope (multi-doc bundles, compliance simulator, Fix-next, eligibility gating, eval gates) to confirm no new requirements. *(See `docs/rev4-stakeholder-plan.md` for documented scope + pending async sign-offs.)*
 - [x] Schedule staging + production rollout checkpoints with Ops (who watches each deploy, rollback plan). *(Checkpoint dates + owners captured in `docs/rev4-stakeholder-plan.md`.)*
-- [x] Push branch + open draft PR summarizing findings before coding begins; ensure Vercel preview build completes green. *(Draft PR https://github.com/nathan-eagle/granted/pull/17 with Vercel preview run `BmchQ6vKpMuPqKfoAJUyK25y336m` reported ✅.)*
+- [x] Push branch + open draft PR summarizing findings before coding begins; ensure Vercel preview build completes green. *(Draft PR https://github.com/nathan-eagle/granted/pull/17 with Vercel preview runs `BmchQ6vKpMuPqKfoAJUyK25y336m` and `JDAPVQ58FQNUuEHZnJxiVKKyJM7U` reporting ✅.)*
 - [x] After any fixes, `git push` the research commit and confirm the associated Vercel preview deploy is green before continuing. *(Branch `ux2-rev4/research` pushed; `gh pr checks 17` shows Vercel deploy completed.)*
 
 ---
