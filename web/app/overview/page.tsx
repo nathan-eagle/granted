@@ -30,7 +30,7 @@ function LegacyDashboard() {
 
 export default function OverviewPage() {
   const useUx2 =
-    process.env.NEXT_PUBLIC_UX2_REV3 === "1" || process.env.UX2_REV3 === "1"
+    process.env["NEXT_PUBLIC_UX2_REV3"] === "1" || process.env["UX2_REV3"] === "1"
 
   return <PageShell>{useUx2 ? <Workspace /> : <LegacyDashboard />}</PageShell>
 }
