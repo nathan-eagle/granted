@@ -62,6 +62,9 @@
 - [ ] Validate merge order logic using AgentKit-provided provenance (version/date) and update tests to cover FAQ/addendum flows.
 - [ ] Document connector governance (logging, retention) in `docs/security-governance.md`.
 - [ ] Push ingestion updates; confirm Vercel preview successfully parses sample bundles end-to-end. Fix issues until deploy stays green.
+- [ ] Provision OpenAI vector stores for project knowledge (RFP + org facts) and upload normalized artifacts during intake.
+- [ ] Enable the hosted `file_search` tool (via AgentKit connector) so ChatKit/Agents SDK runs can ground responses on retrieved chunks.
+- [ ] Store vector store + file search metadata (file ids, filters) in Prisma (`AgentWorkflowRun` events or dedicated tables) for replay/debug.
 
 ---
 
@@ -111,6 +114,9 @@
 - [ ] Add dashboards/alerts (Datadog, Grafana) for AgentKit metrics, ChatKit errors, and Vercel runtime health.
 - [ ] Run load test (parallel runs) to validate quotas and throttling; document mitigations.
 - [ ] Share SLO report with stakeholders and capture sign-off.
+- [ ] Stand up an OpenAI eval dataset covering common RFP scenarios (ingestion, drafting, compliance) and wire to the Evaluations API.
+- [ ] Configure graders (score model + trace grading) to score coverage, factuality, and compliance; fail builds on regression.
+- [ ] Feed eval signals back into prompt optimization workflow (Prompt Optimizer + annotations) once MVP stabilizes.
 - [ ] Push observability changes; verify green Vercel deploy and monitoring dashboards populate as expected. Fix before advancing.
 
 ---
