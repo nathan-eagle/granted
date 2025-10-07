@@ -6,6 +6,15 @@ import {
   RfpNormV1Schema,
   SectionDraftV1Schema,
 } from "../contracts"
+import {
+  draftSection,
+  exportDocx,
+  ingestRfpBundle,
+  mineFacts,
+  normalizeRfp,
+  scoreCoverage,
+  tightenSection,
+} from "./actions"
 
 export type AgentActionDefinition = {
   name: string
@@ -112,15 +121,83 @@ export const exportDocxAction: AgentActionDefinition = {
   }),
 }
 
-export const agentActions: AgentActionDefinition[] = [
-  ingestRfpBundleAction,
-  normalizeRfpAction,
-  mineFactsAction,
-  scoreCoverageAction,
-  draftSectionAction,
-  tightenSectionAction,
-  exportDocxAction,
-]
+const actionDefinitionMap = {
+  ingest_rfp_bundle: ingestRfpBundleAction,
+  normalize_rfp: normalizeRfpAction,
+  mine_facts: mineFactsAction,
+  score_coverage: scoreCoverageAction,
+  draft_section: draftSectionAction,
+  tighten_section: tightenSectionAction,
+  export_docx: exportDocxAction,
+} as const satisfies Record<string, AgentActionDefinition>
+
+export type AgentActionName = keyof typeof actionDefinitionMap
+export type AgentActionEntry<TName extends AgentActionName> = typeof actionDefinitionMap[TName]
+export type AgentActionInput<TName extends AgentActionName> = z.input<AgentActionEntry<TName>["input"]>
+export type AgentActionOutput<TName extends AgentActionName> = z.output<AgentActionEntry<TName>["output"]>
+
+
+export const agentActions: AgentActionDefinition[] = Object.values(actionDefinitionMap)
+
+type RegisteredAgentTool = {
+  definition: AgentActionDefinition
+  execute: (input: unknown) => Promise<unknown>
+}
+
+const createRegisteredTool = <Name extends AgentActionName>(
+  name: Name,
+  handler: (input: AgentActionInput<Name>) => Promise<AgentActionOutput<Name>>
+): RegisteredAgentTool => {
+  const definition = actionDefinitionMap[name]
+  const runner = async (rawInput: unknown) => {
+    const parsedInput = definition.input.parse(rawInput) as AgentActionInput<Name>
+    const result = await handler(parsedInput)
+    return definition.output.parse(result)
+  }
+  return {
+    definition,
+    execute: runner,
+  }
+}
+
+const toolFactory = {
+  ingest_rfp_bundle: createRegisteredTool("ingest_rfp_bundle", async input =>
+    ingestRfpBundleAction.output.parse(await ingestRfpBundle(input))
+  ),
+  normalize_rfp: createRegisteredTool("normalize_rfp", async input =>
+    normalizeRfpAction.output.parse(await normalizeRfp(input))
+  ),
+  mine_facts: createRegisteredTool("mine_facts", async input =>
+    mineFactsAction.output.parse(await mineFacts(input))
+  ),
+  score_coverage: createRegisteredTool("score_coverage", async input =>
+    scoreCoverageAction.output.parse(await scoreCoverage(input))
+  ),
+  draft_section: createRegisteredTool("draft_section", async input =>
+    draftSectionAction.output.parse(await draftSection(input))
+  ),
+  tighten_section: createRegisteredTool("tighten_section", async input =>
+    tightenSectionAction.output.parse(await tightenSection(input))
+  ),
+  export_docx: createRegisteredTool("export_docx", async input =>
+    exportDocxAction.output.parse(await exportDocx(input))
+  ),
+} as const
+
+export type AgentToolRegistry = typeof toolFactory
+
+export const agentKitTools: AgentToolRegistry = toolFactory
+
+export async function executeAgentAction<TAction extends AgentActionName>(action: TAction, input: AgentActionInput<TAction>): Promise<AgentActionOutput<TAction>> {
+  const selected = agentKitTools[action]
+  if (!selected) {
+    throw new Error(`AgentKit action '${action}' is not registered`)
+  }
+  const result = await selected.execute(input)
+  return result as AgentActionOutput<TAction>
+}
+
+export const agentkitWorkflowId = process.env.AGENTKIT_WORKFLOW_ID ?? "wf_undefined"
 
 export const AgentStateSchema = z.object({
   projectId: z.string(),

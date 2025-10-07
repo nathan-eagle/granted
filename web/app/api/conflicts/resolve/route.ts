@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { Prisma } from "@prisma/client"
 import { withApiInstrumentation } from "@/lib/api/middleware"
-import { scoreCoverage } from "@/lib/agent/actions"
+import { executeAgentAction, type AgentActionInput } from "@/lib/agent/agentkit"
 
 export const POST = withApiInstrumentation(async (req: NextRequest) => {
   const body = await req.json().catch(() => ({}))
@@ -36,7 +36,10 @@ export const POST = withApiInstrumentation(async (req: NextRequest) => {
     data: { conflictLogJson: updatedConflictLog as Prisma.InputJsonValue },
   })
 
-  const coverage = await scoreCoverage({ projectId })
+  const coverage = await executeAgentAction(
+    "score_coverage",
+    { projectId } as AgentActionInput<"score_coverage">
+  )
 
   return NextResponse.json({ status: "ok", coverage })
 })
