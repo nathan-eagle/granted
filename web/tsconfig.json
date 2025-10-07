@@ -33,6 +33,9 @@
       ],
       "@/components/*": [
         "components/*"
+      ],
+      "@agentkit/types": [
+        "types/generated/agentkit/index.d.ts"
       ]
     },
     "plugins": [

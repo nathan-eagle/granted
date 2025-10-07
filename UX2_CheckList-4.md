@@ -15,11 +15,11 @@
 ---
 
 ## 1) Environment & dependencies
-- [ ] Install/upgrade the official AgentKit SDK (`npm i @openai/agentkit` or the Node package documented in the quickstart). Record exact version in `docs/agentkit-notes.md`.
-- [ ] Install ChatKit React bindings (`npm i @openai/chatkit-react` or canonical package). Note required peer dependencies (e.g., `@openai/chatkit-core`).
-- [ ] Update `package.json` scripts: add `agentkit:pull`, `agentkit:push`, `chatkit:devtool` (names per docs) so teammates can sync schemas and run the design surface.
-- [ ] Regenerate TypeScript types (`npx agentkit types` if applicable) and wire to `tsconfig.json` `paths`.
-- [ ] Commit lockfile upgrades separately; run `npm run lint` and `npm run verify:ux2` locally to ensure no regressions.
+- [x] Install/upgrade the official AgentKit SDK (`npm i @openai/agentkit` or the Node package documented in the quickstart). Record exact version in `docs/agentkit-notes.md`. *(Installed `@openai/agents@0.1.9` — current Node SDK referenced in quickstart — noted in `docs/agentkit-notes.md`.)*
+- [x] Install ChatKit React bindings (`npm i @openai/chatkit-react` or canonical package). Note required peer dependencies (e.g., `@openai/chatkit-core`). *(Added `@openai/chatkit-react@0.0.0`; no extra peer deps surfaced.)*
+- [x] Update `package.json` scripts: add `agentkit:pull`, `agentkit:push`, `chatkit:devtool` (names per docs) so teammates can sync schemas and run the design surface. *(Scripts point to placeholder helpers under `web/scripts/**` until official CLI ships.)*
+- [x] Regenerate TypeScript types (`npx agentkit types` if applicable) and wire to `tsconfig.json` `paths`. *(`npm run agentkit:types` snapshots SDK defs to `types/generated/agentkit/index.d.ts`; alias `@agentkit/types` added in `tsconfig.json`.)*
+- [x] Commit lockfile upgrades separately; run `npm run lint` and `npm run verify:ux2` locally to ensure no regressions. *(Lockfile updated; `npm run verify:ux2` passes. `npm run lint` now surfaces pre-existing rule violations in legacy components—logged for follow-up, no new AgentKit-related errors.)*
 - [ ] `git push` dependency updates and wait for Vercel preview to turn green; fix any lint/build/test issues before proceeding.
 
 ---

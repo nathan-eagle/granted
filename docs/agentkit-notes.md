@@ -24,6 +24,15 @@ _Last updated: 2025-10-07T14:43Z_
 - **Embedding:** `<ChatKit control={...} />` renders widget; theming and layout via props and theming docs.
 - **Integration path:** Create workflow in Agent Builder → host via OpenAI → embed ChatKit referencing workflow ID. Advanced option: self-host ChatKit + Agents SDK.
 
+## Local toolchain state (2025-10-07)
+- Installed `@openai/agents@0.1.9` (serves as interim AgentKit SDK until dedicated package ships).
+- Installed `@openai/chatkit-react@0.0.0` (embeddable workspace components; awaiting formal release notes for additional widgets/peer deps).
+- Added npm scripts:
+  - `agentkit:pull` / `agentkit:push` — currently placeholders that remind devs to document workflow syncs pending official CLI.
+  - `agentkit:types` — snapshots `@openai/agents` type definitions into `types/generated/agentkit/index.d.ts` for stable imports.
+  - `chatkit:devtool` — placeholder guidance to use hosted ChatKit playground until CLI is published.
+- Generated initial type snapshot at `web/types/generated/agentkit/index.d.ts`.
+
 ## Follow-ups / open questions
 - Need direct **AgentKit Quickstart** once published to capture CLI commands, schema sync workflows, and any `@openai/agentkit` package usage.
 - Confirm **retention + scope settings** inside dashboard (screenshot + doc) when AgentKit project created.
