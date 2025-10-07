@@ -46,12 +46,12 @@
 ---
 
 ## 4) State, storage & migrations
-- [ ] Audit Prisma models vs AgentKit state stores. Remove redundant JSON columns now covered by AgentKit (e.g., `rfpNormJson`, `coverageJson`, `factsJson`, `conflictLogJson`, `eligibilityJson`) or document why they remain.
-- [ ] Add new bridging tables for AgentKit runs (`AgentWorkflowRun`, `AgentWorkflowRunEvent`) and ChatKit sessions (`ChatKitSession`), including indices for workflow IDs and project references.
-- [ ] Generate migrations, apply locally, and implement backfill scripts to port existing `Project` JSON state into the new tables or AgentKit memory via the registry.
-- [ ] Document migration + rollback steps in `docs/ux2-migration.md`, including data validation queries and fallback procedures.
-- [ ] Run Playwright smoke tests + `npm run verify:ux2` to ensure schema changes do not break flows.
-- [ ] Push migration commits, wait for Vercel preview (with migrations) to go green, and resolve any issues before advancing.
+- [x] Audit Prisma models vs AgentKit state stores. Remove redundant JSON columns now covered by AgentKit (e.g., `rfpNormJson`, `coverageJson`, `factsJson`, `conflictLogJson`, `eligibilityJson`) or document why they remain. *(Audit captured in `docs/ux2-migration.md`; legacy columns flagged for eventual removal post backfill.)*
+- [x] Add new bridging tables for AgentKit runs (`AgentWorkflowRun`, `AgentWorkflowRunEvent`) and ChatKit sessions (`ChatKitSession`), including indices for workflow IDs and project references. *(See migration `20251007180142_agentkit_state_refactor`.)*
+- [x] Generate migrations, apply locally, and implement backfill scripts to port existing `Project` JSON state into the new tables or AgentKit memory via the registry. *(Migration created + `scripts/migrations/backfill-agentkit-state.ts` emitted for replay.)*
+- [x] Document migration + rollback steps in `docs/ux2-migration.md`, including data validation queries and fallback procedures. *(Doc now outlines rollout + rollback plan.)*
+- [ ] Run Playwright smoke tests + `npm run verify:ux2` to ensure schema changes do not break flows. *(`npm run verify:ux2` ✅; Playwright smoke pending.)*
+- [x] Push migration commits, wait for Vercel preview (with migrations) to go green, and resolve any issues before advancing. *(Branch `ux2-rev4/research`; Vercel preview `5Y36a3dsfVzmoEEzAjFr63ksyc3A` ✅.)*
 
 ---
 
