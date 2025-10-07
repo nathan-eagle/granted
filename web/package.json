@@ -15,6 +15,7 @@
     "agentkit:pull": "node scripts/agentkit/pull.js",
     "agentkit:push": "node scripts/agentkit/push.js",
     "agentkit:types": "node scripts/agentkit/generate-types.mjs",
+    "agentkit:check": "node scripts/check-agentkit.js",
     "chatkit:devtool": "node scripts/chatkit/devtool.js"
   },
   "dependencies": {

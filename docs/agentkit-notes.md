@@ -31,9 +31,11 @@ _Last updated: 2025-10-07T14:43Z_
   - `agentkit:pull` / `agentkit:push` — currently placeholders that remind devs to document workflow syncs pending official CLI.
   - `agentkit:types` — snapshots `@openai/agents` type definitions into `types/generated/agentkit/index.d.ts` for stable imports.
   - `chatkit:devtool` — placeholder guidance to use hosted ChatKit playground until CLI is published.
+- `agentkit:check` — validates required env vars and, once AgentKit project endpoints are public, will GET `/agentkit/projects/:id`. For now run with `AGENTKIT_CHECK_SKIP_NETWORK=1`.
 - Generated initial type snapshot at `web/types/generated/agentkit/index.d.ts`.
 
 ## Follow-ups / open questions
 - Need direct **AgentKit Quickstart** once published to capture CLI commands, schema sync workflows, and any `@openai/agentkit` package usage.
 - Confirm **retention + scope settings** inside dashboard (screenshot + doc) when AgentKit project created.
 - Identify **eval tooling endpoints** (datasets, trace grading, prompt optimizer) for automation scripts.
+- Provision AgentKit project `granted-ux4` + ChatKit workflow IDs; update 1Password entry and Vercel envs when OpenAI dashboard access is available.
