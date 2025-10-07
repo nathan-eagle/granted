@@ -34,6 +34,10 @@ _Last updated: 2025-10-07T14:43Z_
 - `agentkit:check` — validates required env vars and, once AgentKit project endpoints are public, will GET `/agentkit/projects/:id`. For now run with `AGENTKIT_CHECK_SKIP_NETWORK=1`.
 - Generated initial type snapshot at `web/types/generated/agentkit/index.d.ts`.
 
+## Provisioning tracker
+- **AgentKit workflow**: `wf_68e537c4e69881908e65357e36a28f3c08492e7f3aee14b4` (Rev‑4 stub created in Agent Builder on 2025‑10‑07). Add to env vars: `AGENTKIT_WORKFLOW_ID` and `CHATKIT_WORKFLOW_ID` (until a separate ChatKit workflow is created, reuse this ID).
+- **AgentKit project ID**: _TBD_ — blocked on dashboard access; once issued, update `.env`, Vercel envs, and rerun `npm run agentkit:check` without the skip flag.
+
 ## Follow-ups / open questions
 - Need direct **AgentKit Quickstart** once published to capture CLI commands, schema sync workflows, and any `@openai/agentkit` package usage.
 - Confirm **retention + scope settings** inside dashboard (screenshot + doc) when AgentKit project created.
