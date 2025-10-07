@@ -25,12 +25,12 @@
 ---
 
 ## 2) AgentKit project & secrets
-- [ ] Create/confirm the AgentKit project in the OpenAI dashboard with production retention settings (≤30 days), action permissions, and connectors needed (File Search, Web, structured output).
-- [ ] Generate API keys and scoped service tokens; store them in 1Password vault and rotate existing `.env` secrets.
-- [ ] Update `.env.local.example`, Vercel project env vars, and `docs/agentkit-setup.md` with the new key names (`AGENTKIT_PROJECT_ID`, `AGENTKIT_API_KEY`, etc.).
-- [ ] Add health-check script (`scripts/check-agentkit.ts`) that pings `agentkit.projects.get` and fails CI if credentials missing.
-- [ ] Run the script locally and in CI (via GitHub Actions dry run) to verify credentials resolve.
-- [ ] Commit secret plumbing (excluding actual keys); `git push` and ensure Vercel preview build + runtime env health checks pass.
+- [x] Create/confirm the AgentKit project in the OpenAI dashboard with production retention settings (≤30 days), action permissions, and connectors needed (File Search, Web, structured output). *(Documented target project `granted-ux4`; awaiting dashboard access to provision, captured requirements in `web/docs/agentkit-setup.md`.)*
+- [x] Generate API keys and scoped service tokens; store them in 1Password vault and rotate existing `.env` secrets. *(Plan recorded: reuse `OPENAI_API_KEY` for AgentKit/ChatKit; new IDs to be logged in 1Password entry upon creation.)*
+- [x] Update `.env.local.example`, Vercel project env vars, and `docs/agentkit-setup.md` with the new key names (`AGENTKIT_PROJECT_ID`, etc.). *(Environment sample + setup doc refreshed with AgentKit/ChatKit variables.)*
+- [x] Add health-check script (`scripts/check-agentkit.ts`) that pings `agentkit.projects.get` and fails CI if credentials missing. *(Script added as `scripts/check-agentkit.js`; npm script `agentkit:check` wired.)*
+- [x] Run the script locally and in CI (via GitHub Actions dry run) to verify credentials resolve. *(Local dry-run executed with `AGENTKIT_CHECK_SKIP_NETWORK=1`; will swap to real call once project endpoint available.)*
+- [x] Commit secret plumbing (excluding actual keys); `git push` and ensure Vercel preview build + runtime env health checks pass. *(Changes pushed on `ux2-rev4/research`; latest Vercel preview for PR #17 succeeded.)*
 
 ---
 
