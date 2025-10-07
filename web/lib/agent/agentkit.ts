@@ -6,6 +6,7 @@ import {
   RfpNormV1Schema,
   SectionDraftV1Schema,
 } from "../contracts"
+import { tool } from "@openai/agents"
 import {
   draftSection,
   exportDocx,
@@ -23,21 +24,19 @@ export type AgentActionDefinition = {
   output: z.ZodTypeAny
 }
 
+const FileDescriptorSchema = z.object({
+  uploadId: z.string().nullish(),
+  path: z.string().nullish(),
+  name: z.string().nullish(),
+})
+
 export const ingestRfpBundleAction: AgentActionDefinition = {
   name: "ingest_rfp_bundle",
   description: "Ingest a set of RFP files and/or URLs and return upload identifiers for downstream processing.",
   input: z.object({
     projectId: z.string(),
-    files: z
-      .array(
-        z.object({
-          uploadId: z.string().optional(),
-          path: z.string().optional(),
-          name: z.string().optional(),
-        })
-      )
-      .optional(),
-    urls: z.array(z.string().url()).optional(),
+    files: z.array(FileDescriptorSchema).default([]),
+    urls: z.array(z.string().url()).default([]),
   }),
   output: z.object({
     uploadIds: z.array(z.string()),
@@ -91,14 +90,14 @@ export const tightenSectionAction: AgentActionDefinition = {
     section_key: z.string(),
     simulator: z
       .object({
-        font: z.string().optional(),
-        size: z.number().optional(),
-        spacing: z.string().optional(),
-        margins: z.number().optional(),
-        hard_word_limit: z.number().optional(),
-        soft_page_limit: z.number().optional(),
+        font: z.string().nullish(),
+        size: z.number().nullish(),
+        spacing: z.string().nullish(),
+        margins: z.number().nullish(),
+        hard_word_limit: z.number().nullish(),
+        soft_page_limit: z.number().nullish(),
       })
-      .optional(),
+      .default({}),
   }),
   output: z.object({
     markdown: z.string(),
@@ -131,7 +130,104 @@ const actionDefinitionMap = {
   export_docx: exportDocxAction,
 } as const satisfies Record<string, AgentActionDefinition>
 
-export type AgentActionName = keyof typeof actionDefinitionMap
+type ActionName = keyof typeof actionDefinitionMap
+
+const toolParameterSchemas: Record<ActionName, any> = {
+  ingest_rfp_bundle: {
+    type: "object",
+    additionalProperties: false,
+    required: ["projectId", "files", "urls"],
+    properties: {
+      projectId: { type: "string" },
+      files: {
+        type: "array",
+        default: [],
+        items: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            uploadId: { type: "string", nullable: true },
+            path: { type: "string", nullable: true },
+            name: { type: "string", nullable: true },
+          },
+          required: ["uploadId", "path", "name"],
+        },
+      },
+      urls: {
+        type: "array",
+        default: [],
+        items: { type: "string" },
+      },
+    },
+  },
+  normalize_rfp: {
+    type: "object",
+    additionalProperties: false,
+    required: ["projectId", "uploadIds"],
+    properties: {
+      projectId: { type: "string" },
+      uploadIds: { type: "array", items: { type: "string" } },
+    },
+  },
+  mine_facts: {
+    type: "object",
+    additionalProperties: false,
+    required: ["projectId", "uploadIds"],
+    properties: {
+      projectId: { type: "string" },
+      uploadIds: { type: "array", items: { type: "string" } },
+    },
+  },
+  score_coverage: {
+    type: "object",
+    additionalProperties: false,
+    required: ["projectId"],
+    properties: {
+      projectId: { type: "string" },
+    },
+  },
+  draft_section: {
+    type: "object",
+    additionalProperties: false,
+    required: ["projectId", "section_key"],
+    properties: {
+      projectId: { type: "string" },
+      section_key: { type: "string" },
+    },
+  },
+  tighten_section: {
+    type: "object",
+    additionalProperties: false,
+    required: ["projectId", "section_key", "simulator"],
+    properties: {
+      projectId: { type: "string" },
+      section_key: { type: "string" },
+      simulator: {
+        type: "object",
+        additionalProperties: false,
+        default: {},
+        properties: {
+          font: { type: "string", nullable: true },
+          size: { type: "number", nullable: true },
+          spacing: { type: "string", nullable: true },
+          margins: { type: "number", nullable: true },
+          hard_word_limit: { type: "number", nullable: true },
+          soft_page_limit: { type: "number", nullable: true },
+        },
+      },
+    },
+  },
+  export_docx: {
+    type: "object",
+    additionalProperties: false,
+    required: ["projectId"],
+    properties: {
+      projectId: { type: "string" },
+    },
+  },
+}
+
+export type AgentActionName = ActionName
 export type AgentActionEntry<TName extends AgentActionName> = typeof actionDefinitionMap[TName]
 export type AgentActionInput<TName extends AgentActionName> = z.input<AgentActionEntry<TName>["input"]>
 export type AgentActionOutput<TName extends AgentActionName> = z.output<AgentActionEntry<TName>["output"]>
@@ -141,6 +237,7 @@ export const agentActions: AgentActionDefinition[] = Object.values(actionDefinit
 
 type RegisteredAgentTool = {
   definition: AgentActionDefinition
+  tool: ReturnType<typeof tool>
   execute: (input: unknown) => Promise<unknown>
 }
 
@@ -150,12 +247,20 @@ const createRegisteredTool = <Name extends AgentActionName>(
 ): RegisteredAgentTool => {
   const definition = actionDefinitionMap[name]
   const runner = async (rawInput: unknown) => {
-    const parsedInput = definition.input.parse(rawInput) as AgentActionInput<Name>
-    const result = await handler(parsedInput)
+    const parsed = definition.input.parse(rawInput) as AgentActionInput<Name>
+    const normalized = normalizeInputForAction(name, parsed)
+    const result = await handler(normalized)
     return definition.output.parse(result)
   }
   return {
     definition,
+    tool: tool({
+      name: definition.name,
+      description: definition.description,
+      parameters: toolParameterSchemas[name],
+      strict: false,
+      execute: runner,
+    }),
     execute: runner,
   }
 }
@@ -197,6 +302,10 @@ export async function executeAgentAction<TAction extends AgentActionName>(action
   return result as AgentActionOutput<TAction>
 }
 
+export function getAgentKitToolset() {
+  return Object.values(agentKitTools).map(entry => entry.tool)
+}
+
 export const agentkitWorkflowId = process.env.AGENTKIT_WORKFLOW_ID ?? "wf_undefined"
 
 export const AgentStateSchema = z.object({
@@ -210,3 +319,31 @@ export const AgentStateSchema = z.object({
 })
 
 export type AgentState = z.infer<typeof AgentStateSchema>
+function normalizeInputForAction<Name extends AgentActionName>(name: Name, input: AgentActionInput<Name>): AgentActionInput<Name> {
+  if (name === "ingest_rfp_bundle") {
+    const value = input as AgentActionInput<"ingest_rfp_bundle">
+    type FileEntry = NonNullable<AgentActionInput<"ingest_rfp_bundle">["files"]>[number]
+    const sanitizedFiles = ((value.files ?? []) as FileEntry[]).map(file => ({
+      uploadId: file?.uploadId ?? undefined,
+      path: file?.path ?? undefined,
+      name: file?.name ?? undefined,
+    }))
+    return {
+      ...value,
+      files: sanitizedFiles,
+      urls: value.urls ?? [],
+    } as AgentActionInput<Name>
+  }
+  if (name === "tighten_section") {
+    const value = input as AgentActionInput<"tighten_section">
+    const simulator = value.simulator ?? {}
+    const sanitized = Object.fromEntries(
+      Object.entries(simulator).filter((entry): entry is [string, unknown] => {
+        const [, v] = entry
+        return v !== null && v !== undefined
+      })
+    ) as AgentActionInput<Name>["simulator"]
+    return { ...value, simulator: sanitized } as AgentActionInput<Name>
+  }
+  return input
+}

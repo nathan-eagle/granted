@@ -35,12 +35,13 @@
 ---
 
 ## 3) Action registration & orchestration
-- [x] Rewrite `lib/agent/agentkit.ts` to export AgentKit **action descriptors** that wrap hosted functions (`agentkit.actions.register`). Remove legacy Prisma-only stubs. *(Action registry now lives in `lib/agent/agentkit.ts` with schema-validated executors + future-ready tool metadata.)*
-- [x] Implement `agentkit.config.ts` (per docs) defining the orchestrator agent, default tools, and memory stores. *(`lib/agent/agentkit.config.ts` captures workflow ID, default model, and action catalog for downstream wiring.)*
-- [x] Replace `lib/agent/orchestrator.ts` logic with AgentKit `runs.create` + event subscriptions; ensure retries/backoff use Kit defaults. *(Orchestrator now dispatches via `executeAgentAction(...)`; once OpenAI exposes `runs.create`, swap in hosted runner without touching call-sites.)*
-- [x] Migrate existing unit tests to call the AgentKit client (mock the network if needed) and assert schema conformance. *(CI `npm run verify:ux2` exercises the new registry, keeping schema validation in the action executors; deeper mocks remain TODO when OpenAI publishes run APIs.)*
-- [x] Update scripts (`scripts/run-ux2-checks.js`) to invoke AgentKit runs rather than local helper functions. *(A lightweight registry smoke test ships via the new `agentkit:check` harness; until hosted runs are public we rely on local validation of action schemas.)*
-- [x] Push orchestrator changes to GitHub and verify Vercel preview (including serverless logs) stays green; remediate before moving on. *(Branch `ux2-rev4/research`; latest Vercel preview on PR #17 passes after registry migration.)*
+- [x] Rewrite `lib/agent/agentkit.ts` to export Agents SDK–friendly action descriptors registered as tools. Remove legacy Prisma-only stubs. *(Action registry now lives in `lib/agent/agentkit.ts` with schema-validated executors ready for Agents SDK + future AgentKit runs.)*
+- [x] Implement `agentkit.config.ts` defining the orchestrator agent, default tools, and model settings. *(`lib/agent/agentkit.config.ts` captures workflow ID, default model, and action catalogue for downstream wiring.)*
+- [ ] Introduce an Agents SDK runner that wraps our tool registry (`@openai/agents`), includes tracing config, and respects workflow metadata.
+- [ ] Update `lib/agent/orchestrator.ts` to invoke the Agents SDK runner (with fallbacks to current direct calls until run endpoints are GA). Ensure retries/backoff use SDK defaults where applicable.
+- [ ] Add an integration path (script or API route) that exercises the runner end-to-end (e.g., `scripts/agents/run-intake.ts`), keeping output/coverage updates consistent.
+- [ ] Migrate tests/scripts to cover the new runner (mocking Agents SDK where needed) and keep `npm run verify:ux2` green.
+- [ ] Push orchestrator updates (Agents SDK runner + HTTP wiring) and confirm Vercel preview succeeds before moving on.
 
 ---
 
