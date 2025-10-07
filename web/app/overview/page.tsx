@@ -3,6 +3,9 @@ import Link from "next/link"
 import PageShell from "../../components/layout/PageShell"
 import Workspace from "@/components/ux2/Workspace"
 
+export const dynamic = "force-dynamic"
+export const revalidate = 0
+
 function LegacyDashboard() {
   return (
     <div className="mx-auto max-w-screen-2xl space-y-6">
@@ -26,7 +29,8 @@ function LegacyDashboard() {
 }
 
 export default function OverviewPage() {
-  const useUx2 = process.env.NEXT_PUBLIC_UX2_REV3 === "1"
+  const useUx2 =
+    process.env.NEXT_PUBLIC_UX2_REV3 === "1" || process.env.UX2_REV3 === "1"
 
   return <PageShell>{useUx2 ? <Workspace /> : <LegacyDashboard />}</PageShell>
 }
