@@ -21,10 +21,10 @@
 ---
 
 ## 2) Data model & persistence
-- [ ] Prune unused ChatKit tables/models (`ChatKitSession`, related relations) or mark deprecated in Prisma schema.
-- [ ] Add minimal `AgentSession` model `{ id, projectId, agentRunId, transcriptJson, createdAt }` for code-driven sessions.
-- [ ] Generate Prisma migration; rerun `npx prisma generate`.
-- [ ] Update `@/lib/prisma` selectors to reference the new session table.
+- [x] Prune unused ChatKit tables/models (`ChatKitSession`, related relations) or mark deprecated in Prisma schema. *(Removed relation from `Project` and dropped the table.)*
+- [x] Add minimal `AgentSession` model `{ id, projectId, agentRunId, transcriptJson, createdAt }` for code-driven sessions. *(Introduced `AgentSession` with optional `memoryId`/`updatedAt` fields.)*
+- [x] Generate Prisma migration; rerun `npx prisma generate`.
+- [x] Update `@/lib/prisma` selectors to reference the new session table. *(Created `lib/agent/sessions.ts` for CRUD helpers.)*
 
 ---
 

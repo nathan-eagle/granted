@@ -86,7 +86,9 @@ model Project {
   uploads         Upload[]
   projectMeta     ProjectMeta?
   agentWorkflowRuns AgentWorkflowRun[]
-  chatKitSessions  ChatKitSession[]
+  agentSessions  AgentSession[]
+  knowledgeBases  AgentKnowledgeBase[]
+  conflictLogs    AgentConflictLog[]
 }
 
 model TemplateCategory {
@@ -282,6 +284,7 @@ model Upload {
   text          String?
   Project       Project         @relation(fields: [projectId], references: [id])
   SectionSource SectionSource[]
+  knowledgeBaseFiles AgentKnowledgeBaseFile[]
 }
 
 model SectionSource {
@@ -351,21 +354,76 @@ model AgentWorkflowRunEvent {
   @@index([runId, createdAt])
 }
 
-model ChatKitSession {
-  id                String   @id @default(cuid())
-  projectId         String?
-  workflowId        String
-  clientSecretHash  String
-  status            String   @default("active")
-  metadata          Json?
-  createdAt         DateTime @default(now())
-  expiresAt         DateTime?
-  revokedAt         DateTime?
+model AgentKnowledgeBase {
+  id            String   @id @default(cuid())
+  projectId     String
+  provider      String   @default("openai")
+  vectorStoreId String
+  status        String   @default("pending")
+  metadata      Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  project Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  files   AgentKnowledgeBaseFile[]
 
-  @@index([workflowId])
+  @@unique([projectId])
+  @@index([vectorStoreId])
+}
+
+model AgentKnowledgeBaseFile {
+  id               String   @id @default(cuid())
+  knowledgeBaseId  String
+  uploadId         String?
+  vectorFileId     String?
+  connectorId      String?
+  source           String
+  version          String?
+  releasedAt       DateTime?
+  metadata         Json?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  knowledgeBase AgentKnowledgeBase @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
+  upload         Upload?             @relation(fields: [uploadId], references: [id], onDelete: SetNull)
+
+  @@index([knowledgeBaseId])
+  @@index([uploadId])
+  @@unique([knowledgeBaseId, uploadId])
+}
+
+model AgentConflictLog {
+  id          String   @id @default(cuid())
+  projectId   String
+  key         String
+  previous    Json?
+  next        Json?
+  status      String   @default("open")
+  resolution  String?
+  resolvedAt  DateTime?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, key])
+  @@index([projectId, status])
+}
+
+model AgentSession {
+  id             String   @id @default(cuid())
+  projectId      String
+  agentRunId     String?
+  memoryId       String?
+  transcriptJson Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
   @@index([projectId])
+  @@unique([agentRunId])
 }
 
 model RFP {

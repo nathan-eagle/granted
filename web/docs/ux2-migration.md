@@ -27,21 +27,20 @@ _Last updated: 2025-10-07T17:55Z_
      - `payload` (jsonb).
      - `createdAt`.
      - Index on `(runId, createdAt)`.
-3. **ChatKit sessions**
-   - Table `ChatKitSession`:
+3. **Agent sessions**
+   - Table `AgentSession`:
      - `id` (cuid).
-     - `projectId` FK (nullable).
-     - `workflowId` (string).
-     - `clientSecretHash` (string) — hashed client secret.
-     - `status` (enum/text) — `active|expired|revoked`.
-     - `metadata` (jsonb).
-     - `createdAt`, `expiresAt`, `revokedAt`.
+     - `projectId` FK (required).
+     - `agentRunId` (string, nullable).
+     - `memoryId` (string, nullable).
+     - `transcriptJson` (jsonb) — array entries `{ role, content, at }`.
+     - `createdAt`, `updatedAt`.
 
 ## Backfill strategy
 - For existing projects:
   1. Snapshot current JSON fields and write them into `AgentWorkflowRun` records with synthetic run IDs (`legacy_snapshot` type) to preserve history.
   2. Generate `AgentWorkflowRunEvent` entries for conflicts/eligibility items so the UI has a contiguous event timeline.
-  3. For ChatKit, create placeholder `ChatKitSession` rows for active users (if applicable) with metadata referencing the legacy `Project.meta.chat` field.
+  3. For Rev5, create `AgentSession` rows for active users (if applicable) with metadata referencing the legacy `Project.meta.chat` field.
 
 ## Migration steps
 1. Generate Prisma migration `agentkit_state_refactor` introducing new tables and keeping legacy columns.
