@@ -1,5 +1,3 @@
-import { notFound } from "next/navigation"
-
 import { prisma } from "@/lib/prisma"
 import type { CoverageV1 } from "@/lib/contracts"
 import { ConflictLogDrawer } from "./ConflictLogDrawer"
@@ -18,7 +16,20 @@ export default async function Workspace() {
   })
 
   if (!project) {
-    notFound()
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-4 rounded-md border border-dashed bg-white p-12 text-center text-sm text-gray-600">
+        <div className="text-base font-semibold text-gray-800">No projects yet</div>
+        <p className="max-w-md text-gray-600">
+          Create a project to unlock the drafting workspace. Once a draft exists, uploaded materials and coverage insights will appear here.
+        </p>
+        <a
+          href="/projects/new"
+          className="inline-flex items-center justify-center rounded-md bg-[hsl(var(--primary))] px-4 py-2 text-sm font-medium text-[hsl(var(--primary-foreground))] hover:opacity-90"
+        >
+          Start a project
+        </a>
+      </div>
+    )
   }
 
   const coverage = project.coverageJson as CoverageV1 | null
