@@ -74,7 +74,7 @@
 - [x] Delete ChatKit npm deps from `package.json`; run `npm install` and confirm lockfile updates. *(`@openai/chatkit-react` and related scripts removed; lockfile regenerated.)*
 - [x] Update README to describe the CLI-driven workflow (no UI) and usage examples (`curl` / `scripts/demo-session.ts`). *(README now documents the core endpoints and local setup.)*
 - [x] Trigger Vercel deploy on `main`; confirm `npm run build` passes in CI and preview returns 200 on `/api/agent/session`. *(Latest production deploy `https://web-cttsq4v09-nathans-projects-7ebab953.vercel.app` verified via `vercel logs`.)*
-- [ ] Tag release `ux2-prototype-agents-sdk` once green deploy verified.
+- [x] Tag release `ux2-prototype-agents-sdk` once green deploy verified. *(Annotated tag pushed after the production deploy.)*
 
 ---
 
