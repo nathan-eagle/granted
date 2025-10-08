@@ -253,7 +253,7 @@ function GrantInfoStep({ formData, updateFormData }: any) {
         Grant Information
       </h2>
       <p style={{ color: '#6b7280', marginBottom: '2rem' }}>
-        Let's start with the basics about the grant opportunity.
+        Let&apos;s start with the basics about the grant opportunity.
       </p>
       
       <div style={{ display: 'grid', gap: '1.5rem' }}>

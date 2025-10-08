@@ -8,12 +8,14 @@ export default function MaterialsPage({ params }: { params: { id: string } }) {
   const [file, setFile] = React.useState<File | null>(null)
   const [loading, setLoading] = React.useState(false)
 
-  async function refresh() {
+  const refresh = React.useCallback(async () => {
     const res = await fetch(`/api/uploads?projectId=${id}&kind=application`)
     const json = await res.json()
     setUploads(json.uploads || [])
-  }
-  React.useEffect(()=>{ refresh() }, [])
+  }, [id])
+  React.useEffect(() => {
+    refresh()
+  }, [refresh])
 
   async function onUpload() {
     if (!file) return

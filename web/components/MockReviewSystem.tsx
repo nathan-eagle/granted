@@ -196,7 +196,7 @@ export default function MockReviewSystem({ grant }: MockReviewSystemProps) {
                 No reviews generated yet
               </h3>
               <p style={{ color: '#6b7280', marginBottom: '2rem' }}>
-                Switch to the "Generate Reviews" tab to create your first mock review.
+                Switch to the &quot;Generate Reviews&quot; tab to create your first mock review.
               </p>
               <button
                 onClick={() => setActiveTab('generate')}

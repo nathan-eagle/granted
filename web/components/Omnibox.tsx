@@ -57,7 +57,7 @@ export default function Omnibox({ projectId, sections, facts, uploads }: { proje
       }
     }
     return out.slice(0, 30)
-  }, [q, sections, facts])
+  }, [q, sections, facts, uploads, uploadSnips])
 
   async function insertFact(text: string, uploadId?: string){
     if (!target || !text) return

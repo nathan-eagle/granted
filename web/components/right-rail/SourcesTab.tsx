@@ -5,12 +5,12 @@ export default function SourcesTab({ projectId, onChange }: { projectId: string;
   const [items, setItems] = React.useState<any[]>([])
   const [selected, setSelected] = React.useState<string[]>([])
 
-  async function refresh() {
+  const refresh = React.useCallback(async () => {
     const res = await fetch(`/api/uploads?projectId=${projectId}&kind=source`)
     const json = await res.json()
     setItems(json.uploads || [])
-  }
-  React.useEffect(()=>{ refresh() }, [projectId])
+  }, [projectId])
+  React.useEffect(() => { refresh() }, [refresh])
 
   function toggle(id: string) {
     setSelected(prev => {

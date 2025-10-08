@@ -182,7 +182,7 @@ export default function SectionEditor({ section, grantInfo }: SectionEditorProps
             border: '1px dashed #d1d5db'
           }}>
             <h4 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '1rem' }}>
-              Ready to start "{section.title}"?
+              Ready to start &quot;{section.title}&quot;?
             </h4>
             <p style={{ color: '#6b7280', marginBottom: '2rem', fontSize: '0.875rem' }}>
               Our AI will help you draft this section based on your grant information.

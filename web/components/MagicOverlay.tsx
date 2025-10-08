@@ -77,9 +77,8 @@ export default function MagicOverlay({ projectId, onClose, mode }: { projectId: 
     }
     subscribe()
     return () => { closed = true; try { es?.close() } catch {} }
-  }, [projectId, onClose])
+  }, [projectId, onClose, mode, router, show])
 
-  if (!active) return null
   const doneCount = useMemo(() => {
     let count = 0
     for (const s of steps) {
@@ -96,6 +95,8 @@ export default function MagicOverlay({ projectId, onClose, mode }: { projectId: 
       onClose()
     }
   }, [doneCount, active, onClose, router])
+
+  if (!active) return null
 
   return (
     <div style={{position:'fixed', inset:0, background:'rgba(0,0,0,0.55)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000}}>
