@@ -281,6 +281,7 @@ model Upload {
   kindDetail    String?
   filename      String
   url           String?
+  openAiFileId  String?
   text          String?
   Project       Project         @relation(fields: [projectId], references: [id])
   SectionSource SectionSource[]

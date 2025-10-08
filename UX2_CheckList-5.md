@@ -38,10 +38,10 @@
 ---
 
 ## 4) File ingestion & PDF support
-- [ ] Replace `/api/autopilot/upload` parser with OpenAI Files API + PDF extraction (`client.files.content.retrieve`) pipeline; persist parsed text.
-- [ ] Hook `registerKnowledgeBaseFile` to upload files to the vector store via the official Agents SDK attachments API.
-- [ ] Support streamed ingestion from local files + URLs using the File Inputs guide (chunk large PDFs, set `purpose:"assistants"`).
-- [ ] Emit ingestion events to `AgentSession` for traceability.
+- [x] Replace `/api/autopilot/upload` parser with OpenAI Files API + PDF extraction (`client.files.content.retrieve`) pipeline; persist parsed text. *(Endpoint now uploads via OpenAI Files and uses `responses.parse`/`files.content` fallbacks, storing parsed text + file id.)*
+- [x] Hook `registerKnowledgeBaseFile` to upload files to the vector store via the official Agents SDK attachments API. *(Prefers `client.agents.vectorStores.files.create` and reuses existing OpenAI file ids.)*
+- [x] Support streamed ingestion from local files + URLs using the File Inputs guide (chunk large PDFs, set `purpose:"assistants"`). *(Form handler accepts multiple `file`/`url` entries and streams buffers with a 40 MB guard.)*
+- [x] Emit ingestion events to `AgentSession` for traceability. *(Optional `sessionId` appends a `tool` transcript summary via `updateAgentSession`.)*
 
 ---
 

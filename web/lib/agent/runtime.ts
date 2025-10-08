@@ -218,7 +218,7 @@ function extractAssistantMessage(payload: any): AgentSessionMessage | null {
   }
 }
 
-function extractText(payload: any): string | null {
+export function extractText(payload: any): string | null {
   if (!payload) return null
   if (typeof payload === "string") return payload
   if (typeof payload.output === "string") return payload.output
