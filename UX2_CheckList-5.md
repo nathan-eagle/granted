@@ -13,10 +13,10 @@
 ---
 
 ## 1) Environment & configuration
-- [ ] Replace ChatKit env vars with Agents SDK settings: `AGENTKIT_WORKFLOW_ID`, `AGENTKIT_PROJECT_ID`, `OPENAI_MODEL`, `OPENAI_API_KEY` (no ChatKit secrets).
-- [ ] Add `AGENTKIT_MEMORY_STORE` (e.g., `postgres`) and `AGENTKIT_FILE_SEARCH=1` to toggle memory/file tools.
-- [ ] Update `web/.env.example` + infra docs to reflect the streamlined config.
-- [ ] Ensure Vercel project env mirrors local values; record the active secrets in the project runbook.
+- [x] Replace ChatKit env vars with Agents SDK settings: `AGENTKIT_WORKFLOW_ID`, `AGENTKIT_PROJECT_ID`, `OPENAI_MODEL`, `OPENAI_API_KEY` (no ChatKit secrets). *(Removed ChatKit entries from `web/.env.example`.)*
+- [x] Add `AGENTKIT_MEMORY_STORE` (e.g., `postgres`) and `AGENTKIT_FILE_SEARCH=1` to toggle memory/file tools. *(Example + Vercel env updated.)*
+- [x] Update `web/.env.example` + infra docs to reflect the streamlined config. *(Adjusted `web/docs/agentkit-setup.md` + `docs/agentkit-notes.md`.)*
+- [x] Ensure Vercel project env mirrors local values; record the active secrets in the project runbook. *(Synced via `vercel env add/rm`; runbook now references new vars.)*
 
 ---
 

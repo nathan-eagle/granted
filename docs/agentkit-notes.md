@@ -1,6 +1,8 @@
-# AgentKit / ChatKit Notes (Rev 4)
+# AgentKit Notes (Rev 4 → Rev 5 transition)
 
 _Last updated: 2025-10-07T14:43Z_
+
+> **Rev5 prototype note:** ChatKit embedding is paused. Keep references below for historical context but prefer Agents SDK endpoints + code-driven sessions going forward.
 
 ## Primary sources reviewed
 - [Introducing AgentKit](https://openai.com/index/introducing-agentkit/) — launch overview retrieved via r.jina.ai mirror.
@@ -18,11 +20,8 @@ _Last updated: 2025-10-07T14:43Z_
 - **Required scopes:** Expect API key with access to Agents/ChatKit endpoints plus Connector management via Global Admin. Exact scope list not in public notes; follow up in dashboard when provisioning service tokens.
 - **CLI / SDK mentions:** Agents SDK still leveraged (Responses API foundation). Quickstart references `@openai/agents` (JS) and `openai-agents-python` packages. Dedicated AgentKit CLI was not documented; expect configuration via dashboard + SDKs.
 
-## ChatKit specifics
-- **Packages:** `@openai/chatkit-react`, optional ChatKit JS script via CDN (`https://cdn.platform.openai.com/deployments/chatkit/chatkit.js`), backend session creation via OpenAI Python or JS SDK.
-- **Session flow:** Backend endpoint calls `openai.chatkit.sessions.create` to mint `client_secret`. Frontend fetches secret via `/api/chatkit/session` and passes into `useChatKit` control hook.
-- **Embedding:** `<ChatKit control={...} />` renders widget; theming and layout via props and theming docs.
-- **Integration path:** Create workflow in Agent Builder → host via OpenAI → embed ChatKit referencing workflow ID. Advanced option: self-host ChatKit + Agents SDK.
+## (Archived) ChatKit specifics
+- The Rev4 workspace used `@openai/chatkit-react` and hosted sessions. Rev5 removes this dependency in favor of code-only Agents SDK flows.
 
 ## Local toolchain state (2025-10-07)
 - Installed `@openai/agents@0.1.9` (serves as interim AgentKit SDK until dedicated package ships).
@@ -35,11 +34,11 @@ _Last updated: 2025-10-07T14:43Z_
 - Generated initial type snapshot at `web/types/generated/agentkit/index.d.ts`.
 
 ## Provisioning tracker
-- **AgentKit workflow**: `wf_68e537c4e69881908e65357e36a28f3c08492e7f3aee14b4` (Rev‑4 stub created in Agent Builder on 2025‑10‑07). Add to env vars: `AGENTKIT_WORKFLOW_ID` and `CHATKIT_WORKFLOW_ID` (until a separate ChatKit workflow is created, reuse this ID).
+- **AgentKit workflow**: `wf_68e537c4e69881908e65357e36a28f3c08492e7f3aee14b4` (Rev‑4 stub created in Agent Builder on 2025‑10‑07). Expose as `AGENTKIT_WORKFLOW_ID`.
 - **AgentKit project ID**: _TBD_ — blocked on dashboard access; once issued, update `.env`, Vercel envs, and rerun `npm run agentkit:check` without the skip flag.
 
 ## Follow-ups / open questions
 - Need direct **AgentKit Quickstart** once published to capture CLI commands, schema sync workflows, and any `@openai/agentkit` package usage.
 - Confirm **retention + scope settings** inside dashboard (screenshot + doc) when AgentKit project created.
 - Identify **eval tooling endpoints** (datasets, trace grading, prompt optimizer) for automation scripts.
-- Provision AgentKit project `granted-ux4` + ChatKit workflow IDs; update 1Password entry and Vercel envs when OpenAI dashboard access is available.
+- Provision AgentKit project `granted-ux4`; update the engineering runbook and Vercel envs when OpenAI dashboard access is available.
