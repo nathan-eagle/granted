@@ -15,10 +15,10 @@ export default async function Home() {
     <div>
       {/* Hero (black) */}
       <section className="bg-black text-white">
-        <div className="mx-auto max-w-[1200px] px-6 md:px-8 py-24 md:py-32 text-center">
-          <h1 className="font-extrabold tracking-tight text-[72px] leading-[100.8px]">{headline}</h1>
-          <div className="mt-6 text-[36px] leading-[50.4px] font-extrabold">{subhead}</div>
-          <div className="mt-5 text-gray-300 max-w-3xl mx-auto space-y-2 text-[16px] md:text-[18px]">
+        <div className="mx-auto max-w-[1200px] px-10 md:px-16 py-24 md:py-32 text-center">
+          <h1 className="font-extrabold tracking-tight text-[64px] leading-[1.05] md:text-[92px]">{headline}</h1>
+          <div className="mt-6 text-[28px] leading-[1.4] font-semibold md:text-[40px]">{subhead}</div>
+          <div className="mt-6 text-gray-300 max-w-3xl mx-auto space-y-3 text-[16px] md:text-[18px]">
             <p>{p1}</p>
             <p>{p2}</p>
           </div>
@@ -28,7 +28,7 @@ export default async function Home() {
 
       {/* Section: quality of ideas */}
       <section className="bg-white">
-        <div className="mx-auto max-w-[1200px] px-6 md:px-8 py-20 grid md:grid-cols-2 gap-16 items-center">
+        <div className="mx-auto max-w-[1200px] px-8 md:px-12 py-24 grid md:grid-cols-2 gap-16 items-center">
           <div>
             <h2 className="text-[36px] md:text-[48px] font-extrabold leading-[1.1]">{h2}</h2>
             <p className="mt-5 text-gray-700 max-w-xl text-[16px] md:text-[18px]">
@@ -39,16 +39,30 @@ export default async function Home() {
             </div>
           </div>
           <div className="text-center">
-            <Image src="/images/imgi_7_img1.jpg" alt="Granted" width={420} height={480} className="mx-auto rounded-xl h-auto w-auto" sizes="(min-width: 1024px) 420px, 80vw" />
+            <Image
+              src="/images/imgi_7_img1.jpg"
+              alt="Granted"
+              width={640}
+              height={720}
+              className="mx-auto w-full max-w-[620px] rounded-[32px] object-cover shadow-xl"
+              sizes="(min-width: 1280px) 600px, (min-width: 1024px) 520px, 90vw"
+            />
           </div>
         </div>
       </section>
 
       {/* Section: donor appeal to NIH R01 */}
       <section className="bg-white">
-        <div className="mx-auto max-w-[1200px] px-6 md:px-8 py-16 grid md:grid-cols-2 gap-16 items-start">
+        <div className="mx-auto max-w-[1200px] px-8 md:px-12 py-24 grid md:grid-cols-2 gap-16 items-start">
           <div className="order-2 md:order-1 text-center">
-            <Image src="/images/imgi_9_img3.jpg" alt="Use cases" width={400} height={480} className="mx-auto rounded-xl h-auto w-auto" sizes="(min-width: 1024px) 400px, 80vw" />
+            <Image
+              src="/images/imgi_9_img3.jpg"
+              alt="Use cases"
+              width={620}
+              height={720}
+              className="mx-auto w-full max-w-[600px] rounded-[32px] object-cover shadow-xl"
+              sizes="(min-width: 1280px) 580px, (min-width: 1024px) 500px, 90vw"
+            />
           </div>
           <div className="order-1 md:order-2">
             <h3 className="text-[30px] md:text-[36px] font-extrabold leading-[1.15]">{h3}</h3>
@@ -78,7 +92,7 @@ export default async function Home() {
 
       {/* Section: 3 Steps */}
       <section className="bg-black text-white">
-        <div className="mx-auto max-w-[1200px] px-6 md:px-8 py-24">
+        <div className="mx-auto max-w-[1200px] px-8 md:px-12 py-28">
           <h2 className="text-[56px] leading-[78.4px] font-extrabold text-center">3 Steps To Your Fastest Funding Ever</h2>
           <div className="mt-12 grid gap-8 md:grid-cols-3">
             <div className="rounded-[28px] bg-white/95 text-black p-8 shadow border border-gray-200">
@@ -102,9 +116,16 @@ export default async function Home() {
 
       {/* Section: Level the playing field */}
       <section className="bg-white">
-        <div className="mx-auto max-w-[1200px] px-6 md:px-8 py-24 grid md:grid-cols-2 gap-16 items-center">
+        <div className="mx-auto max-w-[1200px] px-8 md:px-12 py-28 grid md:grid-cols-2 gap-16 items-center">
           <div className="order-2 md:order-1 text-center">
-            <Image src="/images/imgi_8_img2.jpg" alt="Equity" width={520} height={520} className="mx-auto rounded-xl h-auto w-auto" sizes="(min-width: 1024px) 520px, 80vw" />
+            <Image
+              src="/images/imgi_8_img2.jpg"
+              alt="Equity"
+              width={620}
+              height={720}
+              className="mx-auto w-full max-w-[600px] rounded-[32px] object-cover shadow-xl"
+              sizes="(min-width: 1280px) 580px, (min-width: 1024px) 500px, 90vw"
+            />
           </div>
           <div className="order-1 md:order-2">
             <h2 className="text-[48px] leading-[67.2px] font-extrabold">Level the fundraising playing field.</h2>

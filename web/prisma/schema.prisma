@@ -66,19 +66,27 @@ model Project {
   name      String
   createdAt DateTime @default(now())
 
-  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  responses    Response[]
-  jobs         Job[]
-  grants       Grant[]
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  responses       Response[]
+  jobs            Job[]
+  grants          Grant[]
   // Autopilot extensions
-  agencyPackId String?
-  status       String?
-  charterJson  Json?
-  factsJson    Json?
-  meta         Json?
-  sections     Section[]
-  uploads      Upload[]
-  projectMeta  ProjectMeta?
+  agencyPackId    String?
+  status          String?
+  charterJson     Json?
+  factsJson       Json?
+  coverageJson    Json?
+  rfpNormJson     Json?
+  rfpBundleMeta   Json?
+  conflictLogJson Json?
+  eligibilityJson Json?
+  sloJson         Json?
+  meta            Json?
+  sections        Section[]
+  uploads         Upload[]
+  projectMeta     ProjectMeta?
+  agentWorkflowRuns AgentWorkflowRun[]
+  chatKitSessions  ChatKitSession[]
 }
 
 model TemplateCategory {
@@ -244,22 +252,23 @@ model MockReview {
 
 // Autopilot models
 model Section {
-  id          String          @id @default(cuid())
-  projectId   String
-  key         String
-  title       String
-  order       Int
-  contentMd   String          @default("")
-  contentJson Json?
-  contentHtml String?
-  wordCount   Int             @default(0)
-  limitWords  Int?
-  slotsJson   Json?
-  coverage    Json?
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
-  Project     Project         @relation(fields: [projectId], references: [id])
-  sources     SectionSource[]
+  id           String          @id @default(cuid())
+  projectId    String
+  key          String
+  title        String
+  order        Int
+  contentMd    String          @default("")
+  contentJson  Json?
+  contentHtml  String?
+  wordCount    Int             @default(0)
+  limitWords   Int?
+  slotsJson    Json?
+  coverage     Json?
+  formatLimits Json?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  Project      Project         @relation(fields: [projectId], references: [id])
+  sources      SectionSource[]
 }
 
 model Upload {
@@ -267,6 +276,7 @@ model Upload {
   id            String          @id @default(cuid())
   projectId     String
   kind          String
+  kindDetail    String?
   filename      String
   url           String?
   text          String?
@@ -291,6 +301,9 @@ model Embedding {
   chunk     String
   vector    Json
   createdAt DateTime @default(now())
+
+  @@index([projectId])
+  @@index([uploadId])
 }
 
 model ProjectMeta {
@@ -306,31 +319,80 @@ model ProjectMeta {
   project         Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }
 
-model RFP {
+model AgentWorkflowRun {
   id          String   @id @default(cuid())
-  source      String
-  oppNumber   String?
-  title       String?
-  agency      String?
-  postedDate  DateTime?
-  closeDate   DateTime?
-  synopsis    String?
-  raw         Json?
-  attachments Json?
+  workflowId  String
+  projectId   String?
+  status      String   @default("pending")
+  input       Json?
+  result      Json?
+  error       String?
+  startedAt   DateTime @default(now())
+  completedAt DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  project Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  events  AgentWorkflowRunEvent[]
+
+  @@index([workflowId])
+  @@index([projectId])
+}
+
+model AgentWorkflowRunEvent {
+  id        String   @id @default(cuid())
+  runId     String
+  type      String
+  payload   Json?
+  createdAt DateTime @default(now())
+
+  run AgentWorkflowRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([runId, createdAt])
+}
+
+model ChatKitSession {
+  id                String   @id @default(cuid())
+  projectId         String?
+  workflowId        String
+  clientSecretHash  String
+  status            String   @default("active")
+  metadata          Json?
+  createdAt         DateTime @default(now())
+  expiresAt         DateTime?
+  revokedAt         DateTime?
+
+  project Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([workflowId])
+  @@index([projectId])
+}
+
+model RFP {
+  id           String        @id @default(cuid())
+  source       String
+  oppNumber    String?
+  title        String?
+  agency       String?
+  postedDate   DateTime?
+  closeDate    DateTime?
+  synopsis     String?
+  raw          Json?
+  attachments  Json?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
   requirements Requirement[]
 }
 
 model Requirement {
-  id         String   @id @default(cuid())
-  rfpId      String
-  key        String?
-  title      String
-  targetWords Int?
-  required   Boolean  @default(true)
+  id           String  @id @default(cuid())
+  rfpId        String
+  key          String?
+  title        String
+  targetWords  Int?
+  required     Boolean @default(true)
   instructions String?
-  RFP        RFP      @relation(fields: [rfpId], references: [id])
+  RFP          RFP     @relation(fields: [rfpId], references: [id])
 }
 
 model AgentRun {
@@ -343,6 +405,7 @@ model AgentRun {
   docxUrl   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  eventLogs EventLog[]
 }
 
 model EventLog {
@@ -351,5 +414,10 @@ model EventLog {
   level      String   @default("info")
   message    String
   data       Json?
+  requestId  String?
   createdAt  DateTime @default(now())
+
+  agentRun AgentRun? @relation(fields: [agentRunId], references: [id], onDelete: SetNull)
+
+  @@index([agentRunId])
 }
