@@ -21,6 +21,7 @@ type InvokeResult<Action extends AgentActionName> = {
   durationMs: number
   hadAttachment: boolean
   agentsRunId?: string | null
+  memoryId?: string | null
 }
 
 function extractProjectId<Action extends AgentActionName>(input: AgentActionInput<Action>): string | null {
@@ -52,6 +53,16 @@ function extractRunPayload(payload: any): any {
   return payload
 }
 
+async function resolveMemoryId(projectId: string | null) {
+  if (!projectId) return null
+  const session = await prisma.agentSession.findFirst({
+    where: { projectId, memoryId: { not: null } },
+    orderBy: { updatedAt: "desc" },
+    select: { memoryId: true },
+  })
+  return session?.memoryId ?? null
+}
+
 async function invokeAgentTool<Action extends AgentActionName>({ action, input }: AgentToolInvocation<Action>): Promise<InvokeResult<Action>> {
   const agentsClient = getAgentsClient()
   if (!agentsClient?.runs?.create) {
@@ -63,6 +74,7 @@ async function invokeAgentTool<Action extends AgentActionName>({ action, input }
   const entry = agentKitTools[action]
   const projectId = extractProjectId(input)
   const vectorAttachment = projectId ? await getVectorStoreAttachment(projectId) : null
+  const memoryId = projectId ? await resolveMemoryId(projectId) : null
   const startedAt = Date.now()
 
   const response = await agentsClient.runs.create({
@@ -84,6 +96,7 @@ async function invokeAgentTool<Action extends AgentActionName>({ action, input }
       projectId,
       action,
     },
+    memory_id: memoryId ?? undefined,
   })
 
   const parsed = entry.definition.output.parse(extractRunPayload(response)) as AgentActionOutput<Action>
@@ -92,6 +105,7 @@ async function invokeAgentTool<Action extends AgentActionName>({ action, input }
     durationMs: Date.now() - startedAt,
     hadAttachment: Boolean(vectorAttachment),
     agentsRunId: response?.id ?? null,
+    memoryId,
   }
 }
 
@@ -110,11 +124,13 @@ export async function callAgentActionWithAgents<Action extends AgentActionName>(
   let fallbackUsed = false
   let resultPayload: AgentActionOutput<Action>
   let agentsRunId: string | null = null
+  let resolvedMemoryId: string | null = null
 
   try {
-    const { output, durationMs, hadAttachment, agentsRunId: externalId } = await invokeAgentTool({ action, input })
+    const { output, durationMs, hadAttachment, agentsRunId: externalId, memoryId } = await invokeAgentTool({ action, input })
     resultPayload = output
     agentsRunId = externalId ?? null
+    resolvedMemoryId = memoryId ?? resolvedMemoryId
     await prisma.agentWorkflowRunEvent.create({
       data: {
         runId: runRecord.id,
@@ -129,7 +145,7 @@ export async function callAgentActionWithAgents<Action extends AgentActionName>(
       projectId: projectId ?? undefined,
       status: "completed",
       durationMs,
-      metadata: { hasAttachment: hadAttachment, agentsRunId },
+      metadata: { hasAttachment: hadAttachment, agentsRunId, memoryId },
     })
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error)
@@ -174,6 +190,9 @@ export async function callAgentActionWithAgents<Action extends AgentActionName>(
   }
 
   const finalStatus = fallbackUsed ? "succeeded_fallback" : "succeeded"
+  if (!resolvedMemoryId && projectId) {
+    resolvedMemoryId = await resolveMemoryId(projectId)
+  }
   await prisma.agentWorkflowRun.update({
     where: { id: runRecord.id },
     data: {
@@ -188,7 +207,11 @@ export async function callAgentActionWithAgents<Action extends AgentActionName>(
     action,
     projectId: projectId ?? undefined,
     status: finalStatus,
-    metadata: agentsRunId ? { agentsRunId } : undefined,
+    metadata: {
+      ...(agentsRunId ? { agentsRunId } : {}),
+      ...(projectId ? { projectId } : {}),
+      ...(resolvedMemoryId ? { memoryId: resolvedMemoryId } : {}),
+    },
   })
 
   return resultPayload

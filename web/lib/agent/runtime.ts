@@ -150,6 +150,7 @@ export async function continueAgentSession({
               },
             ]
           : undefined,
+        memory_id: memoryId ?? undefined,
       })
       raw = response
       memoryId = response?.memory_id ?? memoryId

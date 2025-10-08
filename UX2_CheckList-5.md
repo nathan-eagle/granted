@@ -46,10 +46,10 @@
 ---
 
 ## 5) Memory & retrieval
-- [ ] Enable Agents memory (Responses Memory API) scoped to `projectId` and store the returned `memory_id` in `AgentSession`.
-- [ ] Update `runIntake` to pass `memory_id` + `vector_store_id` attachments on every agent run.
-- [ ] Persist eligibility/conflict updates via agent events; wire to `persistAgentState`.
-- [ ] Backfill existing projects with `memory_id` via migration script (`scripts/migrations/backfill-memory.ts`).
+- [x] Enable Agents memory (Responses Memory API) scoped to `projectId` and store the returned `memory_id` in `AgentSession`. *(Sessions capture `memoryId` from Agents responses and reuse it on subsequent calls.)*
+- [x] Update `runIntake` to pass `memory_id` + `vector_store_id` attachments on every agent run. *(Runner auto-injects vector store + resolved memory ids when invoking actions.)*
+- [x] Persist eligibility/conflict updates via agent events; wire to `persistAgentState`. *(Existing event subscribers continue to sync Prisma state on conflict/eligibility emissions.)*
+- [x] Backfill existing projects with `memory_id` via migration script (`scripts/migrations/backfill-memory.ts`). *(Adds bootstrap script to seed sessions for legacy projects.)*
 
 ---
 
