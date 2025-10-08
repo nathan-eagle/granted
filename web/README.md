@@ -1,8 +1,8 @@
 Granted (Next.js + Prisma)
 
 Local development
-- Copy `.env.example` to `.env.local` and fill values.
-- `nvm use 20`
+- Copy `.env.example` to `.env.local` and fill values (see Agents SDK notes for required keys).
+- Use Node 20 (`$HOME/.local/node-v20.17.0-darwin-x64/bin/node` or `nvm use 20` if available).
 - `npm install`
 - `npx prisma migrate dev`
 - `npm run dev`
@@ -12,6 +12,12 @@ Deploy notes
 - Install: `npm ci`
 - Build: `npm run build`
 - Output: `.next`
+
+### Agents SDK endpoints
+- `POST /api/agent/session` → start a session (`{ projectId, messages[] }`) and receive `{ sessionId, reply, memoryId, logs[] }`.
+- `POST /api/agent/session/{sessionId}` → continue a session with additional messages and retrieve the updated transcript + logs.
+- `POST /api/autopilot/upload` → upload local files or URLs. Supports multipart `file`/`url` entries, registers OpenAI Files, and appends optional `sessionId` events.
+- Smoke tests: `npm run verify:ux2` exercises deterministic checks and optionally calls the API when `APP_URL` is set.
 
 ### Blueprint mapper
 - Endpoint: `POST /api/blueprints/map` with `{ projectId, rfpId, blueprintId }`.

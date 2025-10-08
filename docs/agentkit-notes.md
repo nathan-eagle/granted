@@ -42,3 +42,4 @@ _Last updated: 2025-10-07T14:43Z_
 - Confirm **retention + scope settings** inside dashboard (screenshot + doc) when AgentKit project created.
 - Identify **eval tooling endpoints** (datasets, trace grading, prompt optimizer) for automation scripts.
 - Provision AgentKit project `granted-ux4`; update the engineering runbook and Vercel envs when OpenAI dashboard access is available.
+- See `docs/agents-sdk-prototype.md` for the Rev5 API-first architecture summary and backlog.

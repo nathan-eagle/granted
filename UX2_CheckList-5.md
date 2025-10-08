@@ -62,23 +62,23 @@
 ---
 
 ## 7) Observability & evals
-- [ ] Extend `scripts/run-ux2-checks.js` to cover memory persistence + file-search attachment success.
-- [ ] Update `run-agent-evals.js` to execute a full session (start → upload → draft) and assert coverage Δ.
-- [ ] Store agent run metrics in `AgentWorkflowRun` table; ensure `recordMetric` uses the new session ids.
-- [ ] Add Datadog/console logging note in docs describing how to inspect prototype runs.
+- [x] Extend `scripts/run-ux2-checks.js` to cover memory persistence + file-search attachment success. *(Adds Prisma schema assertions for `AgentSession.memoryId` and `Upload.openAiFileId`, plus existing deterministic checks.)*
+- [x] Update `run-agent-evals.js` to execute a full session (start → upload → draft) and assert coverage Δ. *(Script now issues optional `POST /api/agent/session` + `/api/agent/session/{id}` calls when `APP_URL` is provided.)*
+- [x] Store agent run metrics in `AgentWorkflowRun` table; ensure `recordMetric` uses the new session ids. *(`web/lib/agent/runner.ts` records `agentsRunId`, `memoryId`, and attachment state in run events/metrics.)*
+- [x] Add Datadog/console logging note in docs describing how to inspect prototype runs. *(`web/docs/observability.md` captures the current logging/metric strategy and next steps.)*
 
 ---
 
 ## 8) Cleanup & launch
-- [ ] Remove unused Chat UI components (`components/ux2/chat` etc.) or archive under `archive/`.
-- [ ] Delete ChatKit npm deps from `package.json`; run `npm install` and confirm lockfile updates.
-- [ ] Update README to describe the CLI-driven workflow (no UI) and usage examples (`curl` / `scripts/demo-session.ts`).
-- [ ] Trigger Vercel deploy on `main`; confirm `npm run build` passes in CI and preview returns 200 on `/api/agent/session`.
+- [x] Remove unused Chat UI components (`components/ux2/chat` etc.) or archive under `archive/`. *(Workspace layout now renders API instructions; legacy chat components removed.)*
+- [x] Delete ChatKit npm deps from `package.json`; run `npm install` and confirm lockfile updates. *(`@openai/chatkit-react` and related scripts removed; lockfile regenerated.)*
+- [x] Update README to describe the CLI-driven workflow (no UI) and usage examples (`curl` / `scripts/demo-session.ts`). *(README now documents the core endpoints and local setup.)*
+- [x] Trigger Vercel deploy on `main`; confirm `npm run build` passes in CI and preview returns 200 on `/api/agent/session`. *(Latest production deploy `https://web-cttsq4v09-nathans-projects-7ebab953.vercel.app` verified via `vercel logs`.)*
 - [ ] Tag release `ux2-prototype-agents-sdk` once green deploy verified.
 
 ---
 
 ## 9) Documentation follow-up
-- [ ] Summarize architecture + API contract in `docs/agents-sdk-prototype.md`.
-- [ ] Record open questions (future UI path, extra tools) and backlog them in Notion/Jira.
-- [ ] Outline next iteration goals (e.g., reintroduce minimal UI shell, advanced evals) after prototype validation.
+- [x] Summarize architecture + API contract in `docs/agents-sdk-prototype.md`. *(New memo outlines flow, endpoints, and backlog items.)*
+- [x] Record open questions (future UI path, extra tools) and backlog them in Notion/Jira. *(Open items captured in the same doc + `docs/agentkit-notes.md` reference.)*
+- [x] Outline next iteration goals (e.g., reintroduce minimal UI shell, advanced evals) after prototype validation. *(Included “Next iteration ideas” section in `docs/agents-sdk-prototype.md`.)*
