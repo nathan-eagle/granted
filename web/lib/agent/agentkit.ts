@@ -132,7 +132,7 @@ const actionDefinitionMap = {
 
 type ActionName = keyof typeof actionDefinitionMap
 
-const toolParameterSchemas: Record<ActionName, any> = {
+export const toolParameterSchemas: Record<ActionName, any> = {
   ingest_rfp_bundle: {
     type: "object",
     additionalProperties: false,

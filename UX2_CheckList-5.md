@@ -29,11 +29,11 @@
 ---
 
 ## 3) Agents SDK runtime
-- [ ] Consolidate agent entrypoints around `@openai/agents` `client.agents.sessions`, removing `chat/guide` handler.
-- [ ] Implement `lib/agent/runtime.ts` exposing `startSession({ projectId, input })` → returns session id + first reply.
-- [ ] Implement `continueSession({ sessionId, messages })` to reuse memory + state.
-- [ ] Register actions from `lib/agent/agentkit.ts` with the workflow metadata (use `client.agents.actions.sync`).
-- [ ] Ensure `callAgentActionWithAgents` delegates to `client.agents.runs.create` with attached tools instead of bespoke runner.
+- [x] Consolidate agent entrypoints around `@openai/agents` `client.agents.sessions`, removing `chat/guide` handler. *(Legacy `/api/chat/guide` deleted; new runtime utilities drive Agents SDK usage.)*
+- [x] Implement `lib/agent/runtime.ts` exposing `startSession({ projectId, input })` → returns session id + first reply. *(Provides start/continue helpers backed by Agents sessions with Responses fallback.)*
+- [x] Implement `continueSession({ sessionId, messages })` to reuse memory + state. *(Stores transcript via `AgentSession` and reuses `memoryId` when available.)*
+- [x] Register actions from `lib/agent/agentkit.ts` with the workflow metadata (use `client.agents.actions.sync`). *(`ensureAgentActionsSynced` syncs JSON schemas on demand.)*
+- [x] Ensure `callAgentActionWithAgents` delegates to `client.agents.runs.create` with attached tools instead of bespoke runner. *(Runner now invokes Agents runs API and records external run IDs, falling back to local executor on failure.)*
 
 ---
 
