@@ -54,10 +54,10 @@
 ---
 
 ## 6) API surface (code-first UX)
-- [ ] Add `/api/agent/session` POST (start) and `/api/agent/session/[id]` POST (continue) endpoints; both return agent replies + tool logs.
-- [ ] Secure endpoints with NextAuth session check; return 401 when unauthenticated.
-- [ ] Instrument handlers with `withApiInstrumentation` to log request IDs + latency.
-- [ ] Update any CLI/demo scripts (`scripts/run-agent-evals.js`) to call the new endpoints.
+- [x] Add `/api/agent/session` POST (start) and `/api/agent/session/[id]` POST (continue) endpoints; both return agent replies + tool logs. *(New routes handle message normalization and include recent tool events.)*
+- [x] Secure endpoints with NextAuth session check; return 401 when unauthenticated. *(Both handlers require `auth()` and short-circuit on missing user.)*
+- [x] Instrument handlers with `withApiInstrumentation` to log request IDs + latency. *(Wrapped base handler or closure for dynamic route.)*
+- [x] Update any CLI/demo scripts (`scripts/run-agent-evals.js`) to call the new endpoints. *(Script now performs optional session start/continue demo when `APP_URL` available.)*
 
 ---
 
