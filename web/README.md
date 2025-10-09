@@ -1,7 +1,11 @@
 Granted (Next.js + Prisma)
 
 Local development
-- Copy `.env.example` to `.env.local` and fill values (see Agents SDK notes for required keys).
+- Copy `.env.example` to `.env.local` and fill values. Required keys:
+  - `OPENAI_API_KEY`, `OPENAI_PROJECT` (optional)
+  - `OPENAI_MODEL_FAST`, `OPENAI_MODEL_PRECISE`
+  - `UX2_ENABLED`, `NEXT_PUBLIC_UX2_ENABLED`
+  - `AGENTKIT_PROJECT_ID`, `AGENTKIT_WORKFLOW_ID`
 - Use Node 20 (`$HOME/.local/node-v20.17.0-darwin-x64/bin/node` or `nvm use 20` if available).
 - `npm install`
 - `npx prisma migrate dev`

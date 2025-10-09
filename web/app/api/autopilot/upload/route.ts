@@ -1,7 +1,8 @@
+import crypto from "crypto"
 import { NextRequest, NextResponse } from "next/server"
 
 import { prisma } from "@/lib/prisma"
-import { client } from "@/lib/ai"
+import { client, fastModel } from "@/lib/ai"
 import { registerKnowledgeBaseFile } from "@/lib/agent/knowledgeBase"
 import { updateAgentSession, type AgentSessionMessage } from "@/lib/agent/sessions"
 import { extractText } from "@/lib/agent/runtime"
@@ -23,16 +24,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Missing projectId or payload" }, { status: 400 })
   }
 
-  const results: Array<{ uploadId: string; filename: string; kind: string; confidence: number; parsedChars: number; openAiFileId?: string | null }> = []
+  const results: Array<Record<string, unknown>> = []
 
   for (const file of fileEntries) {
-    const sizeMB = (file.size || 0) / (1024 * 1024)
-    if (sizeMB > MAX_UPLOAD_BYTES / (1024 * 1024)) {
+    const sizeBytes = file.size || 0
+    if (sizeBytes > MAX_UPLOAD_BYTES) {
       return NextResponse.json({ error: "File too large (max 40MB)" }, { status: 413 })
     }
     const buffer = Buffer.from(await file.arrayBuffer())
-    const name = file.name || "upload"
-    const ingested = await ingestBuffer({ buffer, filename: name, explicitKind, projectId })
+    const ingested = await ingestBuffer({
+      buffer,
+      filename: file.name || "upload",
+      explicitKind,
+      projectId,
+    })
     results.push(ingested)
   }
 
@@ -72,9 +77,38 @@ type IngestResult = {
   confidence: number
   parsedChars: number
   openAiFileId?: string | null
+  cached?: boolean
+}
+
+function checksum(buffer: Buffer) {
+  return crypto.createHash("sha256").update(buffer).digest("hex")
 }
 
 async function ingestBuffer({ buffer, filename, explicitKind, projectId, sourceUrl }: IngestArgs): Promise<IngestResult> {
+  const fileChecksum = checksum(buffer)
+
+  const existing = await prisma.upload.findFirst({
+    where: {
+      projectId,
+      meta: {
+        path: ["checksum"],
+        equals: fileChecksum,
+      },
+    },
+  })
+
+  if (existing) {
+    return {
+      uploadId: existing.id,
+      filename: existing.filename,
+      kind: existing.kind,
+      confidence: existing.kind === "other" ? 0.5 : 0.9,
+      parsedChars: existing.text?.length ?? 0,
+      openAiFileId: (existing as any).openAiFileId ?? null,
+      cached: true,
+    }
+  }
+
   const openAiFile = await uploadToOpenAI(buffer, filename)
   const parsedText = await parseFileText(openAiFile.id, buffer)
   const kind = classifyUpload(explicitKind, filename, parsedText)
@@ -89,6 +123,11 @@ async function ingestBuffer({ buffer, filename, explicitKind, projectId, sourceU
       url: sourceUrl ?? null,
       openAiFileId: openAiFile.id,
       text: parsedText,
+      meta: {
+        checksum: fileChecksum,
+        size: buffer.length,
+        sourceUrl: sourceUrl ?? null,
+      },
     },
   })
 
@@ -100,6 +139,7 @@ async function ingestBuffer({ buffer, filename, explicitKind, projectId, sourceU
     source: sourceUrl ? "url" : "file",
     version: null,
     releaseDate: null,
+    openAiFileId: openAiFile.id,
   })
 
   return {
@@ -109,6 +149,7 @@ async function ingestBuffer({ buffer, filename, explicitKind, projectId, sourceU
     confidence,
     parsedChars: parsedText.length,
     openAiFileId: openAiFile.id,
+    cached: false,
   }
 }
 
@@ -125,7 +166,7 @@ async function parseFileText(fileId: string, fallbackBuffer: Buffer) {
   if (responsesClient?.parse) {
     try {
       const response = await responsesClient.parse({
-        model: process.env.OPENAI_MODEL ?? "gpt-4.1-mini",
+        model: fastModel,
         input: [
           {
             role: "user",
@@ -171,9 +212,9 @@ function classifyUpload(explicitKind: string, filename: string, body: string) {
   return "other"
 }
 
-async function appendIngestionEvent(sessionId: string, results: IngestResult[]) {
+async function appendIngestionEvent(sessionId: string, results: Record<string, unknown>[]) {
   const content = results
-    .map(result => `Ingested ${result.filename} (${result.kind}) → upload ${result.uploadId}`)
+    .map(result => `Ingested ${result.filename}${result.cached ? " (cached)" : ""}`)
     .join("\n")
   const messages: AgentSessionMessage[] = [
     {

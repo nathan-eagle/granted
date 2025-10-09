@@ -1,7 +1,13 @@
 import OpenAI from "openai"
 
 const apiKey = process.env.OPENAI_API_KEY as string
-export const defaultModel = process.env.OPENAI_MODEL || "gpt-5-mini"
+
+export const fastModel =
+  process.env.OPENAI_MODEL_FAST || process.env.OPENAI_MODEL || "gpt-4.1-mini"
+export const preciseModel =
+  process.env.OPENAI_MODEL_PRECISE || process.env.OPENAI_MODEL || fastModel
+
+export const defaultModel = fastModel
 
 export const client = new OpenAI({ apiKey })
 

@@ -283,6 +283,7 @@ model Upload {
   url           String?
   openAiFileId  String?
   text          String?
+  meta          Json?
   Project       Project         @relation(fields: [projectId], references: [id])
   SectionSource SectionSource[]
   knowledgeBaseFiles AgentKnowledgeBaseFile[]

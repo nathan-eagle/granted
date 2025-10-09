@@ -25,3 +25,6 @@ out/
 
 # VSCode
 .vscode/
+
+# Nested repos
+Orchestrator/

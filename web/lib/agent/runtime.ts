@@ -1,5 +1,5 @@
 import { client } from "@/lib/ai"
-import { agentKitRuntimeConfig } from "./agentkit.config"
+import { agentKitRuntimeConfig, agentKitModels } from "./agentkit.config"
 import { agentActions, toolParameterSchemas } from "./agentkit"
 import { getVectorStoreAttachment } from "./knowledgeBase"
 import {
@@ -193,7 +193,7 @@ async function fallbackAssistant(history: AgentSessionMessage[]) {
     input.push({ role: message.role, content: message.content })
   }
   const response = await client.responses.create({
-    model: agentKitRuntimeConfig.model,
+    model: agentKitModels.fast,
     input,
   } as any)
   const text = extractText(response)

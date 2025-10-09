@@ -1,6 +1,7 @@
 import blueprintNSF, { type BlueprintSection } from "./nsf_sbir"
 import { bestMatch } from "./similarity"
 import { prisma } from "../prisma"
+import { client as openaiClient, fastModel } from "../ai"
 
 export type BlueprintLike = {
   slug?: string
@@ -23,13 +24,11 @@ async function classifyWithLLM(requirementText: string, sections: BlueprintSecti
   if (!process.env.OPENAI_API_KEY) return ""
   if ((process.env.OPENAI_MODE || "live") === "mock") return ""
   try {
-    const OpenAI = (await import("openai")).default
-    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
     const allowed = sections.map(section => section.key).join(", ")
     const system = "You map funding requirements to a grant blueprint section key. Reply with ONLY the key from the allowed list."
     const user = `Allowed keys: ${allowed}\n\nRequirement:\n${requirementText}\n\nReturn only one key.`
-    const response: any = await client.responses.create({
-      model: process.env.OPENAI_MODEL || "gpt-5-mini",
+    const response: any = await openaiClient.responses.create({
+      model: fastModel,
       input: [
         { role: "system", content: system },
         { role: "user", content: user }
