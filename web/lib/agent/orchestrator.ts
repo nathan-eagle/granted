@@ -1,4 +1,5 @@
 import type { AgentActionInput } from "./agentkit"
+import { agentkit } from "@/lib/agentkit/client"
 import { callAgentActionWithAgents } from "./runner"
 import { loadAgentState, persistAgentState } from "./state"
 import { prisma } from "../prisma"
@@ -7,19 +8,34 @@ export type IntakeOptions = {
   projectId: string
   urls?: string[]
   files?: { uploadId?: string; path?: string; name?: string }[]
+  uploadIds?: string[]
 }
 
 export async function runIntake(options: IntakeOptions) {
-  const { projectId, urls = [], files = [] } = options
-  const ingestionResult = await callAgentActionWithAgents("ingest_rfp_bundle", {
-    projectId,
-    urls,
-    files,
-  } satisfies AgentActionInput<"ingest_rfp_bundle">)
-  if (ingestionResult.uploadIds.length) {
-    const sharedArgs = { projectId, uploadIds: ingestionResult.uploadIds }
-    await callAgentActionWithAgents("normalize_rfp", sharedArgs as AgentActionInput<"normalize_rfp">)
-    await callAgentActionWithAgents("mine_facts", sharedArgs as AgentActionInput<"mine_facts">)
+  const { projectId, urls = [], files = [], uploadIds } = options
+  const ingestionUploadIds = uploadIds
+    ? uploadIds
+    : (
+        await agentkit.actions.invoke("ingest_rfp_bundle", {
+          projectId,
+          urls,
+          files,
+        } satisfies AgentActionInput<"ingest_rfp_bundle">)
+      ).uploadIds
+
+  if (ingestionUploadIds.length) {
+    const sharedArgs = { projectId, uploadIds: ingestionUploadIds }
+    const rfpNorm = await callAgentActionWithAgents(
+      "normalize_rfp",
+      sharedArgs as AgentActionInput<"normalize_rfp">
+    )
+    await persistAgentState({
+      projectId,
+      rfpNorm,
+      eligibility: { items: rfpNorm.eligibility ?? [] },
+    })
+    const facts = await callAgentActionWithAgents("mine_facts", sharedArgs as AgentActionInput<"mine_facts">)
+    await persistAgentState({ projectId, facts })
   }
   const coverage = await callAgentActionWithAgents("score_coverage", { projectId } as AgentActionInput<"score_coverage">)
   await persistAgentState({ projectId, coverage })

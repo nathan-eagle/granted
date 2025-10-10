@@ -205,3 +205,29 @@ export type CoverageV1 = z.infer<typeof CoverageV1Schema>
 export type SectionDraftV1 = z.infer<typeof SectionDraftV1Schema>
 
 export const ProvenanceSchema = provenanceSchema
+
+const ComplianceSnapshotSchema = z.object({
+  status: z.enum(["ok", "overflow"]),
+  wordCount: z.number(),
+  estimatedPages: z.number(),
+})
+
+export const FirstDraftSectionSchema = z.object({
+  key: z.string(),
+  title: z.string(),
+  markdown: z.string(),
+  compliance: ComplianceSnapshotSchema.optional(),
+  settings: z.record(z.unknown()).optional(),
+  assumptions: z.array(z.string()).optional(),
+  paragraph_meta: z.array(z.unknown()).optional(),
+})
+
+export const FirstDraftV1Schema = z.object({
+  projectId: z.string(),
+  sections: z.array(FirstDraftSectionSchema),
+  coverage: z.number().optional(),
+  coverageSuggestions: z.array(fixSuggestionSchema).optional(),
+})
+
+export type FirstDraftSection = z.infer<typeof FirstDraftSectionSchema>
+export type FirstDraftV1 = z.infer<typeof FirstDraftV1Schema>

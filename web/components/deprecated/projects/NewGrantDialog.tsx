@@ -17,7 +17,7 @@ export default function NewGrantDialog() {
     if (json?.project?.id) {
       setOpen(false)
       setName("")
-      router.push(`/project/${json.project.id}/setup`)
+      router.push(`/agent/${json.project.id}`)
       router.refresh()
     }
   }

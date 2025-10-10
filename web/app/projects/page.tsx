@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma"
 import PageShell from "../../components/layout/PageShell"
-import NewGrantDialog from "../../components/projects/NewGrantDialog"
+import NewGrantDialog from "@/components/deprecated/projects/NewGrantDialog"
 
 export const dynamic = "force-dynamic"
 export const revalidate = 0
@@ -29,7 +29,7 @@ export default async function ProjectsPage() {
             <tbody>
               {projects?.map((p: any) => (
                 <tr key={p.id} className="border-t hover:bg-gray-50">
-                  <td className="px-4 py-3"><a className="underline" href={`/project/${p.id}/draft`}>{p.name}</a></td>
+                  <td className="px-4 py-3"><a className="underline" href={`/agent/${p.id}`}>{p.name}</a></td>
                   <td className="px-4 py-3">{p.status || "—"}</td>
                   <td className="px-4 py-3 text-gray-500">{new Date(p.createdAt).toLocaleString()}</td>
                 </tr>

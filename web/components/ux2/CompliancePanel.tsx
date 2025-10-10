@@ -12,7 +12,8 @@ export function CompliancePanel({ sections }: { sections: Pick<Section, "key" | 
       <ul className="divide-y text-sm">
         {sections.map(section => {
           const limits = (section.formatLimits as any) || {}
-          const compliance = simulateCompliance(section.contentMd ?? "", limits)
+          const settings = limits?.settings ?? limits ?? {}
+          const compliance = limits?.result ?? simulateCompliance(section.contentMd ?? "", settings)
           return (
             <li key={section.key} className="px-4 py-3">
               <div className="flex items-center justify-between">
@@ -23,6 +24,8 @@ export function CompliancePanel({ sections }: { sections: Pick<Section, "key" | 
               </div>
               <div className="mt-1 text-xs text-gray-500">
                 {Math.round(compliance.wordCount)} words · {compliance.estimatedPages.toFixed(2)} pages
+                {settings?.word_limit && ` · limit ${settings.word_limit} words`}
+                {settings?.page_limit && ` · limit ${settings.page_limit} pages`}
               </div>
             </li>
           )

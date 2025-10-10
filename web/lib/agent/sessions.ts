@@ -52,6 +52,43 @@ export async function createAgentSession(input: {
   return toRecord(record)
 }
 
+export async function ensureProjectAgentSession(projectId: string) {
+  return prisma.$transaction(async tx => {
+    const project = await tx.project.findUnique({
+      where: { id: projectId },
+      select: { agentSessionId: true },
+    })
+    if (!project) {
+      throw new Error(`Project ${projectId} not found`)
+    }
+
+    if (project.agentSessionId) {
+      const existing = await tx.agentSession.findUnique({ where: { id: project.agentSessionId } })
+      if (existing) return toRecord(existing)
+    }
+
+    const fallback = await tx.agentSession.findFirst({
+      where: { projectId },
+      orderBy: { updatedAt: "desc" },
+    })
+
+    const session = fallback
+      ? fallback
+      : await tx.agentSession.create({
+          data: {
+            projectId,
+            transcriptJson: [],
+          },
+        })
+
+    if (!project.agentSessionId || project.agentSessionId !== session.id) {
+      await tx.project.update({ where: { id: projectId }, data: { agentSessionId: session.id } })
+    }
+
+    return toRecord(session)
+  })
+}
+
 export async function getAgentSession(sessionId: string) {
   const record = await prisma.agentSession.findUnique({ where: { id: sessionId } })
   return record ? toRecord(record) : null

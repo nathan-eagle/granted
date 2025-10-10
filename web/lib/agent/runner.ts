@@ -125,12 +125,14 @@ export async function callAgentActionWithAgents<Action extends AgentActionName>(
   let resultPayload: AgentActionOutput<Action>
   let agentsRunId: string | null = null
   let resolvedMemoryId: string | null = null
+  let lastDurationMs: number | null = null
 
   try {
     const { output, durationMs, hadAttachment, agentsRunId: externalId, memoryId } = await invokeAgentTool({ action, input })
     resultPayload = output
     agentsRunId = externalId ?? null
     resolvedMemoryId = memoryId ?? resolvedMemoryId
+    lastDurationMs = durationMs
     await prisma.agentWorkflowRunEvent.create({
       data: {
         runId: runRecord.id,
@@ -193,12 +195,17 @@ export async function callAgentActionWithAgents<Action extends AgentActionName>(
   if (!resolvedMemoryId && projectId) {
     resolvedMemoryId = await resolveMemoryId(projectId)
   }
+  const metricsPayload = {
+    ...(lastDurationMs !== null ? { duration_ms: lastDurationMs } : {}),
+    fallbackUsed,
+  }
   await prisma.agentWorkflowRun.update({
     where: { id: runRecord.id },
     data: {
       status: finalStatus,
       result: { action, result: resultPayload, fallbackUsed, agentsRunId },
       completedAt: new Date(),
+      metrics: metricsPayload,
     },
   })
   await recordMetric({

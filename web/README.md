@@ -18,10 +18,23 @@ Deploy notes
 - Output: `.next`
 
 ### Agents SDK endpoints
-- `POST /api/agent/session` → start a session (`{ projectId, messages[] }`) and receive `{ sessionId, reply, memoryId, logs[] }`.
-- `POST /api/agent/session/{sessionId}` → continue a session with additional messages and retrieve the updated transcript + logs.
-- `POST /api/autopilot/upload` → upload local files or URLs. Supports multipart `file`/`url` entries, registers OpenAI Files, and appends optional `sessionId` events.
+- `POST /api/agent/session`
+  - Body: `{ projectId, text?, messages?, allowWebSearch? }`.
+  - Sends back a streaming `text/event-stream` when `Accept: text/event-stream`; emits `status`, `section_delta`, `section_complete`, `coverage`, and `done` events as the draft materializes.
+  - Non-stream consumers receive `{ sessionId, reply, memoryId, draft, logs }`.
+- `GET /api/agent/session/{sessionId}` → restore workspace state on reload; returns `{ draft, uploads, preferences.allowWebSearch, context: { orgUrl, projectIdea } }`.
+- `POST /api/agent/session/{sessionId}` → continue a session with free-form messages or `action` payloads (e.g., `{ action: "tighten", sectionKey }`).
+- `POST /api/autopilot/upload` → multipart ingest entry point; stores uploads, indexes them in the project vector store, and emits ingestion events tied to the session.
+- `PATCH /api/projects/{projectId}/meta` → persist workspace context (`orgUrl`, `projectIdea`) used by the auto-start countdown and the facts miner. Empty strings remove existing values.
 - Smoke tests: `npm run verify:ux2` exercises deterministic checks and optionally calls the API when `APP_URL` is set.
+
+**Web Search toggle**
+- Default is off; the workspace persists the toggle per project (`project.meta.allowWebSearch`).
+- Turn on by passing `allowWebSearch: true` to session endpoints or toggling the checkbox in the UI. When disabled, the agent confines itself to local files + org site.
+
+**Observability & metrics**
+- Every streamed session logs `ttft_ms`, `ttfd_ms`, tool runtimes, and the model id on `AgentWorkflowRun`.
+- `npm run verify:ux2` asserts synthetic coverage improvements across three fixtures and validates the latest run metrics (when `DATABASE_URL` is set).
 
 ### Blueprint mapper
 - Endpoint: `POST /api/blueprints/map` with `{ projectId, rfpId, blueprintId }`.
@@ -38,3 +51,7 @@ Deploy notes
 - `simpler` downloads attachments (requires `SIMPLER_API_KEY`) and stores them in Supabase Storage under `uploads/rfp/...`, indexing them as `Upload` records with kind `rfp-attachment` plus extracted text for PDF/DOCX.
 - `grants` returns the Grants.gov attachment metadata when direct downloads are unavailable.
 - `SIMPLER_API_KEY` and `SIMPLER_API_BASE` (optional) configure the Simpler API client; `GRANTS_API_BASE` (optional) points search + metadata calls at a different Grants.gov environment.
+
+### Privacy posture
+
+Project data stays in Postgres with per-project vector stores in OpenAI File Search. Uploaded artifacts are hashed; repeat uploads skip re-processing. Compliance metadata (format limits and tighten results) lives on `section.formatLimits`. We do not send PII to third parties beyond OpenAI (governed by `OPENAI_PROJECT`); encryption at rest comes from the managed Postgres + OpenAI storage layers. Toggle web search per session to avoid hitting public sources when not needed.

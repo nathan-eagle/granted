@@ -66,29 +66,31 @@ model Project {
   name      String
   createdAt DateTime @default(now())
 
-  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  responses       Response[]
-  jobs            Job[]
-  grants          Grant[]
+  user                User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  responses           Response[]
+  jobs                Job[]
+  grants              Grant[]
   // Autopilot extensions
-  agencyPackId    String?
-  status          String?
-  charterJson     Json?
-  factsJson       Json?
-  coverageJson    Json?
-  rfpNormJson     Json?
-  rfpBundleMeta   Json?
-  conflictLogJson Json?
-  eligibilityJson Json?
-  sloJson         Json?
-  meta            Json?
-  sections        Section[]
-  uploads         Upload[]
-  projectMeta     ProjectMeta?
-  agentWorkflowRuns AgentWorkflowRun[]
-  agentSessions  AgentSession[]
-  knowledgeBases  AgentKnowledgeBase[]
-  conflictLogs    AgentConflictLog[]
+  agencyPackId        String?
+  status              String?
+  charterJson         Json?
+  factsJson           Json?
+  coverageJson        Json?
+  rfpNormJson         Json?
+  rfpBundleMeta       Json?
+  conflictLogJson     Json?
+  eligibilityJson     Json?
+  sloJson             Json?
+  meta                Json?
+  agentSessionId      String?              @unique
+  sections            Section[]
+  uploads             Upload[]
+  projectMeta         ProjectMeta?
+  agentWorkflowRuns   AgentWorkflowRun[]
+  agentSessions       AgentSession[]
+  primaryAgentSession AgentSession?        @relation("PrimaryAgentSession", fields: [agentSessionId], references: [id])
+  knowledgeBases      AgentKnowledgeBase[]
+  conflictLogs        AgentConflictLog[]
 }
 
 model TemplateCategory {
@@ -274,18 +276,18 @@ model Section {
 }
 
 model Upload {
-  createdAt     DateTime        @default(now())
-  id            String          @id @default(cuid())
-  projectId     String
-  kind          String
-  kindDetail    String?
-  filename      String
-  url           String?
-  openAiFileId  String?
-  text          String?
-  meta          Json?
-  Project       Project         @relation(fields: [projectId], references: [id])
-  SectionSource SectionSource[]
+  createdAt          DateTime                 @default(now())
+  id                 String                   @id @default(cuid())
+  projectId          String
+  kind               String
+  kindDetail         String?
+  filename           String
+  url                String?
+  openAiFileId       String?
+  text               String?
+  meta               Json?
+  Project            Project                  @relation(fields: [projectId], references: [id])
+  SectionSource      SectionSource[]
   knowledgeBaseFiles AgentKnowledgeBaseFile[]
 }
 
@@ -325,23 +327,27 @@ model ProjectMeta {
 }
 
 model AgentWorkflowRun {
-  id          String   @id @default(cuid())
-  workflowId  String
-  projectId   String?
-  status      String   @default("pending")
-  input       Json?
-  result      Json?
-  error       String?
-  startedAt   DateTime @default(now())
-  completedAt DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             String    @id @default(cuid())
+  workflowId     String
+  projectId      String?
+  agentSessionId String?
+  status         String    @default("pending")
+  input          Json?
+  result         Json?
+  metrics        Json?
+  error          String?
+  startedAt      DateTime  @default(now())
+  completedAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
-  project Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  events  AgentWorkflowRunEvent[]
+  project      Project?                @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  agentSession AgentSession?           @relation(fields: [agentSessionId], references: [id], onDelete: SetNull)
+  events       AgentWorkflowRunEvent[]
 
   @@index([workflowId])
   @@index([projectId])
+  @@index([agentSessionId])
 }
 
 model AgentWorkflowRunEvent {
@@ -366,7 +372,7 @@ model AgentKnowledgeBase {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project Project                  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   files   AgentKnowledgeBaseFile[]
 
   @@unique([projectId])
@@ -374,38 +380,38 @@ model AgentKnowledgeBase {
 }
 
 model AgentKnowledgeBaseFile {
-  id               String   @id @default(cuid())
-  knowledgeBaseId  String
-  uploadId         String?
-  vectorFileId     String?
-  connectorId      String?
-  source           String
-  version          String?
-  releasedAt       DateTime?
-  metadata         Json?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id              String    @id @default(cuid())
+  knowledgeBaseId String
+  uploadId        String?
+  vectorFileId    String?
+  connectorId     String?
+  source          String
+  version         String?
+  releasedAt      DateTime?
+  metadata        Json?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   knowledgeBase AgentKnowledgeBase @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
-  upload         Upload?             @relation(fields: [uploadId], references: [id], onDelete: SetNull)
+  upload        Upload?            @relation(fields: [uploadId], references: [id], onDelete: SetNull)
 
+  @@unique([knowledgeBaseId, uploadId])
   @@index([knowledgeBaseId])
   @@index([uploadId])
-  @@unique([knowledgeBaseId, uploadId])
 }
 
 model AgentConflictLog {
-  id          String   @id @default(cuid())
-  projectId   String
-  key         String
-  previous    Json?
-  next        Json?
-  status      String   @default("open")
-  resolution  String?
-  resolvedAt  DateTime?
-  metadata    Json?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String    @id @default(cuid())
+  projectId  String
+  key        String
+  previous   Json?
+  next       Json?
+  status     String    @default("open")
+  resolution String?
+  resolvedAt DateTime?
+  metadata   Json?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
@@ -422,10 +428,12 @@ model AgentSession {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project        Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  primaryProject Project?           @relation("PrimaryAgentSession")
+  workflowRuns   AgentWorkflowRun[]
 
-  @@index([projectId])
   @@unique([agentRunId])
+  @@index([projectId])
 }
 
 model RFP {
@@ -456,15 +464,15 @@ model Requirement {
 }
 
 model AgentRun {
-  id        String   @id @default(cuid())
+  id        String     @id @default(cuid())
   rfpId     String?
   projectId String?
-  status    String   @default("created") // created|running|done|error
+  status    String     @default("created") // created|running|done|error
   steps     Json?
   scores    Json?
   docxUrl   String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
   eventLogs EventLog[]
 }
 

@@ -10,6 +10,7 @@ const VECTOR_DISABLE_REMOTE = process.env.AGENTKIT_VECTOR_DISABLE_REMOTE === "1"
 export async function ensureKnowledgeBase(projectId: string) {
   let record = await prisma.agentKnowledgeBase.findUnique({ where: { projectId } })
   if (record) {
+    await persistProjectVectorStore(projectId, record.vectorStoreId)
     return record
   }
 
@@ -54,6 +55,8 @@ export async function ensureKnowledgeBase(projectId: string) {
       metadata: metadata as unknown as Prisma.InputJsonValue,
     },
   })
+
+  await persistProjectVectorStore(projectId, vectorStoreId)
 
   return record
 }
@@ -128,6 +131,7 @@ export async function registerKnowledgeBaseFile(input: KnowledgeBaseFileInput) {
             file_id: remoteFileId,
           })
         }
+        await waitForVectorFileReady(knowledgeBase.vectorStoreId, remoteFileId)
         vectorFileId = remoteFileId
         metadata.openAiFileId = remoteFileId
       }
@@ -151,6 +155,7 @@ export async function registerKnowledgeBaseFile(input: KnowledgeBaseFileInput) {
         metadata: (metadata ?? Prisma.JsonNull) as Prisma.InputJsonValue | Prisma.JsonNullValueInput,
       },
     })
+    await persistUploadFileId(input.uploadId, vectorFileId ?? input.openAiFileId ?? null)
     return updated
   }
 
@@ -167,7 +172,75 @@ export async function registerKnowledgeBaseFile(input: KnowledgeBaseFileInput) {
     },
   })
 
+  await persistUploadFileId(input.uploadId, vectorFileId ?? input.openAiFileId ?? null)
+
   return created
+}
+
+async function persistProjectVectorStore(projectId: string, vectorStoreId: string) {
+  try {
+    const project = await prisma.project.findUnique({ where: { id: projectId }, select: { meta: true } })
+    if (!project) return
+    const meta = mergeMetaRecord(project.meta, { vectorStoreId })
+    await prisma.project.update({ where: { id: projectId }, data: { meta } })
+  } catch (error) {
+    console.warn("[knowledge-base] persistProjectVectorStore failed", error)
+  }
+}
+
+async function persistUploadFileId(uploadId: string | null | undefined, openAiFileId: string | null) {
+  if (!uploadId || !openAiFileId) return
+  try {
+    const upload = await prisma.upload.findUnique({ where: { id: uploadId }, select: { meta: true } })
+    if (!upload) return
+    const meta = mergeMetaRecord(upload.meta, { openaiFileId: openAiFileId })
+    await prisma.upload.update({
+      where: { id: uploadId },
+      data: {
+        openAiFileId,
+        meta,
+      },
+    })
+  } catch (error) {
+    console.warn("[knowledge-base] persistUploadFileId failed", error)
+  }
+}
+
+async function waitForVectorFileReady(vectorStoreId: string, fileId: string) {
+  const beta = (client as any)?.beta
+  if (!beta?.vectorStores?.files?.retrieve) return
+  const started = Date.now()
+  const timeoutMs = 30000
+  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+  while (true) {
+    try {
+      const response = await beta.vectorStores.files.retrieve(vectorStoreId, fileId)
+      const status = response?.status ?? response?.data?.status
+      if (!status || status === "completed" || status === "succeeded" || status === "ready") {
+        return
+      }
+      if (status === "failed" || status === "canceled" || status === "cancelled") {
+        console.warn("[knowledge-base] vector file indexing failed", { vectorStoreId, fileId, status })
+        return
+      }
+    } catch (error) {
+      console.warn("[knowledge-base] vector file polling error", error)
+    }
+    if (Date.now() - started > timeoutMs) {
+      console.warn("[knowledge-base] vector file polling timed out", { vectorStoreId, fileId })
+      return
+    }
+    await delay(1000)
+  }
+}
+
+function mergeMetaRecord(value: unknown, additions: Record<string, unknown>): Prisma.InputJsonValue {
+  if (!additions || Object.keys(additions).length === 0) {
+    return (value ?? Prisma.JsonNull) as Prisma.InputJsonValue
+  }
+  const base: Record<string, unknown> =
+    value && typeof value === "object" && !Array.isArray(value) ? { ...(value as Record<string, unknown>) } : {}
+  return { ...base, ...additions } as Prisma.InputJsonValue
 }
 
 function serializeConnectors(registry: ReturnType<typeof loadConnectorRegistry>) {

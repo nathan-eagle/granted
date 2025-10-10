@@ -3,9 +3,9 @@ import { agentKitRuntimeConfig, agentKitModels } from "./agentkit.config"
 import { agentActions, toolParameterSchemas } from "./agentkit"
 import { getVectorStoreAttachment } from "./knowledgeBase"
 import {
-  createAgentSession,
   getAgentSession,
   updateAgentSession,
+  ensureProjectAgentSession,
   type AgentSessionMessage,
 } from "./sessions"
 
@@ -68,11 +68,16 @@ export async function ensureAgentActionsSynced(force = false) {
 export async function startAgentSession({
   projectId,
   messages,
+  allowWebSearch = false,
 }: {
   projectId: string
   messages: AgentSessionMessage[]
+  allowWebSearch?: boolean
 }): Promise<AgentSessionStartResult> {
-  const session = await createAgentSession({ projectId, transcript: messages })
+  const session = await ensureProjectAgentSession(projectId)
+  if (messages.length) {
+    await updateAgentSession(session.id, { appendTranscript: messages })
+  }
   const agentsClient = getAgentsClient()
   let reply: AgentSessionMessage | null = null
   let memoryId: string | null = null
@@ -81,7 +86,7 @@ export async function startAgentSession({
     await ensureAgentActionsSynced()
     const attachment = await getVectorStoreAttachment(projectId)
     if (agentsClient?.sessions?.create) {
-      const response = await agentsClient.sessions.create({
+      const payload: Record<string, unknown> = {
         workflow_id: agentKitRuntimeConfig.workflowId,
         messages: messages.map(m => ({ role: m.role, content: m.content })),
         metadata: { projectId },
@@ -93,7 +98,12 @@ export async function startAgentSession({
               },
             ]
           : undefined,
-      })
+      }
+      if (allowWebSearch) {
+        payload.tools = [{ type: "web_search" }]
+        ;(payload.metadata as Record<string, unknown>).allowWebSearch = true
+      }
+      const response = await agentsClient.sessions.create(payload as any)
       raw = response
       memoryId = response?.memory_id ?? null
       reply = extractAssistantMessage(response)
@@ -121,9 +131,11 @@ export async function startAgentSession({
 export async function continueAgentSession({
   sessionId,
   messages,
+  allowWebSearch = false,
 }: {
   sessionId: string
   messages: AgentSessionMessage[]
+  allowWebSearch?: boolean
 }): Promise<AgentSessionContinueResult> {
   const session = await getAgentSession(sessionId)
   if (!session) {
@@ -139,7 +151,7 @@ export async function continueAgentSession({
     await ensureAgentActionsSynced()
     const attachment = await getVectorStoreAttachment(session.projectId)
     if (agentsClient?.sessions?.messages?.create) {
-      const response = await agentsClient.sessions.messages.create({
+      const payload: Record<string, unknown> = {
         session_id: sessionId,
         messages: messages.map(m => ({ role: m.role, content: m.content })),
         attachments: attachment
@@ -151,7 +163,11 @@ export async function continueAgentSession({
             ]
           : undefined,
         memory_id: memoryId ?? undefined,
-      })
+      }
+      if (allowWebSearch) {
+        payload.tools = [{ type: "web_search" }]
+      }
+      const response = await agentsClient.sessions.messages.create(payload as any)
       raw = response
       memoryId = response?.memory_id ?? memoryId
       reply = extractAssistantMessage(response)

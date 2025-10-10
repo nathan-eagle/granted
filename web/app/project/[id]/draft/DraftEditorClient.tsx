@@ -2,10 +2,10 @@
 
 import React from "react"
 import { toast } from "sonner"
-import SectionCard from "../../../../components/editor/SectionCard"
-import EditorHeader from "../../../../components/editor/EditorHeader"
-import InlineAI from "../../../../components/editor/InlineAI"
-import RightRail from "../../../../components/right-rail/RightRail"
+import SectionCard from "@/components/deprecated/editor/SectionCard"
+import EditorHeader from "@/components/deprecated/editor/EditorHeader"
+import InlineAI from "@/components/deprecated/editor/InlineAI"
+import RightRail from "@/components/deprecated/right-rail/RightRail"
 
 async function fetchSectionSources(sectionId: string) {
   try {

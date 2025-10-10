@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 
 import { withApiInstrumentation } from "@/lib/api/middleware"
+import { agentkit } from "@/lib/agentkit/client"
 import { runIntake } from "@/lib/agent/orchestrator"
+import type { AgentEvent } from "@/lib/agent/events"
+type ConflictEvent = Extract<AgentEvent, { type: "conflict.found" }>
 
 export const POST = withApiInstrumentation(async (req: NextRequest, ctx) => {
   const body = await req.json().catch(() => ({}))
@@ -13,11 +16,34 @@ export const POST = withApiInstrumentation(async (req: NextRequest, ctx) => {
     return NextResponse.json({ error: "projectId required" }, { status: 400 })
   }
 
-  const coverage = await runIntake({ projectId, urls, files })
-
-  return NextResponse.json({
-    projectId,
-    coverage,
-    requestId: ctx.requestId,
+  const capturedEvents: ConflictEvent[] = []
+  const unsubscribe = agentkit.events.subscribe("conflict.found", event => {
+    if (event.payload.projectId === projectId) {
+      capturedEvents.push(event)
+    }
   })
+
+  try {
+    const ingestion = await agentkit.actions.invoke("ingest_rfp_bundle", {
+      projectId,
+      urls,
+      files,
+    })
+
+    const coverage = await runIntake({ projectId, uploadIds: ingestion.uploadIds })
+
+    return NextResponse.json({
+      projectId,
+      coverage,
+      uploadIds: ingestion.uploadIds,
+      conflicts: capturedEvents.map(event => ({
+        key: event.payload.key,
+        previous: event.payload.previous ?? null,
+        next: event.payload.next ?? null,
+      })),
+      requestId: ctx.requestId,
+    })
+  } finally {
+    unsubscribe()
+  }
 })

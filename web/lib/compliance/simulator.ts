@@ -56,14 +56,15 @@ export type ComplianceResult = {
   status: "ok" | "overflow"
 }
 
-export function simulateCompliance(markdown: string, options: SimulatorOptions = {}): ComplianceResult {
+export function simulateCompliance(markdown: string, options?: SimulatorOptions | null): ComplianceResult {
+  const normalized = options ?? {}
   const words = markdown.trim().split(/\s+/).filter(Boolean)
   const wordCount = words.length
-  const estimatedPages = estimatePages(wordCount, options)
+  const estimatedPages = estimatePages(wordCount, normalized)
   const overWordLimit =
-    options.hard_word_limit !== undefined && wordCount > options.hard_word_limit
+    normalized.hard_word_limit !== undefined && wordCount > normalized.hard_word_limit
   const overPageLimit =
-    options.soft_page_limit !== undefined && estimatedPages > options.soft_page_limit
+    normalized.soft_page_limit !== undefined && estimatedPages > normalized.soft_page_limit
 
   const status: "ok" | "overflow" = overWordLimit || overPageLimit ? "overflow" : "ok"
 

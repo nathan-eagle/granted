@@ -1,80 +1,69 @@
-import { NextRequest } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } from 'docx'
+import { NextRequest, NextResponse } from "next/server"
 
-export const runtime = 'nodejs'
-export const dynamic = 'force-dynamic'
+import { withApiInstrumentation } from "@/lib/api/middleware"
+import { callAgentActionWithAgents } from "@/lib/agent/runner"
+import type { AgentActionInput } from "@/lib/agent/agentkit"
+import { auth } from "@/lib/auth"
+import { prisma } from "@/lib/prisma"
 
-function mdToTextParagraphs(md: string): Paragraph[] {
-  const lines = String(md || '').split(/\r?\n/)
-  const paras: Paragraph[] = []
-  let buf: string[] = []
-  function flush(){
-    if (!buf.length) return
-    const text = buf.join('\n').replace(/\*\*|__/g, '').replace(/\*/g, '')
-    paras.push(new Paragraph({ children: [ new TextRun({ text, size: 24 }) ], spacing: { after: 180 } }))
-    buf = []
+export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
+
+async function fetchFile(url: string) {
+  if (url.startsWith("data:")) {
+    const comma = url.indexOf(",")
+    const meta = url.slice(5, comma)
+    const data = url.slice(comma + 1)
+    const buffer = Buffer.from(data, meta.includes(";base64") ? "base64" : "utf8")
+    return { buffer, contentType: meta.split(";")[0] || "application/octet-stream" }
   }
-  for (const ln of lines) {
-    if (!ln.trim()) { flush(); continue }
-    buf.push(ln)
+
+  const response = await fetch(url)
+  if (!response.ok) {
+    throw new Error(`Failed to download exported file (${response.status})`)
   }
-  flush()
-  return paras
+  const arrayBuffer = await response.arrayBuffer()
+  const buffer = Buffer.from(arrayBuffer)
+  const contentType = response.headers.get("content-type") ?? "application/octet-stream"
+  return { buffer, contentType }
 }
 
-export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url)
-  const projectId = searchParams.get('projectId') || ''
-  if (!projectId) return new Response('Missing projectId', { status: 400 })
-
-  const project = await prisma.project.findUnique({ where: { id: projectId }, include: { sections: { orderBy: { order: 'asc' } }, uploads: true } })
-  if (!project) return new Response('Not found', { status: 404 })
-
-  // Build References map from {{fact:ID}} markers → [n]
-  const facts: any[] = (project as any).factsJson || []
-  const byFact = new Map(facts.map(f => [String(f.id||''), f]))
-  const seen: string[] = []
-  function citeId(id: string){
-    if (!seen.includes(id)) seen.push(id)
-    return seen.indexOf(id) + 1
+export const GET = withApiInstrumentation(async (request: NextRequest) => {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+  const { searchParams } = new URL(request.url)
+  const projectId = searchParams.get("projectId")
+  if (!projectId) {
+    return NextResponse.json({ error: "projectId required" }, { status: 400 })
   }
 
-  const doc = new Document({ sections: [ { children: [] } ] })
-  const children = (doc as any).Sections[0].children as any[]
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: { name: true },
+  })
+  const downloadStem = (project?.name || projectId)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/gi, "-")
+    .replace(/-{2,}/g, "-")
+    .replace(/^-+|-+$/g, "")
+  const filename = `${downloadStem || projectId}.docx`
 
-  // Title
-  children.push(new Paragraph({ text: project.name, heading: HeadingLevel.HEADING_1, alignment: AlignmentType.CENTER, spacing: { after: 320 } }))
+  const payload = await callAgentActionWithAgents("export_docx", {
+    projectId,
+  } as AgentActionInput<"export_docx">)
 
-  for (const s of project.sections) {
-    children.push(new Paragraph({ text: s.title, heading: HeadingLevel.HEADING_2, spacing: { before: 240, after: 120 } }))
-    // Replace markers with [n]
-    let body = String(s.contentMd || '')
-    body = body.replace(/\{\{fact:([^}]+)\}\}/g, (_m, id) => `[${citeId(String(id))}]`)
-    mdToTextParagraphs(body).forEach(p => children.push(p))
+  if (!payload?.fileUrl) {
+    return NextResponse.json({ error: "AgentKit export returned no file URL" }, { status: 502 })
   }
 
-  if (seen.length) {
-    children.push(new Paragraph({ text: 'References', heading: HeadingLevel.HEADING_2, spacing: { before: 240, after: 120 } }))
-    const uploads = project.uploads
-    for (let i = 0; i < seen.length; i++) {
-      const id = seen[i]
-      const f: any = byFact.get(id)
-      if (!f) continue
-      const upName = f?.evidence?.uploadId ? (uploads.find(u => u.id === f.evidence.uploadId)?.filename || '') : ''
-      const pageStr = f?.evidence?.page ? ` p.${f.evidence.page}` : ''
-      const line = `[${i+1}] ${f.text}${upName ? ` (Source: ${upName}${pageStr})` : ''}`
-      children.push(new Paragraph({ children: [ new TextRun({ text: line, size: 22 }) ], spacing: { after: 120 } }))
-    }
-  }
-
-  const buf = await Packer.toBuffer(doc)
-  const arrayBuffer = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer
-  return new Response(arrayBuffer, {
+  const { buffer, contentType } = await fetchFile(payload.fileUrl)
+  return new NextResponse(buffer, {
     headers: {
-      'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'Content-Disposition': `attachment; filename="${encodeURIComponent(project.name || 'proposal')}.docx"`,
-      'Cache-Control': 'no-store',
+      "Content-Type": contentType,
+      "Content-Disposition": `attachment; filename="${filename}"`,
+      "Cache-Control": "no-store",
     },
   })
-}
+})

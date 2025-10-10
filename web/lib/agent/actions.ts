@@ -1,5 +1,4 @@
 import { promises as fs } from "fs"
-
 import { Prisma } from "@prisma/client"
 
 import { prisma } from "../prisma"
@@ -16,9 +15,15 @@ import {
 } from "../contracts"
 import { simulateCompliance } from "../compliance/simulator"
 import { emitAgentEvent } from "./events"
+import "./event-subscribers"
+import { registerKnowledgeBaseFile } from "./knowledgeBase"
+import { loadConnectorRegistry, pickConnectorForFile } from "./connectors"
+import { buildConflictKey, buildConflictTopic, upsertConflictLog } from "./conflicts"
 import { computeFixSuggestions } from "./fixNext"
 import { slotsForSection } from "./slotLibrary"
-import { Document, Packer, Paragraph, HeadingLevel, Media } from "docx"
+import { persistAgentState } from "./state"
+import { Document, Packer, Paragraph, HeadingLevel } from "docx"
+import { loadDraftSnapshot, SUMMARY_SECTION_KEY, SUMMARY_SECTION_TITLE } from "./draft"
 
 type JsonArray = Prisma.JsonArray
 
@@ -73,20 +78,26 @@ export type IngestRfpBundleInput = {
 }
 
 export async function ingestRfpBundle({ projectId, files = [], urls = [] }: IngestRfpBundleInput) {
+  const registry = loadConnectorRegistry()
   const uploadIds: string[] = []
-
   const bundleMeta: JsonArray = []
+  const freshEntries: Record<string, unknown>[] = []
+
+  const recordMeta = (entry: Record<string, unknown>) => {
+    bundleMeta.push(entry as unknown as Prisma.JsonValue)
+    freshEntries.push(entry)
+  }
 
   if (files.length) {
     for (const file of files) {
       if (file.uploadId) {
         const exists = await prisma.upload.findUnique({
           where: { id: file.uploadId },
-          select: { id: true, filename: true, kindDetail: true },
+          select: { id: true, filename: true, kindDetail: true, text: true },
         })
         if (exists) {
-          uploadIds.push(file.uploadId)
-          bundleMeta.push({
+          uploadIds.push(exists.id)
+          const entry: Record<string, unknown> = {
             uploadId: exists.id,
             name: exists.filename ?? exists.id,
             version: detectVersion(exists.filename),
@@ -94,7 +105,21 @@ export async function ingestRfpBundle({ projectId, files = [], urls = [] }: Inge
             source: "existing",
             addedAt: new Date().toISOString(),
             kind: exists.kindDetail,
+          }
+          const knowledgeFile = await registerKnowledgeBaseFile({
+            projectId,
+            uploadId: exists.id,
+            filename: exists.filename,
+            text: exists.text,
+            source: "existing",
+            version: entry.version?.toString() ?? null,
+            releaseDate: entry.release_date?.toString() ?? null,
+            connectorOverride: pickConnectorForFile(registry, exists.filename ?? undefined),
           })
+          entry.connector_id = knowledgeFile?.connectorId ?? null
+          entry.vector_store_file_id = knowledgeFile?.vectorFileId ?? null
+          entry.knowledge_base_file_id = knowledgeFile?.id ?? null
+          recordMeta(entry)
           continue
         }
       }
@@ -102,26 +127,42 @@ export async function ingestRfpBundle({ projectId, files = [], urls = [] }: Inge
       if (file.path) {
         const buffer = await fs.readFile(file.path)
         const text = buffer.toString("utf8")
-        const detectedVersion = detectVersion(file.name ?? file.path)
-        const detectedDate = detectReleaseDate(file.name ?? file.path)
+        const fileName = file.name ?? file.path.split("/").pop() ?? "rfp_document"
+        const detectedVersion = detectVersion(fileName)
+        const detectedDate = detectReleaseDate(fileName)
         const created = await prisma.upload.create({
           data: {
             projectId,
             kind: "rfp",
             kindDetail: detectKindDetail(file.name),
-            filename: file.name ?? file.path.split("/").pop() ?? "rfp_document",
+            filename: fileName,
             text,
           },
         })
         uploadIds.push(created.id)
-        bundleMeta.push({
+        const entry: Record<string, unknown> = {
           uploadId: created.id,
-          name: file.name ?? created.id,
+          name: fileName,
           version: detectedVersion,
           release_date: detectedDate,
           source: "file",
           addedAt: new Date().toISOString(),
+          kind: detectKindDetail(file.name),
+        }
+        const knowledgeFile = await registerKnowledgeBaseFile({
+          projectId,
+          uploadId: created.id,
+          filename: fileName,
+          text,
+          source: "file",
+          version: detectedVersion,
+          releaseDate: detectedDate,
+          connectorOverride: pickConnectorForFile(registry, fileName),
         })
+        entry.connector_id = knowledgeFile?.connectorId ?? null
+        entry.vector_store_file_id = knowledgeFile?.vectorFileId ?? null
+        entry.knowledge_base_file_id = knowledgeFile?.id ?? null
+        recordMeta(entry)
       }
     }
   }
@@ -144,14 +185,29 @@ export async function ingestRfpBundle({ projectId, files = [], urls = [] }: Inge
           },
         })
         uploadIds.push(created.id)
-        bundleMeta.push({
+        const entry: Record<string, unknown> = {
           uploadId: created.id,
           name: url,
           version: detectedVersion,
           release_date: detectedDate,
           source: "url",
           addedAt: new Date().toISOString(),
+          kind: "url",
+        }
+        const knowledgeFile = await registerKnowledgeBaseFile({
+          projectId,
+          uploadId: created.id,
+          filename: url,
+          text,
+          source: "url",
+          version: detectedVersion,
+          releaseDate: detectedDate,
+          connectorOverride: pickConnectorForFile(registry, "remote.html"),
         })
+        entry.connector_id = knowledgeFile?.connectorId ?? null
+        entry.vector_store_file_id = knowledgeFile?.vectorFileId ?? null
+        entry.knowledge_base_file_id = knowledgeFile?.id ?? null
+        recordMeta(entry)
       } catch (error) {
         console.warn("Failed to fetch RFP URL", { url, error })
       }
@@ -167,9 +223,45 @@ export async function ingestRfpBundle({ projectId, files = [], urls = [] }: Inge
     ? (existingBundle?.rfpBundleMeta as JsonArray)
     : []
 
+  const conflictTopics = new Map<string, Record<string, unknown>>()
+  persistedMeta.forEach(entry => {
+    if (!entry || typeof entry !== "object") return
+    const typed = entry as Record<string, unknown>
+    const topic = buildConflictTopic(typed as any)
+    if (!conflictTopics.has(topic)) {
+      conflictTopics.set(topic, typed)
+    }
+  })
+
+  for (const entry of freshEntries) {
+    const topic = buildConflictTopic(entry as any)
+    const previous = conflictTopics.get(topic)
+    if (previous) {
+      const key = buildConflictKey({
+        ...entry,
+        kind: entry.kind ?? previous.kind ?? "bundle",
+      } as any)
+      await upsertConflictLog({
+        projectId,
+        key,
+        previous: previous as Record<string, unknown>,
+        next: entry,
+      })
+      emitAgentEvent({
+        type: "conflict.found",
+        payload: {
+          projectId,
+          key,
+          previous: previous as Record<string, unknown>,
+          next: entry,
+        },
+      })
+    }
+  }
+
   const mergedMeta: JsonArray = [...persistedMeta, ...bundleMeta]
-  const deduped: JsonArray = []
   const seen = new Set<string>()
+  const deduped: JsonArray = []
   for (const entry of mergedMeta) {
     if (!entry || typeof entry !== "object" || !("uploadId" in entry)) {
       deduped.push(entry)
@@ -181,12 +273,37 @@ export async function ingestRfpBundle({ projectId, files = [], urls = [] }: Inge
     deduped.push(entry)
   }
 
+  deduped.sort((a, b) => compareBundleEntries(a as Record<string, unknown>, b as Record<string, unknown>))
+
   await prisma.project.update({
     where: { id: projectId },
     data: { rfpBundleMeta: deduped },
   })
 
   return { uploadIds }
+}
+
+function compareBundleEntries(a: Record<string, unknown>, b: Record<string, unknown>) {
+  const getDate = (entry: Record<string, unknown>) => {
+    const value = typeof entry.release_date === "string" ? entry.release_date : undefined
+    return value ? Date.parse(value) : NaN
+  }
+
+  const dateA = getDate(a)
+  const dateB = getDate(b)
+  if (!Number.isNaN(dateA) && !Number.isNaN(dateB) && dateA !== dateB) {
+    return dateB - dateA
+  }
+
+  const versionA = typeof a.version === "string" ? a.version : ""
+  const versionB = typeof b.version === "string" ? b.version : ""
+  if (versionA && versionB && versionA !== versionB) {
+    return versionB.localeCompare(versionA, undefined, { numeric: true, sensitivity: "base" })
+  }
+
+  const nameA = typeof a.name === "string" ? a.name : ""
+  const nameB = typeof b.name === "string" ? b.name : ""
+  return nameA.localeCompare(nameB)
 }
 
 export type NormalizeRfpInput = {
@@ -301,11 +418,22 @@ export async function normalizeRfp({ projectId, uploadIds }: NormalizeRfpInput) 
       select: { id: true },
     })
 
-    const formatLimits = sectionData.word_limit || sectionData.page_limit
+    const formatSettings = {
+      hard_word_limit: sectionData.word_limit ?? undefined,
+      soft_page_limit: sectionData.page_limit ?? undefined,
+      font: sectionData.provenance?.font,
+      size: sectionData.provenance?.font_size_pt,
+      spacing: sectionData.provenance?.line_spacing,
+      margins: sectionData.provenance?.margins_in,
+      provenance: sectionData.provenance ?? undefined,
+    }
+    const hasSettings =
+      formatSettings.hard_word_limit !== undefined || formatSettings.soft_page_limit !== undefined
+    const formatLimits = hasSettings
       ? {
-          word_limit: sectionData.word_limit,
-          page_limit: sectionData.page_limit,
-          provenance: sectionData.provenance,
+          settings: formatSettings,
+          result: null,
+          updatedAt: new Date().toISOString(),
         }
       : undefined
 
@@ -343,6 +471,12 @@ export async function normalizeRfp({ projectId, uploadIds }: NormalizeRfpInput) 
 
   eligibility.forEach(item => {
     emitAgentEvent({ type: "eligibility.flag", payload: { projectId, item } })
+  })
+
+  await persistAgentState({
+    projectId,
+    rfpNorm,
+    eligibility: { items: eligibility },
   })
 
   return rfpNorm
@@ -385,7 +519,8 @@ export async function scoreCoverage({ projectId }: ScoreCoverageInput) {
     const status: "missing" | "stubbed" | "evidenced" | "drafted" = section.contentMd?.trim()
       ? "drafted"
       : "missing"
-    const compliance = (section.formatLimits as any)?.result
+    const formatLimits = section.formatLimits as any
+    const compliance = formatLimits?.result
     return {
       id: section.key,
       source: `sections.${section.key}`,
@@ -444,21 +579,27 @@ export async function draftSection({ projectId, section_key }: DraftSectionInput
     paragraphs.push(`### ${slot.label}\n\n${placeholder}`)
   })
 
+  const paragraphMeta = slots.map(slot => ({
+    requirement_path: `sections.${section_key}.${slot.key}`,
+    assumption: true,
+  }))
+
   const markdown = [`## ${section.title}`, ...paragraphs].join("\n\n")
 
   await prisma.section.update({
     where: { id: section.id },
-    data: { contentMd: markdown, slotsJson: slot_fills as Prisma.InputJsonValue },
+    data: {
+      contentMd: markdown,
+      slotsJson: slot_fills as Prisma.InputJsonValue,
+      contentJson: paragraphMeta as Prisma.InputJsonValue,
+    },
   })
 
   const draft: SectionDraftV1 = SectionDraftV1Schema.parse({
     section_key,
     slot_fills,
     full_markdown: markdown,
-    paragraph_meta: slots.map(slot => ({
-      requirement_path: `sections.${section_key}.${slot.key}`,
-      assumption: true,
-    })),
+    paragraph_meta: paragraphMeta,
   })
 
   emitAgentEvent({ type: "draft.progress", payload: { projectId, sectionKey: section_key, status: "completed" } })
@@ -482,29 +623,47 @@ export type TightenSectionInput = {
 export async function tightenSection({ projectId, section_key, simulator }: TightenSectionInput) {
   const section = await prisma.section.findFirst({
     where: { projectId, key: section_key },
-    select: { id: true, contentMd: true },
+    select: { id: true, contentMd: true, formatLimits: true },
   })
 
   if (!section) throw new Error(`Section ${section_key} not found`)
 
+  const existingLimits = section.formatLimits as any
+  const baseSettings = existingLimits?.settings ?? existingLimits ?? {}
+  const tightenSettings = {
+    ...baseSettings,
+    ...(simulator ?? {}),
+  }
+
   let markdown = section.contentMd ?? ""
-  if (simulator?.hard_word_limit) {
+  if (tightenSettings.hard_word_limit) {
     const words = markdown.split(/\s+/)
-    if (words.length > simulator.hard_word_limit) {
-      markdown = words.slice(0, simulator.hard_word_limit).join(" ")
+    if (words.length > tightenSettings.hard_word_limit) {
+      markdown = words.slice(0, tightenSettings.hard_word_limit).join(" ")
     }
   }
 
-  const compliance = simulateCompliance(markdown, simulator)
+  const compliance = simulateCompliance(markdown, tightenSettings)
 
   await prisma.section.update({
     where: { id: section.id },
     data: {
       contentMd: markdown,
       formatLimits: {
-        ...(simulator ?? {}),
+        settings: tightenSettings,
         result: compliance,
+        updatedAt: new Date().toISOString(),
       } as Prisma.InputJsonValue,
+    },
+  })
+
+  await persistAgentState({
+    projectId,
+    formatLimits: {
+      [section_key]: {
+        settings: tightenSettings,
+        result: compliance,
+      },
     },
   })
 
@@ -524,28 +683,59 @@ export async function exportDocx({ projectId }: ExportDocxInput) {
       name: true,
       coverageJson: true,
       eligibilityJson: true,
-      sections: { select: { title: true, contentMd: true }, orderBy: { order: "asc" } },
     },
   })
 
   if (!project) throw new Error("project not found")
 
+  const draft = await loadDraftSnapshot(projectId)
+  const coveragePercent =
+    typeof draft.coverage === "number" && Number.isFinite(draft.coverage)
+      ? `${Math.round(draft.coverage * 100)}%`
+      : "n/a"
+
+  const headerParagraphs: Paragraph[] = [
+    new Paragraph({ text: project.name, heading: HeadingLevel.TITLE }),
+    new Paragraph({ text: `Generated ${new Date().toLocaleString()}` }),
+    new Paragraph({ text: `Coverage Score: ${coveragePercent}` }),
+  ]
+
+  if (project.eligibilityJson) {
+    headerParagraphs.push(new Paragraph({ text: "Eligibility Summary", heading: HeadingLevel.HEADING_2 }))
+    headerParagraphs.push(new Paragraph({ text: JSON.stringify(project.eligibilityJson, null, 2) }))
+  }
+
+  if (draft.coverageSuggestions?.length) {
+    headerParagraphs.push(new Paragraph({ text: "Fix Next Suggestions", heading: HeadingLevel.HEADING_2 }))
+    draft.coverageSuggestions.slice(0, 5).forEach(suggestion => {
+      headerParagraphs.push(new Paragraph({ text: suggestion.label, bullet: { level: 0 } }))
+    })
+  }
+
+  const sectionParagraphs: Paragraph[] = []
+  for (const section of draft.sections) {
+    const headingLevel = section.key === SUMMARY_SECTION_KEY ? HeadingLevel.HEADING_1 : HeadingLevel.HEADING_2
+    sectionParagraphs.push(new Paragraph({ text: section.title, heading: headingLevel }))
+    markdownToParagraphs(section.markdown).forEach(paragraph => sectionParagraphs.push(paragraph))
+    if (section.compliance) {
+      sectionParagraphs.push(
+        new Paragraph({
+          text: `Compliance: ${section.compliance.status.toUpperCase()} — ${section.compliance.wordCount} words, ${section.compliance.estimatedPages.toFixed(2)} pages`,
+        }),
+      )
+    }
+    if (section.assumptions?.length) {
+      sectionParagraphs.push(new Paragraph({ text: "Assumptions", heading: HeadingLevel.HEADING_3 }))
+      section.assumptions.forEach(assumption => {
+        sectionParagraphs.push(new Paragraph({ text: assumption, bullet: { level: 0 } }))
+      })
+    }
+  }
+
   const doc = new Document({
     sections: [
       {
-        children: [
-          new Paragraph({ text: project.name, heading: HeadingLevel.TITLE }),
-          new Paragraph({ text: `Generated ${new Date().toLocaleString()}` }),
-          new Paragraph({
-            text: "Coverage Score: " + String((project.coverageJson as any)?.score ?? "n/a"),
-          }),
-          new Paragraph({ text: "Eligibility Summary:" }),
-          new Paragraph({ text: JSON.stringify(project.eligibilityJson ?? {}, null, 2) }),
-          ...project.sections.flatMap(section => [
-            new Paragraph({ text: section.title, heading: HeadingLevel.HEADING_1 }),
-            new Paragraph({ text: section.contentMd ?? "" }),
-          ]),
-        ],
+        children: [...headerParagraphs, ...sectionParagraphs],
       },
     ],
   })
@@ -560,4 +750,13 @@ export async function exportDocx({ projectId }: ExportDocxInput) {
   })
 
   return { fileUrl: dataUrl }
+}
+
+function markdownToParagraphs(markdown: string): Paragraph[] {
+  if (!markdown.trim()) return [new Paragraph({ text: "" })]
+  return markdown
+    .split(/\n{2,}/)
+    .map(line => line.trim())
+    .filter(Boolean)
+    .map(line => new Paragraph({ text: line }))
 }

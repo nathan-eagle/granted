@@ -1,6 +1,8 @@
 import PageShell from "@/components/layout/PageShell"
 import { prisma } from "@/lib/prisma"
 
+export const dynamic = "force-dynamic"
+
 export default async function GrantsPage() {
   const projects = await prisma.project.findMany({
     orderBy: { createdAt: "desc" },
