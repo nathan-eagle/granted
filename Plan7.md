@@ -13,28 +13,28 @@
 ---
 
 ## 0) Preflight
-- [ ] **Confirm hosting**: We are deploying on **Vercel**. Use GitHub repo with automatic deployments from `main`.
-- [ ] **Local runtime**: Node.js **v20+** (required for Web Streams/Blob); package manager **pnpm** (preferred) or npm.
+- [x] **Confirm hosting**: We are deploying on **Vercel**. Use GitHub repo with automatic deployments from `main`.
+- [x] **Local runtime**: Node.js **v20+** (required for Web Streams/Blob); package manager **pnpm** (preferred) or npm.
 - [ ] **OpenAI credentials**: Obtain `OPENAI_API_KEY`. (Organization/project scoped key is fine.)
-- [ ] **Decide model**: Use a GPT‑5 class model: 'gpt-5'. 
+- [x] **Decide model**: Use a GPT‑5 class model: 'gpt-5'. 
 
 ---
 
 ## 1) Initialize a fresh repo
-- [ ] We are using a fresh, main branch of **public GitHub repo** `granted`.
-- [ ] Initialize Next.js (App Router) with TypeScript:
+- [x] We are using a fresh, main branch of **public GitHub repo** `granted`.
+- [x] Initialize Next.js (App Router) with TypeScript:
   ```bash
   pnpm dlx create-next-app@latest granted-mvp \
     --ts --eslint --app --src-dir --import-alias "@/*" --no-tailwind
   cd granted-mvp
   pnpm add -D prettier @types/node
   ```
-- [ ] Opt into **Node.js runtime** by default for API routes (needed for file uploads + DOCX generation).
+- [x] Opt into **Node.js runtime** by default for API routes (needed for file uploads + DOCX generation).
 
 ---
 
 ## 2) Add core dependencies
-- [ ] Add OpenAI + Agents SDK + validation + DOCX:
+- [x] Add OpenAI + Agents SDK + validation + DOCX:
   ```bash
   pnpm add openai @openai/agents @openai/agents-openai zod docx undici
   ```
@@ -43,7 +43,7 @@
   - `zod`: Small schema checks for tool I/O.  
   - `docx`: Generate DOCX in serverless.  
   - `undici`: Node fetch / Blob / File polyfills where needed.
-- [ ] (Optional) UI libs: `pnpm add clsx` (class merging), `react-markdown` for draft preview.
+- [x] (Optional) UI libs: `pnpm add clsx` (class merging), `react-markdown` for draft preview.
 
 ---
 
@@ -93,13 +93,13 @@ granted-mvp/
 ---
 
 ## 4) Environment & Vercel config
-- [ ] Create `.env.local` (never commit) and `.env.example`:
+- [x] Create `.env.local` (never commit) and `.env.example`:
   ```env
   OPENAI_API_KEY=sk-...
   # Optional: OPENAI_ORG=...
   # Optional: NEXT_PUBLIC_APP_NAME=Granted MVP
   ```
-- [ ] Add `vercel.json` to enforce **Node runtime** for API and increase function limits if needed:
+- [x] Add `vercel.json` to enforce **Node runtime** for API and increase function limits if needed:
   ```json
   {
     "functions": {
@@ -113,12 +113,12 @@ granted-mvp/
 ---
 
 ## 5) Implement OpenAI client & Agents SDK wiring
-- [ ] `lib/openai.ts` — instantiate clients:
+- [x] `lib/openai.ts` — instantiate clients:
   ```ts
   import OpenAI from "openai";
   export const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
   ```
-- [ ] `lib/agents.ts` — define a single **Grant Assistant** with tools:
+- [x] `lib/agents.ts` — define a single **Grant Assistant** with tools:
   ```ts
   import { Agent, tool, run } from "@openai/agents";
   import { OpenAIProvider, fileSearchTool, webSearchTool, setDefaultOpenAIKey } from "@openai/agents-openai";
@@ -164,7 +164,7 @@ granted-mvp/
 ---
 
 ## 6) Vector Store helpers (File Search)
-- [ ] `lib/vector-store.ts`
+- [x] `lib/vector-store.ts`
   ```ts
   import { openai } from "./openai";
 
@@ -180,7 +180,7 @@ granted-mvp/
     }
   }
   ```
-- [ ] Notes:
+- [x] Notes:
   - Create **one vector store per chat session**.
   - Use it as the data source for the agent’s `fileSearchTool`.
   - All URLs/files the user provides go into the same store.
@@ -190,7 +190,7 @@ granted-mvp/
 ## 7) Server tools (minimal, production‑ready)
 
 ### 7.1 `server/tools/ingestFromUrls.ts`
-- [ ] Implement a function that accepts `{ urls: string[] }` and returns `{ fileIds: string[] }`:
+- [x] Implement a function that accepts `{ urls: string[] }` and returns `{ fileIds: string[] }`:
   ```ts
   import { z } from "zod";
   import { openai } from "@/lib/openai";
@@ -217,7 +217,7 @@ granted-mvp/
   - _Why Files API?_ We avoid server disk usage; Vercel’s FS is ephemeral. Files go straight to OpenAI Files & Vector Stores.
 
 ### 7.2 `server/tools/normalizeRfp.ts`
-- [ ] Build **RFP‑NORM v1**: extract sections, limits (page/word + formatting), eligibility, attachments, and rubric from File Search results.
+- [x] Build **RFP‑NORM v1**: extract sections, limits (page/word + formatting), eligibility, attachments, and rubric from File Search results.
   ```ts
   import { z } from "zod";
   export const normalizeRfp = {
@@ -233,7 +233,7 @@ granted-mvp/
   ```
 
 ### 7.3 `server/tools/coverageAndNext.ts`
-- [ ] Minimal deterministic scoring + next chip:
+- [x] Minimal deterministic scoring + next chip:
   ```ts
   import { z } from "zod";
   const SLOTS = ["problem","beneficiaries","innovation","prior_results","approach","milestones","risks","evaluation","team","facilities","budget_justification","impact","commercialization"] as const;
@@ -254,7 +254,7 @@ granted-mvp/
   ```
 
 ### 7.4 `server/tools/draftSection.ts`
-- [ ] Shape the drafting call; the agent writes content with citations:
+- [x] Shape the drafting call; the agent writes content with citations:
   ```ts
   import { z } from "zod";
   export const draftSection = {
@@ -266,7 +266,7 @@ granted-mvp/
   ```
 
 ### 7.5 `server/tools/tightenSection.ts`
-- [ ] Tighten to limits preset:
+- [x] Tighten to limits preset:
   ```ts
   import { z } from "zod";
   export const tightenSection = {
@@ -278,7 +278,7 @@ granted-mvp/
   ```
 
 ### 7.6 `server/tools/exportDocx.ts`
-- [ ] Generate DOCX and return a download path or a base64 buffer:
+- [x] Generate DOCX and return a download path or a base64 buffer:
   ```ts
   import { z } from "zod";
   import { Document, Packer, Paragraph, TextRun } from "docx";
@@ -330,17 +330,17 @@ granted-mvp/
     });
   }
   ```
-- [ ] The client consumes with `EventSource` and renders deltas live.
+- [x] The client consumes with `EventSource` and renders deltas live.
 
 ### 8.2 `/app/api/upload/route.ts` — accept **PDF** uploads and push to Files API
-- [ ] Implement a multipart handler (`formData()`) → `openai.files.create` → return `{ fileId }`.
-- [ ] Attach resulting `fileId` to the current session’s Vector Store.
+- [x] Implement a multipart handler (`formData()`) → `openai.files.create` → return `{ fileId }`.
+- [x] Attach resulting `fileId` to the current session’s Vector Store.
 
 ### 8.3 `/app/api/import-url/route.ts` — import arbitrary URLs
-- [ ] POST `{ urls: string[] }` → call **ingestFromUrls** tool (or duplicate logic) → return `{ fileIds }`.
+- [x] POST `{ urls: string[] }` → call **ingestFromUrls** tool (or duplicate logic) → return `{ fileIds }`.
 
 ### 8.4 `/app/api/export/route.ts` — download a DOCX
-- [ ] POST `{ markdown, filename? }` → call **exportDocx** → return a binary response:
+- [x] POST `{ markdown, filename? }` → call **exportDocx** → return a binary response:
   ```ts
   export async function POST(req: Request) {
     const { markdown, filename = "grant-draft.docx" } = await req.json();
@@ -357,30 +357,30 @@ granted-mvp/
   ```
 
 ### 8.5 `/app/api/health/route.ts`
-- [ ] Return `{ ok: true }` for uptime checks.
+- [x] Return `{ ok: true }` for uptime checks.
 
 ---
 
 ## 9) UI — one screen, conversation‑first (minimal)
-- [ ] `app/page.tsx` renders: center chat stream, right **CoveragePanel**, left **SourceRail**.
-- [ ] `components/Chat.tsx`
+- [x] `app/page.tsx` renders: center chat stream, right **CoveragePanel**, left **SourceRail**.
+- [x] `components/Chat.tsx`
   - A message list + input box + **“Fix‑next” chips** from server events.
   - Supports file uploads (PDF) and URL paste for RFP, bios, resumes, org site.
   - Uses `EventSource("/api/agent")` to render streaming tokens.
-- [ ] `components/CoveragePanel.tsx`
+- [x] `components/CoveragePanel.tsx`
   - Renders slot coverage as simple badges/bars. Clicking a slot focuses the chat to ask for missing info.
-- [ ] `components/SourceRail.tsx`
+- [x] `components/SourceRail.tsx`
   - Shows attached files and imported URLs; clicking jumps to citations in the draft (future).
 
 ---
 
 ## 10) **One preset** for limits/compliance
-- [ ] Use the following default formatting for simulation and tightening:
+- [x] Use the following default formatting for simulation and tightening:
   - **Font**: Times New Roman, **12 pt**
   - **Margins**: 1″ all sides
   - **Spacing**: single
   - **Page calc**: 550 words/page heuristic (tweak later)
-- [ ] `lib/tighten.ts` — return `{ withinLimit: boolean, wordCount, pageEstimate }`. If overflow, call `tightenSection` tool from the agent.
+- [x] `lib/tighten.ts` — return `{ withinLimit: boolean, wordCount, pageEstimate }`. If overflow, call `tightenSection` tool from the agent.
 
 ---
 
@@ -393,8 +393,8 @@ granted-mvp/
 ---
 
 ## 12) Observability (light)
-- [ ] Log per run: `coverageScore`, `tightenCompliance`, `% paragraphs with provenance`.
-- [ ] Console tracing from the Agents SDK (enable when `NODE_ENV !== "production"`).
+- [x] Log per run: `coverageScore`, `tightenCompliance`, `% paragraphs with provenance`.
+- [x] Console tracing from the Agents SDK (enable when `NODE_ENV !== "production"`).
 
 ---
 
