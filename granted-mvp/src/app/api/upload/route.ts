@@ -1,4 +1,4 @@
-import { openai } from "@/lib/openai";
+import { getOpenAI } from "@/lib/openai";
 import { attachFilesToVectorStore } from "@/lib/vector-store";
 import type { SourceAttachment } from "@/lib/types";
 
@@ -23,9 +23,10 @@ export async function POST(req: Request): Promise<Response> {
   }
 
   try {
+    const client = getOpenAI();
     const uploads = await Promise.all(
       files.map(async (file) => {
-        const created = await openai.files.create({
+        const created = await client.files.create({
           file,
           purpose: "assistants",
         });

@@ -13,26 +13,43 @@ if (process.env.NODE_ENV !== "production" && !process.env.DEBUG) {
   process.env.DEBUG = "@openai/agents*";
 }
 
-const apiKey = process.env.OPENAI_API_KEY;
+let cachedClient: OpenAI | null = null;
+let cachedProvider: OpenAIProvider | null = null;
 
-export const openai = new OpenAI({
-  apiKey,
-  organization: process.env.OPENAI_ORG,
-  project: process.env.OPENAI_PROJECT,
-});
-
-const provider = new OpenAIProvider({
-  openAIClient: openai,
-  apiKey,
-  organization: process.env.OPENAI_ORG,
-  project: process.env.OPENAI_PROJECT,
-  useResponses: true,
-});
-
-if (apiKey) {
-  setDefaultOpenAIKey(apiKey);
-  setDefaultOpenAIClient(openai);
-  setDefaultModelProvider(provider);
+function ensureApiKey(): string {
+  const key = process.env.OPENAI_API_KEY;
+  if (!key) {
+    throw new Error("OPENAI_API_KEY is not configured");
+  }
+  return key;
 }
 
-export { provider as openAIProvider };
+export function getOpenAI(): OpenAI {
+  if (!cachedClient) {
+    const apiKey = ensureApiKey();
+    cachedClient = new OpenAI({
+      apiKey,
+      organization: process.env.OPENAI_ORG,
+      project: process.env.OPENAI_PROJECT,
+    });
+  }
+  return cachedClient;
+}
+
+export function getOpenAIProvider(): OpenAIProvider {
+  if (!cachedProvider) {
+    const apiKey = ensureApiKey();
+    const openAIClient = getOpenAI();
+    cachedProvider = new OpenAIProvider({
+      openAIClient,
+      apiKey,
+      organization: process.env.OPENAI_ORG,
+      project: process.env.OPENAI_PROJECT,
+      useResponses: true,
+    });
+    setDefaultOpenAIKey(apiKey);
+    setDefaultOpenAIClient(openAIClient);
+    setDefaultModelProvider(cachedProvider);
+  }
+  return cachedProvider;
+}

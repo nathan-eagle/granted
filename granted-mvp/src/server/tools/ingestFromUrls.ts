@@ -1,6 +1,6 @@
 import { tool } from "@openai/agents";
 import { z } from "zod";
-import { openai } from "@/lib/openai";
+import { getOpenAI } from "@/lib/openai";
 import { attachFilesToVectorStore } from "@/lib/vector-store";
 import type { GrantAgentContext } from "@/lib/agent-context";
 import type { SourceAttachment } from "@/lib/types";
@@ -9,6 +9,7 @@ export async function ingestFromUrls(sessionId: string, urls: string[]): Promise
   fileIds: string[];
   sources: SourceAttachment[];
 }> {
+  const client = getOpenAI();
   const uploads = await Promise.all(
     urls.map(async (url) => {
       const response = await fetch(url);
@@ -21,7 +22,7 @@ export async function ingestFromUrls(sessionId: string, urls: string[]): Promise
         type: response.headers.get("content-type") ?? "application/octet-stream",
       });
 
-      const uploaded = await openai.files.create({
+      const uploaded = await client.files.create({
         file,
         purpose: "assistants",
       });

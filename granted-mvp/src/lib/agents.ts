@@ -2,6 +2,7 @@ import { Agent, run, type AgentInputItem, assistant, system, user } from "@opena
 import { fileSearchTool, webSearchTool } from "@openai/agents-openai";
 import type { StreamedRunResult, AgentOutputType } from "@openai/agents-core";
 import type { GrantAgentContext } from "@/lib/agent-context";
+import { getOpenAIProvider } from "./openai";
 import { ensureVectorStore } from "@/lib/vector-store";
 import { coverageAndNextTool } from "@/server/tools/coverageAndNext";
 import { draftSectionTool } from "@/server/tools/draftSection";
@@ -13,6 +14,7 @@ import { tightenSectionTool } from "@/server/tools/tightenSection";
 const DEFAULT_MODEL = process.env.GRANTED_MODEL ?? "gpt-5";
 
 export function buildGrantAgent(vectorStoreId: string): Agent<GrantAgentContext, AgentOutputType> {
+  getOpenAIProvider();
   return new Agent<GrantAgentContext, AgentOutputType>({
     name: "Granted Assistant",
     instructions: `You are Granted, a collaborative grant assistant.

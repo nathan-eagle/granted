@@ -1,4 +1,4 @@
-import { openai } from "./openai";
+import { getOpenAI } from "./openai";
 
 export interface VectorStoreHandle {
   sessionId: string;
@@ -20,7 +20,8 @@ export async function ensureVectorStore(sessionId: string): Promise<VectorStoreH
     return cached;
   }
 
-  const created = await openai.vectorStores.create({
+  const client = getOpenAI();
+  const created = await client.vectorStores.create({
     name: `granted-session-${sessionId}`,
   });
 
@@ -38,7 +39,8 @@ export async function attachFilesToVectorStore(sessionId: string, fileIds: strin
     return handle;
   }
 
-  await openai.vectorStores.fileBatches.create(handle.vectorStoreId, {
+  const client = getOpenAI();
+  await client.vectorStores.fileBatches.create(handle.vectorStoreId, {
     file_ids: fileIds,
   });
 
@@ -50,7 +52,8 @@ export async function teardownVectorStore(sessionId: string): Promise<void> {
   if (!handle) return;
   cache.delete(sessionId);
   try {
-    await openai.vectorStores.delete(handle.vectorStoreId);
+    const client = getOpenAI();
+    await client.vectorStores.delete(handle.vectorStoreId);
   } catch (error) {
     console.warn("Failed to delete vector store", error);
   }
