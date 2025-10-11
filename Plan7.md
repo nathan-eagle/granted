@@ -399,7 +399,7 @@ granted-mvp/
 ---
 
 ## 13) Build & deploy
-- [ ] Commit and push to GitHub `main`.
+- [x] Commit and push to GitHub `main`.
 - [ ] In Vercel, ensure project is linked and env vars set (`OPENAI_API_KEY`).
 - [ ] Trigger a deploy; verify routes:
   - `GET /api/health` → `{ ok: true }`
