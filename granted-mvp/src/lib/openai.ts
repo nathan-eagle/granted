@@ -42,7 +42,6 @@ export function getOpenAIProvider(): OpenAIProvider {
     const openAIClient = getOpenAI();
     cachedProvider = new OpenAIProvider({
       openAIClient,
-      apiKey,
       organization: process.env.OPENAI_ORG,
       project: process.env.OPENAI_PROJECT,
       useResponses: true,
