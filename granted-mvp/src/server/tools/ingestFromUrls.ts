@@ -53,7 +53,7 @@ export const ingestFromUrlsTool = tool({
   description: "Fetch remote URLs and add them to the current session's vector store for search.",
   parameters: z.object({
     sessionId: z.string().min(1, "sessionId is required"),
-    urls: z.array(z.string().url()).min(1),
+    urls: z.array(z.string().min(1)).min(1),
   }),
   strict: true,
   async execute({ sessionId, urls }, context) {
