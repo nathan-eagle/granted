@@ -11,7 +11,7 @@ import { ingestFromUrlsTool } from "@/server/tools/ingestFromUrls";
 import { normalizeRfpTool } from "@/server/tools/normalizeRfp";
 import { tightenSectionTool } from "@/server/tools/tightenSection";
 
-const DEFAULT_MODEL = process.env.GRANTED_MODEL ?? "gpt-5";
+const DEFAULT_MODEL = process.env.GRANTED_MODEL ?? "gpt-4.1-mini";
 
 export function buildGrantAgent(vectorStoreId: string): Agent<GrantAgentContext, AgentOutputType> {
   getOpenAIProvider();
