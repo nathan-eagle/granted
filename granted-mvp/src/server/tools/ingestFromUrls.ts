@@ -17,9 +17,27 @@ export async function ingestFromUrls(sessionId: string, urls: string[]): Promise
         throw new Error(`Failed to fetch ${url}: ${response.status}`);
       }
       const buffer = await response.arrayBuffer();
-      const filename = url.split("/").filter(Boolean).pop() ?? "imported";
+      const contentType = response.headers.get("content-type") ?? "application/octet-stream";
+      const rawName = url.split("/").filter(Boolean).pop() ?? "imported";
+      let filename = decodeURIComponent(rawName.replace(/[?#].*$/, ""));
+      if (!filename || filename.endsWith("/")) {
+        filename = "imported";
+      }
+      if (!filename.includes(".")) {
+        if (contentType.includes("pdf")) {
+          filename += ".pdf";
+        } else if (contentType.includes("html")) {
+          filename += ".html";
+        } else if (contentType.includes("plain")) {
+          filename += ".txt";
+        } else if (contentType.includes("json")) {
+          filename += ".json";
+        } else {
+          filename += ".bin";
+        }
+      }
       const file = new File([buffer], filename, {
-        type: response.headers.get("content-type") ?? "application/octet-stream",
+        type: contentType,
       });
 
       const uploaded = await client.files.create({
