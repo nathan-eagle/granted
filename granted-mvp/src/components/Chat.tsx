@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useCallback, useMemo, useRef, useState } from "react";
+import { FormEvent, KeyboardEvent, useCallback, useMemo, useRef, useState } from "react";
 import FixNextChips from "./FixNextChips";
 import Message from "./Message";
 import type {
@@ -341,6 +341,16 @@ export default function Chat({ fixNext, sessionId, onEnvelope, onSourcesUpdate }
     }
   }, [onSourcesUpdate, sessionId, urlInput]);
 
+  const handleInputKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLTextAreaElement>) => {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        void sendMessage();
+      }
+    },
+    [sendMessage],
+  );
+
   const handleFixNextSelect = useCallback(
     (suggestion: FixNextSuggestion) => {
       setActiveFixNext(suggestion.id);
@@ -371,6 +381,7 @@ export default function Chat({ fixNext, sessionId, onEnvelope, onSourcesUpdate }
           placeholder="Ask for a summary, request a section draft, or provide new context."
           value={input}
           onChange={(event) => setInput(event.target.value)}
+          onKeyDown={handleInputKeyDown}
           rows={3}
         />
         <div className="composer-actions">
