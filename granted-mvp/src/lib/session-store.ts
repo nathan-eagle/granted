@@ -51,16 +51,20 @@ function convertSourceRow(row: DbSourceRow): SourceAttachment {
   };
 }
 
-async function insertInitialSession(): Promise<{ project: DbProject; session: DbSession }> {
+async function insertInitialSession(explicitSessionId?: string): Promise<{ project: DbProject; session: DbSession }> {
   const supabase = await getSupabaseAdmin();
   const { data: project, error: projectError } = await supabase.from("projects").insert({}).select().single();
   if (projectError || !project) {
     throw projectError ?? new Error("Failed to create project");
   }
 
+  const sessionInsert = explicitSessionId
+    ? { id: explicitSessionId, project_id: project.id }
+    : { project_id: project.id };
+
   const { data: session, error: sessionError } = await supabase
     .from("sessions")
-    .insert({ project_id: project.id })
+    .insert(sessionInsert)
     .select()
     .single();
   if (sessionError || !session) {
@@ -183,7 +187,7 @@ export async function ensureSession(sessionIdFromClient?: string): Promise<Sessi
   }
 
   if (!session || !project) {
-    const created = await insertInitialSession();
+    const created = await insertInitialSession(sessionId ?? undefined);
     session = created.session;
     project = created.project;
     sessionId = session.id;
