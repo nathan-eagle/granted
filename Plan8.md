@@ -201,9 +201,9 @@ This aligns with the tools already included. fileciteturn6file13
 ---
 
 ## 9) Deploy to Vercel
-- [ ] Push to GitHub (main). Connect the repo in Vercel.  
+- [x] Push to GitHub (main). Connect the repo in Vercel.  
 - [x] Set `OPENAI_API_KEY` in Vercel **Production** and **Preview**.
-- [ ] Trigger a deploy; validate API routes (`/api/health`, `/api/import-url`, `/api/upload`, `/api/export`) respond OK. fileciteturn5file6 fileciteturn5file2 fileciteturn5file9 fileciteturn5file3
+- [x] Trigger a deploy; validate API routes (`/api/health`, `/api/import-url`, `/api/upload`, `/api/export`) respond OK. fileciteturn5file6 fileciteturn5file2 fileciteturn5file9 fileciteturn5file3
 
 
 ---
