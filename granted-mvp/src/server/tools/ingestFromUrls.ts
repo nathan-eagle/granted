@@ -13,7 +13,13 @@ export async function ingestFromUrls(sessionId: string, urls: string[]): Promise
   const client = getOpenAI();
   const uploads = await Promise.all(
     urls.map(async (url) => {
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        headers: {
+          "User-Agent": "GrantedFetcher/1.0 (+https://granted.ai)",
+          Accept: "*/*",
+        },
+        redirect: "follow",
+      });
       if (!response.ok) {
         throw new Error(`Failed to fetch ${url}: ${response.status}`);
       }
