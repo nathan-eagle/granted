@@ -7,7 +7,7 @@ export interface MessageProps {
   message: ChatMessage;
 }
 
-function TypingIndicator(): JSX.Element {
+function TypingIndicator() {
   return (
     <span className="typing-indicator" role="status" aria-label="Granted is typing">
       <span className="typing-indicator__dot" aria-hidden="true" />
