@@ -6,6 +6,59 @@ import { attachFilesToVectorStore } from "@/lib/vector-store";
 import type { GrantAgentContext } from "@/lib/agent-context";
 import type { SourceAttachment } from "@/lib/types";
 
+const ALLOWED_EXTENSIONS = new Set([
+  "c",
+  "cpp",
+  "css",
+  "csv",
+  "doc",
+  "docx",
+  "gif",
+  "go",
+  "html",
+  "java",
+  "jpeg",
+  "jpg",
+  "js",
+  "json",
+  "md",
+  "pdf",
+  "php",
+  "pkl",
+  "png",
+  "pptx",
+  "py",
+  "rb",
+  "tar",
+  "tex",
+  "ts",
+  "txt",
+  "webp",
+  "xlsx",
+  "xml",
+  "zip",
+]);
+
+function inferExtension(filename: string, contentType: string): string {
+  const inferred = contentType.toLowerCase();
+  if (inferred.includes("pdf")) return "pdf";
+  if (inferred.includes("html")) return "html";
+  if (inferred.includes("json")) return "json";
+  if (inferred.includes("jpeg")) return "jpeg";
+  if (inferred.includes("jpg")) return "jpg";
+  if (inferred.includes("png")) return "png";
+  if (inferred.includes("gif")) return "gif";
+  if (inferred.includes("webp")) return "webp";
+  if (inferred.includes("csv")) return "csv";
+  if (inferred.includes("plain")) return "txt";
+  if (inferred.includes("xml")) return "xml";
+  if (inferred.includes("zip")) return "zip";
+  const lastSegment = filename.toLowerCase();
+  if (lastSegment.endsWith(".pdf")) return "pdf";
+  if (lastSegment.endsWith(".html") || lastSegment.endsWith(".htm")) return "html";
+  return "txt";
+}
+
 export async function ingestFromUrls(sessionId: string, urls: string[]): Promise<{
   fileIds: string[];
   sources: SourceAttachment[];
@@ -31,18 +84,10 @@ export async function ingestFromUrls(sessionId: string, urls: string[]): Promise
       if (!filename || filename.endsWith("/")) {
         filename = "imported";
       }
-      if (!filename.includes(".")) {
-        if (contentType.includes("pdf")) {
-          filename += ".pdf";
-        } else if (contentType.includes("html")) {
-          filename += ".html";
-        } else if (contentType.includes("plain")) {
-          filename += ".txt";
-        } else if (contentType.includes("json")) {
-          filename += ".json";
-        } else {
-          filename += ".bin";
-        }
+      const currentExt = filename.split(".").pop()?.toLowerCase() ?? "";
+      if (!currentExt || !ALLOWED_EXTENSIONS.has(currentExt)) {
+        const inferredExt = inferExtension(filename, contentType);
+        filename = `${filename.replace(/\.+$/, "")}.${inferredExt}`;
       }
       const file = await toFile(fileData, filename, { type: contentType });
 
