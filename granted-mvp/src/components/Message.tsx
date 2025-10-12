@@ -7,6 +7,16 @@ export interface MessageProps {
   message: ChatMessage;
 }
 
+function TypingIndicator(): JSX.Element {
+  return (
+    <span className="typing-indicator" role="status" aria-label="Granted is typing">
+      <span className="typing-indicator__dot" aria-hidden="true" />
+      <span className="typing-indicator__dot" aria-hidden="true" />
+      <span className="typing-indicator__dot" aria-hidden="true" />
+    </span>
+  );
+}
+
 export default function Message({ message }: MessageProps) {
   const isAssistant = message.role === "assistant";
   const isUser = message.role === "user";
@@ -15,6 +25,8 @@ export default function Message({ message }: MessageProps) {
     "chat-bubble--user": isUser,
     "chat-bubble--pending": message.pending,
   });
+
+  const showTypingIndicator = isAssistant && message.pending && !message.content;
 
   return (
     <article className={bubbleClass} data-role={message.role}>
@@ -27,9 +39,7 @@ export default function Message({ message }: MessageProps) {
           })}
         </time>
       </header>
-      <p className="chat-bubble__body">
-        {message.content || (message.pending ? "…" : "")}
-      </p>
+      <p className="chat-bubble__body">{showTypingIndicator ? <TypingIndicator /> : message.content}</p>
     </article>
   );
 }

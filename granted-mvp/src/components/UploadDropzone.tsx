@@ -7,9 +7,10 @@ interface UploadDropzoneProps {
   sessionId: string;
   disabled?: boolean;
   onUploaded: (sources: SourceAttachment[]) => void;
+  onUploadingChange?: (uploading: boolean) => void;
 }
 
-export default function UploadDropzone({ sessionId, disabled = false, onUploaded }: UploadDropzoneProps) {
+export default function UploadDropzone({ sessionId, disabled = false, onUploaded, onUploadingChange }: UploadDropzoneProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -24,6 +25,7 @@ export default function UploadDropzone({ sessionId, disabled = false, onUploaded
     async (files: File[]) => {
       if (!files.length || disabled) return;
       setIsUploading(true);
+      onUploadingChange?.(true);
       try {
         const formData = new FormData();
         formData.append("sessionId", sessionId);
@@ -51,9 +53,10 @@ export default function UploadDropzone({ sessionId, disabled = false, onUploaded
         resetInput();
         setIsUploading(false);
         setIsDragging(false);
+        onUploadingChange?.(false);
       }
     },
-    [disabled, onUploaded, sessionId],
+    [disabled, onUploaded, onUploadingChange, sessionId],
   );
 
   const handleDrop = useCallback(

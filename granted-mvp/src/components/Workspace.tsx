@@ -14,12 +14,13 @@ import type {
 } from "@/lib/types";
 import type { SessionState } from "@/lib/session-store";
 
+const SESSION_COOKIE = "granted_session_id";
+
 interface WorkspaceProps {
   initialState: SessionState;
 }
 
 export default function Workspace({ initialState }: WorkspaceProps) {
-  const SESSION_COOKIE = "granted_session_id";
   const [coverage, setCoverage] = useState<CoverageSnapshot | null>(initialState.coverage);
   const [fixNext, setFixNext] = useState<FixNextSuggestion | null>(initialState.fixNext);
   const [sources, setSources] = useState<SourceAttachment[]>(initialState.sources);

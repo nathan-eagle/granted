@@ -278,6 +278,7 @@ export default function Chat({ initialMessages = [], fixNext, sessionId, onEnvel
     setActiveFixNext(null);
     scrollToBottom();
 
+    let hadError = false;
     const assistantId = enqueueAssistant();
     setActivity("Granted is thinking…");
     setIsStreaming(true);
@@ -308,11 +309,15 @@ export default function Chat({ initialMessages = [], fixNext, sessionId, onEnvel
             : msg,
         ),
       );
+      hadError = true;
       setActivity("Agent run failed.");
+      setTimeout(() => setActivity(null), 3500);
     } finally {
       setIsStreaming(false);
       scrollToBottom();
-      setActivity(null);
+      if (!hadError) {
+        setActivity(null);
+      }
     }
   }, [enqueueAssistant, fixNext?.id, input, isStreaming, messages, scrollToBottom, sessionId, streamAgentRun]);
 
@@ -338,6 +343,7 @@ export default function Chat({ initialMessages = [], fixNext, sessionId, onEnvel
       const assistantId = enqueueAssistant();
       scrollToBottom();
       setIsStreaming(true);
+      let hadError = false;
 
       try {
         const res = await fetch("/api/chat", {
@@ -365,11 +371,15 @@ export default function Chat({ initialMessages = [], fixNext, sessionId, onEnvel
               : msg,
           ),
         );
+        hadError = true;
         setActivity("Agent run failed.");
+        setTimeout(() => setActivity(null), 3500);
       } finally {
         setIsStreaming(false);
         scrollToBottom();
-        setActivity(null);
+        if (!hadError) {
+          setActivity(null);
+        }
       }
     },
     [enqueueAssistant, isStreaming, messages, scrollToBottom, sessionId, streamAgentRun],
@@ -379,6 +389,7 @@ export default function Chat({ initialMessages = [], fixNext, sessionId, onEnvel
     const trimmed = urlInput.trim();
     if (!trimmed) return;
     setUrlInput("");
+    setActivity("Fetching URL…");
     const res = await fetch("/api/import-url", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -390,6 +401,8 @@ export default function Chat({ initialMessages = [], fixNext, sessionId, onEnvel
 
     if (!res.ok) {
       console.error("Import failed", await res.text());
+      setActivity("Unable to import that URL.");
+      setTimeout(() => setActivity(null), 3500);
       return;
     }
 
@@ -429,6 +442,12 @@ export default function Chat({ initialMessages = [], fixNext, sessionId, onEnvel
           {messages.map((message) => (
             <Message key={message.id} message={message} />
           ))}
+          {activity && (
+            <div className="chat-activity-bubble" role="status" aria-live="polite">
+              <span className="chat-activity-bubble__icon" aria-hidden="true" />
+              <span>{activity}</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -459,6 +478,13 @@ export default function Chat({ initialMessages = [], fixNext, sessionId, onEnvel
               onUploaded={(uploadedSources) => {
                 onSourcesUpdate?.(uploadedSources);
                 void runCommand("normalize_rfp");
+              }}
+              onUploadingChange={(busy) => {
+                if (busy) {
+                  setActivity("Uploading files…");
+                } else {
+                  setActivity((prev) => (prev === "Uploading files…" ? null : prev));
+                }
               }}
             />
             <div className="url-import">
