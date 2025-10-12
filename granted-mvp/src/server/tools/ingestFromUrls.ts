@@ -18,6 +18,7 @@ export async function ingestFromUrls(sessionId: string, urls: string[]): Promise
         throw new Error(`Failed to fetch ${url}: ${response.status}`);
       }
       const buffer = await response.arrayBuffer();
+      const fileData = new Uint8Array(buffer);
       const contentType = response.headers.get("content-type") ?? "application/octet-stream";
       const rawName = url.split("/").filter(Boolean).pop() ?? "imported";
       let filename = decodeURIComponent(rawName.replace(/[?#].*$/, ""));
@@ -37,7 +38,7 @@ export async function ingestFromUrls(sessionId: string, urls: string[]): Promise
           filename += ".bin";
         }
       }
-      const file = new File([buffer], filename, {
+      const file = new File([fileData], filename, {
         type: contentType,
       });
 
