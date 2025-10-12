@@ -187,13 +187,6 @@ export async function ensureSession(sessionIdFromClient?: string): Promise<Sessi
     session = created.session;
     project = created.project;
     sessionId = session.id;
-    cookieStore.set({
-      name: SESSION_COOKIE,
-      value: sessionId,
-      httpOnly: false,
-      path: "/",
-      maxAge: 60 * 60 * 24 * 30,
-    });
   }
 
   return buildSessionState(session, project);

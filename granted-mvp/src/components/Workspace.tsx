@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Chat from "./Chat";
 import CoveragePanel from "./CoveragePanel";
 import SourceRail from "./SourceRail";
@@ -19,12 +19,25 @@ interface WorkspaceProps {
 }
 
 export default function Workspace({ initialState }: WorkspaceProps) {
+  const SESSION_COOKIE = "granted_session_id";
   const [coverage, setCoverage] = useState<CoverageSnapshot | null>(initialState.coverage);
   const [fixNext, setFixNext] = useState<FixNextSuggestion | null>(initialState.fixNext);
   const [sources, setSources] = useState<SourceAttachment[]>(initialState.sources);
   const [, setTighten] = useState<TightenSectionSnapshot | null>(initialState.tighten);
   const [, setProvenance] = useState<ProvenanceSnapshot | null>(initialState.provenance);
   const sessionId = initialState.sessionId;
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const hasCookie = document.cookie
+      .split(";")
+      .map((entry) => entry.trim())
+      .some((entry) => entry.startsWith(`${SESSION_COOKIE}=`));
+    if (!hasCookie) {
+      const maxAge = 60 * 60 * 24 * 30;
+      document.cookie = `${SESSION_COOKIE}=${sessionId}; path=/; max-age=${maxAge}; samesite=lax`;
+    }
+  }, [SESSION_COOKIE, sessionId]);
 
   const handleEnvelope = useCallback((envelope: AgentRunEnvelope) => {
     switch (envelope.type) {
