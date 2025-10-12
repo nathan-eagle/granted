@@ -25,10 +25,16 @@ export async function POST(req: Request): Promise<Response> {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error(error);
-    return new Response(JSON.stringify({ error: "Import failed" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    console.error("import-url failed", error);
+    return new Response(
+      JSON.stringify({
+        error: "Import failed",
+        detail: error instanceof Error ? error.message : "Unknown error",
+      }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      },
+    );
   }
 }
