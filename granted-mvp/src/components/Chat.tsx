@@ -78,6 +78,7 @@ export default function Chat({ initialMessages = [], fixNext, sessionId, onEnvel
   const [isStreaming, setIsStreaming] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [activeFixNext, setActiveFixNext] = useState<string | null>(null);
+  const [activity, setActivity] = useState<string | null>(null);
   const chatScrollRef = useRef<HTMLDivElement | null>(null);
   const pendingAssistantId = useRef<string | null>(null);
 
@@ -150,6 +151,8 @@ export default function Chat({ initialMessages = [], fixNext, sessionId, onEnvel
         throw new Error(`Agent request failed (${res.status})`);
       }
 
+      setActivity((prev) => prev ?? "Granted is thinking…");
+
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let pending = "";
@@ -171,14 +174,33 @@ export default function Chat({ initialMessages = [], fixNext, sessionId, onEnvel
         envelopes.forEach((envelope) => {
           if (envelope.type === "message") {
             if (envelope.delta) {
+              setActivity("Granted is drafting a reply…");
               updateAssistantContent(envelope.delta);
               scrollToBottom();
             }
             if (envelope.done) {
               sawDoneEnvelope = true;
               finalizeAssistantMessage();
+              setActivity(null);
             }
           } else {
+            switch (envelope.type) {
+              case "coverage":
+                setActivity("Refreshing coverage map…");
+                break;
+              case "fixNext":
+                setActivity("Selecting the next action…");
+                break;
+              case "sources":
+                setActivity("Recording new sources…");
+                break;
+              case "tighten":
+                setActivity("Reviewing length limits…");
+                break;
+              case "provenance":
+                setActivity("Tracking provenance citations…");
+                break;
+            }
             onEnvelope?.(envelope);
           }
         });
@@ -190,6 +212,7 @@ export default function Chat({ initialMessages = [], fixNext, sessionId, onEnvel
 
       if (!sawDoneEnvelope) {
         finalizeAssistantMessage();
+        setActivity(null);
       }
     },
     [finalizeAssistantMessage, onEnvelope, scrollToBottom, updateAssistantContent],
@@ -256,6 +279,7 @@ export default function Chat({ initialMessages = [], fixNext, sessionId, onEnvel
     scrollToBottom();
 
     const assistantId = enqueueAssistant();
+    setActivity("Granted is thinking…");
     setIsStreaming(true);
 
     try {
@@ -284,9 +308,11 @@ export default function Chat({ initialMessages = [], fixNext, sessionId, onEnvel
             : msg,
         ),
       );
+      setActivity("Agent run failed.");
     } finally {
       setIsStreaming(false);
       scrollToBottom();
+      setActivity(null);
     }
   }, [enqueueAssistant, fixNext?.id, input, isStreaming, messages, scrollToBottom, sessionId, streamAgentRun]);
 
@@ -306,6 +332,9 @@ export default function Chat({ initialMessages = [], fixNext, sessionId, onEnvel
 
       const historyPayload = messages.map(({ role, content }) => ({ role, content }));
       setActiveFixNext(null);
+      setActivity(
+        command === "normalize_rfp" ? "Normalizing the RFP structure…" : "Granted is working on your request…",
+      );
       const assistantId = enqueueAssistant();
       scrollToBottom();
       setIsStreaming(true);
@@ -336,9 +365,11 @@ export default function Chat({ initialMessages = [], fixNext, sessionId, onEnvel
               : msg,
           ),
         );
+        setActivity("Agent run failed.");
       } finally {
         setIsStreaming(false);
         scrollToBottom();
+        setActivity(null);
       }
     },
     [enqueueAssistant, isStreaming, messages, scrollToBottom, sessionId, streamAgentRun],
@@ -412,6 +443,14 @@ export default function Chat({ initialMessages = [], fixNext, sessionId, onEnvel
           onKeyDown={handleInputKeyDown}
           rows={3}
         />
+        {activity && (
+          <div className="chat-activity" role="status" aria-live="polite">
+            <span className="chat-activity__icon" aria-hidden="true">
+              ⏳
+            </span>
+            <span>{activity}</span>
+          </div>
+        )}
         <div className="composer-actions">
           <div className="composer-left">
             <UploadDropzone

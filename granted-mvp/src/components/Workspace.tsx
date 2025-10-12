@@ -37,7 +37,7 @@ export default function Workspace({ initialState }: WorkspaceProps) {
       const maxAge = 60 * 60 * 24 * 30;
       document.cookie = `${SESSION_COOKIE}=${sessionId}; path=/; max-age=${maxAge}; samesite=lax`;
     }
-  }, [SESSION_COOKIE, sessionId]);
+  }, [sessionId]);
 
   const handleEnvelope = useCallback((envelope: AgentRunEnvelope) => {
     switch (envelope.type) {

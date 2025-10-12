@@ -27,7 +27,9 @@ export default function Message({ message }: MessageProps) {
           })}
         </time>
       </header>
-      <p className="chat-bubble__body">{message.content}</p>
+      <p className="chat-bubble__body">
+        {message.content || (message.pending ? "…" : "")}
+      </p>
     </article>
   );
 }
