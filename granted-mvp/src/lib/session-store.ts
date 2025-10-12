@@ -1,6 +1,6 @@
 "use server";
 
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import {
   getSupabaseAdmin,
   type DbMessageRow,
@@ -187,7 +187,9 @@ export async function ensureSession(sessionIdFromClient?: string): Promise<Sessi
   }
 
   if (!session || !project) {
-    const created = await insertInitialSession(sessionId ?? undefined);
+    const headerStore = await headers();
+    const generated = sessionIdFromClient ?? headerStore.get("x-granted-session") ?? undefined;
+    const created = await insertInitialSession(generated);
     session = created.session;
     project = created.project;
     sessionId = session.id;
