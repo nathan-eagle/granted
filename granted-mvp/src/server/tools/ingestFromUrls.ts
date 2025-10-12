@@ -1,6 +1,6 @@
 import { tool } from "@openai/agents";
 import { z } from "zod";
-import { File } from "node:buffer";
+import { toFile } from "openai";
 import { getOpenAI } from "@/lib/openai";
 import { attachFilesToVectorStore } from "@/lib/vector-store";
 import type { GrantAgentContext } from "@/lib/agent-context";
@@ -38,9 +38,7 @@ export async function ingestFromUrls(sessionId: string, urls: string[]): Promise
           filename += ".bin";
         }
       }
-      const file = new File([fileData], filename, {
-        type: contentType,
-      });
+      const file = await toFile(fileData, filename, { type: contentType });
 
       const uploaded = await client.files.create({
         file,
