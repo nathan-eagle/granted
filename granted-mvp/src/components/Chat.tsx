@@ -17,11 +17,6 @@ interface ChatProps {
   onSourcesUpdate?: (sources: SourceAttachment[]) => void;
 }
 
-interface StreamingEvent {
-  event: string;
-  data: string;
-}
-
 const INITIAL_ASSISTANT: ChatMessage = {
   id: crypto.randomUUID(),
   role: "assistant",
@@ -30,11 +25,54 @@ const INITIAL_ASSISTANT: ChatMessage = {
   createdAt: Date.now(),
 };
 
+function consumeNdjsonBuffer(
+  buffer: string,
+  flush: boolean,
+): { envelopes: AgentRunEnvelope[]; remainder: string } {
+  let working = buffer;
+  const envelopes: AgentRunEnvelope[] = [];
+  let newlineIndex = working.indexOf("\n");
+
+  while (newlineIndex !== -1) {
+    const line = working.slice(0, newlineIndex).trim();
+    working = working.slice(newlineIndex + 1);
+    if (line) {
+      try {
+        envelopes.push(JSON.parse(line) as AgentRunEnvelope);
+      } catch (error) {
+        console.warn("Failed to parse agent envelope line", { line, error });
+      }
+    }
+    newlineIndex = working.indexOf("\n");
+  }
+
+  if (flush) {
+    const trimmed = working.trim();
+    if (trimmed) {
+      try {
+        envelopes.push(JSON.parse(trimmed) as AgentRunEnvelope);
+      } catch (error) {
+        console.warn("Failed to parse final agent envelope", { line: trimmed, error });
+      }
+    }
+    working = "";
+  }
+
+  return { envelopes, remainder: working };
+}
+
+function extractFilename(header: string | null): string | null {
+  if (!header) return null;
+  const match = /filename\*?=(?:UTF-8''|")?([^";\n]+)"?/i.exec(header);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
 export default function Chat({ fixNext, sessionId, onEnvelope, onSourcesUpdate }: ChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([INITIAL_ASSISTANT]);
   const [input, setInput] = useState("");
   const [urlInput, setUrlInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [activeFixNext, setActiveFixNext] = useState<string | null>(null);
   const chatScrollRef = useRef<HTMLDivElement | null>(null);
   const pendingAssistantId = useRef<string | null>(null);
@@ -65,7 +103,7 @@ export default function Chat({ fixNext, sessionId, onEnvelope, onSourcesUpdate }
 
   const updateAssistantContent = useCallback((delta: string) => {
     const targetId = pendingAssistantId.current;
-    if (!targetId) return;
+    if (!targetId || !delta) return;
     setMessages((prev) =>
       prev.map((msg) =>
         msg.id === targetId
@@ -94,59 +132,47 @@ export default function Chat({ fixNext, sessionId, onEnvelope, onSourcesUpdate }
     pendingAssistantId.current = null;
   }, []);
 
-  const parseSseEvent = useCallback((chunk: string): StreamingEvent | null => {
-    const lines = chunk.split("\n");
-    let event = "message";
-    const dataLines: string[] = [];
-
-    lines.forEach((line) => {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith(":")) {
-        return;
-      }
-      if (trimmed.startsWith("event:")) {
-        event = trimmed.slice(6).trim();
-      } else if (trimmed.startsWith("data:")) {
-        dataLines.push(trimmed.slice(5).trimStart());
-      }
-    });
-
-    const data = dataLines.join("\n");
-    if (!data) {
-      return null;
+  const exportLatestDraft = useCallback(async () => {
+    const latestAssistant = [...messages]
+      .reverse()
+      .find((msg) => msg.role === "assistant" && !msg.pending);
+    if (!latestAssistant || !latestAssistant.content.trim()) {
+      console.warn("No assistant draft content available for export");
+      return;
     }
 
-    return { event, data } satisfies StreamingEvent;
-  }, []);
+    setIsExporting(true);
+    try {
+      const res = await fetch("/api/export", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          markdown: latestAssistant.content,
+          filename: `grant-draft-${sessionId}.docx`,
+        }),
+      });
 
-  const consumeSseBuffer = useCallback(
-    (buffer: string, flush: boolean): { events: StreamingEvent[]; remainder: string } => {
-      let working = buffer;
-      const events: StreamingEvent[] = [];
-      let delimiterIndex = working.indexOf("\n\n");
-
-      while (delimiterIndex !== -1) {
-        const chunk = working.slice(0, delimiterIndex);
-        working = working.slice(delimiterIndex + 2);
-        const event = parseSseEvent(chunk);
-        if (event) {
-          events.push(event);
-        }
-        delimiterIndex = working.indexOf("\n\n");
+      if (!res.ok) {
+        throw new Error(`Export failed (${res.status})`);
       }
 
-      if (flush && working.trim().length > 0) {
-        const event = parseSseEvent(working);
-        working = "";
-        if (event) {
-          events.push(event);
-        }
-      }
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const filename = extractFilename(res.headers.get("Content-Disposition")) ?? "grant-draft.docx";
 
-      return { events, remainder: working };
-    },
-    [parseSseEvent],
-  );
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsExporting(false);
+    }
+  }, [messages, sessionId]);
 
   const sendMessage = useCallback(async () => {
     if (!input.trim() || isStreaming) {
@@ -160,7 +186,8 @@ export default function Chat({ fixNext, sessionId, onEnvelope, onSourcesUpdate }
       createdAt: Date.now(),
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    const updatedMessages = [...messages, userMessage];
+    setMessages(updatedMessages);
     setInput("");
     setActiveFixNext(null);
     scrollToBottom();
@@ -174,7 +201,7 @@ export default function Chat({ fixNext, sessionId, onEnvelope, onSourcesUpdate }
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           sessionId,
-          messages: [...messages, userMessage].map(({ role, content }) => ({ role, content })),
+          messages: updatedMessages.map(({ role, content }) => ({ role, content })),
           fixNextId: fixNext?.id ?? null,
         }),
       });
@@ -186,43 +213,44 @@ export default function Chat({ fixNext, sessionId, onEnvelope, onSourcesUpdate }
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let pending = "";
+      let sawDoneEnvelope = false;
 
       while (true) {
         const { value, done } = await reader.read();
         if (value) {
-          pending += decoder.decode(value, { stream: !done }).replace(/\r\n/g, "\n");
+          pending += decoder.decode(value, { stream: !done });
         }
 
         if (done) {
-          pending += decoder.decode().replace(/\r\n/g, "\n");
+          pending += decoder.decode();
         }
 
-        const { events, remainder } = consumeSseBuffer(pending, done);
+        const { envelopes, remainder } = consumeNdjsonBuffer(pending, done);
         pending = remainder;
 
-        events.forEach((event) => {
-          if (event.event === "token") {
-            updateAssistantContent(event.data);
-            scrollToBottom();
-          } else if (event.event === "envelope") {
-            try {
-              const parsed = JSON.parse(event.data) as AgentRunEnvelope;
-              onEnvelope?.(parsed);
-            } catch (error) {
-              console.error("Failed to parse envelope", error);
+        envelopes.forEach((envelope) => {
+          if (envelope.type === "message") {
+            if (envelope.delta) {
+              updateAssistantContent(envelope.delta);
+              scrollToBottom();
             }
+            if (envelope.done) {
+              sawDoneEnvelope = true;
+              finalizeAssistantMessage();
+            }
+          } else {
+            onEnvelope?.(envelope);
           }
         });
 
         if (done) {
-          if (pending.trim().length > 0) {
-            console.warn("Unparsed SSE buffer", pending);
-          }
           break;
         }
       }
 
-      finalizeAssistantMessage();
+      if (!sawDoneEnvelope) {
+        finalizeAssistantMessage();
+      }
     } catch (error) {
       console.error(error);
       setMessages((prev) =>
@@ -249,7 +277,6 @@ export default function Chat({ fixNext, sessionId, onEnvelope, onSourcesUpdate }
     isStreaming,
     messages,
     onEnvelope,
-    consumeSseBuffer,
     scrollToBottom,
     sessionId,
     updateAssistantContent,
@@ -314,12 +341,17 @@ export default function Chat({ fixNext, sessionId, onEnvelope, onSourcesUpdate }
     }
   }, [onSourcesUpdate, sessionId, urlInput]);
 
-  const handleFixNextSelect = useCallback((suggestion: FixNextSuggestion) => {
-    setActiveFixNext(suggestion.id);
-    if (suggestion.kind === "question") {
-      setInput(suggestion.label);
-    }
-  }, []);
+  const handleFixNextSelect = useCallback(
+    (suggestion: FixNextSuggestion) => {
+      setActiveFixNext(suggestion.id);
+      if (suggestion.kind === "question") {
+        setInput(suggestion.label);
+      } else if (suggestion.kind === "export") {
+        void exportLatestDraft();
+      }
+    },
+    [exportLatestDraft],
+  );
 
   return (
     <section className="panel-surface chat-panel">
@@ -365,8 +397,8 @@ export default function Chat({ fixNext, sessionId, onEnvelope, onSourcesUpdate }
               </button>
             </div>
           </div>
-          <button className="send-button" type="submit" disabled={isStreaming}>
-            {isStreaming ? "Streaming…" : "Send"}
+          <button className="send-button" type="submit" disabled={isStreaming || isExporting}>
+            {isStreaming ? "Streaming…" : isExporting ? "Exporting…" : "Send"}
           </button>
         </div>
       </form>

@@ -15,7 +15,7 @@ export function selectFixNext(coverage: CoverageSnapshot): FixNextSuggestion {
     return {
       id: "export",
       label: "Export a DOCX draft",
-      kind: "tighten",
+      kind: "export",
       description: "Everything is mapped. Generate a downloadable draft.",
     };
   }

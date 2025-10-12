@@ -22,20 +22,21 @@ export async function POST(req: Request): Promise<Response> {
     const { stream, context } = await streamAgentResponse(body);
     const encoder = new TextEncoder();
 
-    const sseStream = new ReadableStream<Uint8Array>({
+    const ndjsonStream = new ReadableStream<Uint8Array>({
       async start(controller) {
+        const write = (payload: AgentRunEnvelope) => {
+          controller.enqueue(encoder.encode(`${JSON.stringify(payload)}\n`));
+        };
+
         try {
           const textStream = stream.toTextStream();
           for await (const value of textStream as AsyncIterable<string>) {
             if (value) {
-              controller.enqueue(
-                encoder.encode(`event: token\ndata: ${value.replace(/\r\n/g, "\n")}\n\n`),
-              );
+              write({ type: "message", delta: value });
             }
           }
 
           await stream.completed;
-          const finalOutput = stream.finalOutput ?? "";
 
           if (process.env.NODE_ENV !== "production") {
             const coverageScore = context.coverage?.score ?? 0;
@@ -53,30 +54,33 @@ export async function POST(req: Request): Promise<Response> {
             );
           }
 
-          const envelope: AgentRunEnvelope = {
-            message: typeof finalOutput === "string" ? finalOutput : JSON.stringify(finalOutput),
-            coverage: context.coverage ?? null,
-            fixNext: context.fixNext ?? null,
-            sources: context.sources,
-            tighten: context.tighten ?? null,
-            provenance: context.provenance ?? null,
-          };
-          controller.enqueue(encoder.encode(`event: envelope\ndata: ${JSON.stringify(envelope)}\n\n`));
+          write({ type: "message", delta: "", done: true });
+
+          if (context.coverage) {
+            write({ type: "coverage", coverage: context.coverage });
+          }
+
+          write({ type: "fixNext", fixNext: context.fixNext ?? null });
+
+          if (context.sources && context.sources.length > 0) {
+            write({ type: "sources", sources: context.sources });
+          }
+
+          write({ type: "tighten", tighten: context.tighten ?? null });
+          write({ type: "provenance", provenance: context.provenance ?? null });
+
           controller.close();
         } catch (error) {
-          controller.enqueue(
-            encoder.encode(
-              `event: error\ndata: ${JSON.stringify({ message: (error as Error).message })}\n\n`,
-            ),
-          );
+          console.error(error);
+          write({ type: "message", delta: "", done: true });
           controller.close();
         }
       },
     });
 
-    return new Response(sseStream, {
+    return new Response(ndjsonStream, {
       headers: {
-        "Content-Type": "text/event-stream",
+        "Content-Type": "application/x-ndjson",
         "Cache-Control": "no-cache",
         Connection: "keep-alive",
       },

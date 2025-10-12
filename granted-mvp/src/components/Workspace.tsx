@@ -22,27 +22,31 @@ export default function Workspace() {
   const [sessionId] = useState(() => crypto.randomUUID());
 
   const handleEnvelope = useCallback((envelope: AgentRunEnvelope) => {
-    if (envelope.coverage) {
-      setCoverage(envelope.coverage);
-    }
-    if (envelope.fixNext !== undefined) {
-      setFixNext(envelope.fixNext ?? null);
-    }
-    if (envelope.sources) {
-      setSources((prev) => {
-        const dedupe = new Map<string, SourceAttachment>();
-        const nextSources = envelope.sources ?? [];
-        [...prev, ...nextSources].forEach((source) => {
-          dedupe.set(source.id, source);
+    switch (envelope.type) {
+      case "coverage":
+        setCoverage(envelope.coverage);
+        break;
+      case "fixNext":
+        setFixNext(envelope.fixNext ?? null);
+        break;
+      case "sources":
+        setSources((prev) => {
+          const dedupe = new Map<string, SourceAttachment>();
+          [...prev, ...envelope.sources].forEach((source) => {
+            dedupe.set(source.id, source);
+          });
+          return Array.from(dedupe.values());
         });
-        return Array.from(dedupe.values());
-      });
-    }
-    if (envelope.tighten !== undefined) {
-      setTighten(envelope.tighten ?? null);
-    }
-    if (envelope.provenance !== undefined) {
-      setProvenance(envelope.provenance ?? null);
+        break;
+      case "tighten":
+        setTighten(envelope.tighten ?? null);
+        break;
+      case "provenance":
+        setProvenance(envelope.provenance ?? null);
+        break;
+      case "message":
+        // message envelopes are consumed within Chat
+        break;
     }
   }, []);
 

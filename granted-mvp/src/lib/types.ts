@@ -12,7 +12,7 @@ export interface FixNextSuggestion {
   id: string;
   label: string;
   description?: string;
-  kind: "question" | "upload" | "url" | "tighten";
+  kind: "question" | "tighten" | "export";
 }
 
 export interface CoverageSlot {
@@ -37,14 +37,13 @@ export interface SourceAttachment {
   meta?: Record<string, string | number>;
 }
 
-export interface AgentRunEnvelope {
-  message: string;
-  fixNext?: FixNextSuggestion | null;
-  coverage?: CoverageSnapshot | null;
-  sources?: SourceAttachment[];
-  tighten?: TightenSectionSnapshot | null;
-  provenance?: ProvenanceSnapshot | null;
-}
+export type AgentRunEnvelope =
+  | { type: "message"; delta: string; done?: boolean }
+  | { type: "coverage"; coverage: CoverageSnapshot }
+  | { type: "fixNext"; fixNext: FixNextSuggestion | null }
+  | { type: "sources"; sources: SourceAttachment[] }
+  | { type: "tighten"; tighten: TightenSectionSnapshot | null }
+  | { type: "provenance"; provenance: ProvenanceSnapshot | null };
 
 export interface UploadResult {
   fileId: string;

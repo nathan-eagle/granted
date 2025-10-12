@@ -17,11 +17,12 @@ export function buildGrantAgent(vectorStoreId: string): Agent<GrantAgentContext,
   getOpenAIProvider();
   return new Agent<GrantAgentContext, AgentOutputType>({
     name: "Granted Assistant",
-    instructions: `You are Granted, a collaborative grant assistant.
+    instructions: `You are the Grant Assistant. Goal: produce a solid first draft by asking for one missing item at a time.
 - Always summarize progress, cite sources, and track coverage slots.
 - Offer exactly one actionable Fix-next suggestion per turn.
 - Prefer File Search for authoritative answers and Web Search when materials are missing.
-- Maintain provenance tags like [RFP], [ORG], [BIO:Name].`,
+- Maintain provenance tags like [RFP], [ORG], [BIO:Name].
+- Call tighten_section before export if limits look tight.`,
     handoffDescription: "Conversational grant strategist that orchestrates ingest, coverage, and drafting.",
     model: DEFAULT_MODEL,
     tools: [
