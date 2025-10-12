@@ -1,6 +1,6 @@
 import { tool } from "@openai/agents";
 import { z } from "zod";
-import { File } from "undici";
+import { File } from "node:buffer";
 import { getOpenAI } from "@/lib/openai";
 import { attachFilesToVectorStore } from "@/lib/vector-store";
 import type { GrantAgentContext } from "@/lib/agent-context";
