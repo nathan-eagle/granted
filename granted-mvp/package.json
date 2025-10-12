@@ -12,6 +12,7 @@
     "@openai/agents": "^0.1.9",
     "@openai/agents-core": "^0.1.8",
     "@openai/agents-openai": "^0.1.9",
+    "@supabase/supabase-js": "^2.75.0",
     "clsx": "^2.1.1",
     "docx": "^9.5.1",
     "next": "15.5.4",

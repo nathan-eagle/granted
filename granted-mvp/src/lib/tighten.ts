@@ -23,7 +23,8 @@ export function analyzeLength(markdown: string, limitWords?: number, preset: Tig
     .split(/\s+/)
     .map((token) => token.trim())
     .filter(Boolean).length;
-  const pageEstimate = Math.max(1, Math.round(wordCount / preset.wordsPerPage));
+  const rawPages = wordCount / preset.wordsPerPage;
+  const pageEstimate = Math.max(1, Math.round(rawPages * 10) / 10);
   const limit = limitWords ?? preset.wordsPerPage;
   return {
     withinLimit: wordCount <= limit,

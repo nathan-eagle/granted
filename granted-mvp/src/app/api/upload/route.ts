@@ -1,6 +1,7 @@
 import { getOpenAI } from "@/lib/openai";
 import { attachFilesToVectorStore } from "@/lib/vector-store";
 import type { SourceAttachment } from "@/lib/types";
+import { persistSources } from "@/lib/session-store";
 
 export const runtime = "nodejs";
 
@@ -43,11 +44,13 @@ export async function POST(req: Request): Promise<Response> {
     );
 
     await attachFilesToVectorStore(sessionId, uploads.map((item) => item.id));
+    const sources = uploads.map((item) => item.source);
+    await persistSources(sessionId, sources);
 
     return new Response(
       JSON.stringify({
         fileIds: uploads.map((item) => item.id),
-        sources: uploads.map((item) => item.source),
+        sources,
       }),
       {
         status: 200,

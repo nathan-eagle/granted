@@ -1,6 +1,6 @@
 import { tool } from "@openai/agents";
 import { z } from "zod";
-import { createCoverageSnapshot } from "@/lib/coverage";
+import { COVERAGE_TEMPLATES, createCoverageSnapshot } from "@/lib/coverage";
 import type { GrantAgentContext } from "@/lib/agent-context";
 import type { CoverageSnapshot, FixNextSuggestion } from "@/lib/types";
 
@@ -9,41 +9,164 @@ export interface CoverageAndNextResult {
   fixNext: FixNextSuggestion;
 }
 
-export function selectFixNext(coverage: CoverageSnapshot): FixNextSuggestion {
-  const missing = coverage.slots.find((slot) => slot.status !== "complete");
-  if (!missing) {
+const PRIORITY = new Map(COVERAGE_TEMPLATES.map((template) => [template.id, template.priority]));
+
+const FIX_NEXT_CONFIG: Record<
+  string,
+  {
+    missing: { label: string; description: string };
+    partial?: { label: string; description: string };
+  }
+> = {
+  "rfp-overview": {
+    missing: {
+      label: "Share the official RFP link or upload the solicitation PDF",
+      description: "I need the solicitation details to map requirements and deadlines.",
+    },
+    partial: {
+      label: "Clarify submission logistics",
+      description: "Confirm deadline, submission portal, and any formatting rules.",
+    },
+  },
+  eligibility: {
+    missing: {
+      label: "Confirm eligibility & registrations",
+      description: "List applicant type, registrations (SAM, UEI), and compliance checkpoints.",
+    },
+    partial: {
+      label: "Fill in remaining eligibility details",
+      description: "Double-check registrations, partnering rules, and threshold criteria.",
+    },
+  },
+  "project-narrative": {
+    missing: {
+      label: "Provide the project narrative or summary",
+      description: "Outline the problem, beneficiaries, solution, and impact goals.",
+    },
+    partial: {
+      label: "Fill gaps in the project narrative",
+      description: "Add outcomes, differentiation, or evidence of need to strengthen the story.",
+    },
+  },
+  "org-capacity": {
+    missing: {
+      label: "Summarize organizational capacity",
+      description: "Share org history, mission alignment, and proof you can deliver.",
+    },
+    partial: {
+      label: "Add capacity evidence",
+      description: "Upload recent wins, partnerships, or infrastructure supporting success.",
+    },
+  },
+  "key-personnel": {
+    missing: {
+      label: "Upload key personnel bios or resumes",
+      description: "Attach short bios, resumes, or LinkedIn URLs for leads and contributors.",
+    },
+    partial: {
+      label: "Complete personnel details",
+      description: "Add remaining resumes or clarify roles and time commitments.",
+    },
+  },
+  budget: {
+    missing: {
+      label: "Attach the draft budget or cost narrative",
+      description: "Provide line items, indirect rates, and any match/cost share assumptions.",
+    },
+    partial: {
+      label: "Finalize budget assumptions",
+      description: "Clarify cost share, indirect rates, or outstanding line items.",
+    },
+  },
+  timeline: {
+    missing: {
+      label: "Outline the project timeline",
+      description: "Share milestones, start/end dates, and key activities per quarter.",
+    },
+    partial: {
+      label: "Tighten the timeline",
+      description: "Fill in missing milestones or dependencies so the schedule is clear.",
+    },
+  },
+  evaluation: {
+    missing: {
+      label: "Describe the evaluation plan",
+      description: "List metrics, data collection cadence, and who tracks outcomes.",
+    },
+    partial: {
+      label: "Strengthen the evaluation plan",
+      description: "Add success metrics, baselines, and continuous improvement tactics.",
+    },
+  },
+  appendices: {
+    missing: {
+      label: "List required attachments and supporting docs",
+      description: "Note support letters, forms, and certifications required for submission.",
+    },
+    partial: {
+      label: "Gather remaining attachments",
+      description: "Upload outstanding forms or letters so the packet is complete.",
+    },
+  },
+};
+
+function buildQuestion(slot: CoverageSnapshot["slots"][number]): FixNextSuggestion {
+  const config = FIX_NEXT_CONFIG[slot.id];
+  if (!config) {
     return {
-      id: "export",
-      label: "Export a DOCX draft",
-      kind: "export",
-      description: "Everything is mapped. Generate a downloadable draft.",
+      id: slot.id,
+      label: `Provide details for ${slot.label}`,
+      description: slot.notes,
+      kind: "question",
     };
   }
 
+  const variant = slot.status === "partial" && config.partial ? config.partial : config.missing;
   return {
-    id: missing.id,
-    label: `Provide details for ${missing.label}`,
-    description: missing.notes,
+    id: slot.id,
+    label: variant.label,
+    description: variant.description,
     kind: "question",
+  };
+}
+
+export function selectFixNext(coverage: CoverageSnapshot): FixNextSuggestion {
+  const sorted = [...coverage.slots].sort((a, b) => {
+    const aPriority = PRIORITY.get(a.id) ?? Number.MAX_SAFE_INTEGER;
+    const bPriority = PRIORITY.get(b.id) ?? Number.MAX_SAFE_INTEGER;
+    if (aPriority !== bPriority) return aPriority - bPriority;
+    return a.label.localeCompare(b.label);
+  });
+
+  const missing = sorted.find((slot) => slot.status === "missing");
+  if (missing) {
+    return buildQuestion(missing);
+  }
+
+  const partial = sorted.find((slot) => slot.status === "partial");
+  if (partial) {
+    return buildQuestion(partial);
+  }
+
+  return {
+    id: "export",
+    label: "Export a DOCX draft",
+    kind: "export",
+    description: "Everything is mapped. Generate a downloadable draft.",
   };
 }
 
 export async function coverageAndNext(context: GrantAgentContext): Promise<CoverageAndNextResult> {
   const coverage = context.coverage ??
-    createCoverageSnapshot([
-      {
-        id: "narrative",
-        label: "Project narrative",
-        status: "missing",
-        notes: "Summarize the project vision and beneficiaries.",
-      },
-      {
-        id: "org-capacity",
-        label: "Organizational capacity",
-        status: "partial",
-        notes: "Upload bios and past performance evidence.",
-      },
-    ]);
+    createCoverageSnapshot(
+      COVERAGE_TEMPLATES.map((template, index) => ({
+        id: template.id,
+        label: template.label,
+        status: index === 0 ? "partial" : "missing",
+        notes: template.notes,
+      })),
+      "Baseline coverage initialized. Share the solicitation and project context to refine the map.",
+    );
 
   const fixNext = selectFixNext(coverage);
   context.coverage = coverage;

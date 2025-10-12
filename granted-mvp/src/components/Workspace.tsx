@@ -1,10 +1,10 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import Chat from "./Chat";
 import CoveragePanel from "./CoveragePanel";
 import SourceRail from "./SourceRail";
-import {
+import type {
   AgentRunEnvelope,
   CoverageSnapshot,
   FixNextSuggestion,
@@ -12,14 +12,19 @@ import {
   TightenSectionSnapshot,
   ProvenanceSnapshot,
 } from "@/lib/types";
+import type { SessionState } from "@/lib/session-store";
 
-export default function Workspace() {
-  const [coverage, setCoverage] = useState<CoverageSnapshot | null>(null);
-  const [fixNext, setFixNext] = useState<FixNextSuggestion | null>(null);
-  const [sources, setSources] = useState<SourceAttachment[]>([]);
-  const [tighten, setTighten] = useState<TightenSectionSnapshot | null>(null);
-  const [provenance, setProvenance] = useState<ProvenanceSnapshot | null>(null);
-  const [sessionId] = useState(() => crypto.randomUUID());
+interface WorkspaceProps {
+  initialState: SessionState;
+}
+
+export default function Workspace({ initialState }: WorkspaceProps) {
+  const [coverage, setCoverage] = useState<CoverageSnapshot | null>(initialState.coverage);
+  const [fixNext, setFixNext] = useState<FixNextSuggestion | null>(initialState.fixNext);
+  const [sources, setSources] = useState<SourceAttachment[]>(initialState.sources);
+  const [, setTighten] = useState<TightenSectionSnapshot | null>(initialState.tighten);
+  const [, setProvenance] = useState<ProvenanceSnapshot | null>(initialState.provenance);
+  const sessionId = initialState.sessionId;
 
   const handleEnvelope = useCallback((envelope: AgentRunEnvelope) => {
     switch (envelope.type) {
@@ -50,30 +55,27 @@ export default function Workspace() {
     }
   }, []);
 
-  const workspaceProps = useMemo(
-    () => ({
-      coverage,
-      fixNext,
-      sources,
-      tighten,
-      provenance,
-      sessionId,
-      onEnvelope: handleEnvelope,
-      onSourcesUpdate: setSources,
-    }),
-    [coverage, fixNext, sources, tighten, provenance, sessionId, handleEnvelope],
-  );
+  const handleSourcesUpdate = useCallback((incoming: SourceAttachment[]) => {
+    setSources((prev) => {
+      const dedupe = new Map<string, SourceAttachment>();
+      [...prev, ...incoming].forEach((source) => {
+        dedupe.set(source.id, source);
+      });
+      return Array.from(dedupe.values());
+    });
+  }, []);
 
   return (
     <div className="workspace-grid">
-      <SourceRail sources={workspaceProps.sources} />
+      <SourceRail sources={sources} />
       <Chat
-        fixNext={workspaceProps.fixNext}
-        sessionId={workspaceProps.sessionId}
-        onEnvelope={workspaceProps.onEnvelope}
-        onSourcesUpdate={workspaceProps.onSourcesUpdate}
+        initialMessages={initialState.messages}
+        fixNext={fixNext}
+        sessionId={sessionId}
+        onEnvelope={handleEnvelope}
+        onSourcesUpdate={handleSourcesUpdate}
       />
-      <CoveragePanel coverage={workspaceProps.coverage} />
+      <CoveragePanel coverage={coverage} />
     </div>
   );
 }

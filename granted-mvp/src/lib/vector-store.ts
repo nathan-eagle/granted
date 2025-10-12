@@ -1,36 +1,71 @@
+"use server";
+
 import { getOpenAI } from "./openai";
+import { getSupabaseAdmin } from "./supabase";
 
 export interface VectorStoreHandle {
   sessionId: string;
+  projectId: string;
   vectorStoreId: string;
 }
 
 declare global {
-  var __vectorStoreCache: Map<string, VectorStoreHandle> | undefined;
+  var __vectorStoreCache: Map<string, string> | undefined;
 }
 
-const cache: Map<string, VectorStoreHandle> = globalThis.__vectorStoreCache ?? new Map();
+const cache: Map<string, string> = globalThis.__vectorStoreCache ?? new Map();
 if (!globalThis.__vectorStoreCache) {
   globalThis.__vectorStoreCache = cache;
 }
 
 export async function ensureVectorStore(sessionId: string): Promise<VectorStoreHandle> {
-  const cached = cache.get(sessionId);
-  if (cached) {
-    return cached;
+  const supabase = await getSupabaseAdmin();
+  const { data: session, error: sessionError } = await supabase
+    .from("sessions")
+    .select("id, project_id")
+    .eq("id", sessionId)
+    .single();
+  if (sessionError || !session || !session.project_id) {
+    throw sessionError ?? new Error(`Session ${sessionId} not found`);
   }
 
-  const client = getOpenAI();
-  const created = await client.vectorStores.create({
-    name: `granted-session-${sessionId}`,
-  });
+  const projectId = session.project_id as string;
+  let vectorStoreId = cache.get(projectId);
 
-  const handle: VectorStoreHandle = {
+  if (!vectorStoreId) {
+    const { data: project, error: projectError } = await supabase
+      .from("projects")
+      .select("vector_store_id")
+      .eq("id", projectId)
+      .single();
+    if (projectError) {
+      throw projectError;
+    }
+
+    vectorStoreId = project?.vector_store_id ?? null;
+    if (!vectorStoreId) {
+      const client = getOpenAI();
+      const created = await client.vectorStores.create({
+        name: `granted-project-${projectId}`,
+      });
+      vectorStoreId = created.id;
+      const { error: updateError } = await supabase
+        .from("projects")
+        .update({ vector_store_id: vectorStoreId })
+        .eq("id", projectId);
+      if (updateError) {
+        throw updateError;
+      }
+    }
+
+    cache.set(projectId, vectorStoreId);
+  }
+
+  return {
     sessionId,
-    vectorStoreId: created.id,
+    projectId,
+    vectorStoreId,
   };
-  cache.set(sessionId, handle);
-  return handle;
 }
 
 export async function attachFilesToVectorStore(sessionId: string, fileIds: string[]): Promise<VectorStoreHandle> {
@@ -48,12 +83,23 @@ export async function attachFilesToVectorStore(sessionId: string, fileIds: strin
 }
 
 export async function teardownVectorStore(sessionId: string): Promise<void> {
-  const handle = cache.get(sessionId);
-  if (!handle) return;
-  cache.delete(sessionId);
+  const supabase = await getSupabaseAdmin();
+  const { data: session } = await supabase
+    .from("sessions")
+    .select("project_id")
+    .eq("id", sessionId)
+    .maybeSingle();
+
+  const projectId = session?.project_id as string | undefined;
+  if (!projectId) return;
+
+  const vectorStoreId = cache.get(projectId);
+  if (!vectorStoreId) return;
+
+  cache.delete(projectId);
   try {
     const client = getOpenAI();
-    await client.vectorStores.delete(handle.vectorStoreId);
+    await client.vectorStores.delete(vectorStoreId);
   } catch (error) {
     console.warn("Failed to delete vector store", error);
   }

@@ -1,8 +1,9 @@
 "use client";
 
-import { FormEvent, KeyboardEvent, useCallback, useMemo, useRef, useState } from "react";
+import { FormEvent, KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import FixNextChips from "./FixNextChips";
 import Message from "./Message";
+import UploadDropzone from "./UploadDropzone";
 import type {
   AgentRunEnvelope,
   ChatMessage,
@@ -11,6 +12,7 @@ import type {
 } from "@/lib/types";
 
 interface ChatProps {
+  initialMessages?: ChatMessage[];
   fixNext?: FixNextSuggestion | null;
   sessionId: string;
   onEnvelope?: (envelope: AgentRunEnvelope) => void;
@@ -21,7 +23,7 @@ const INITIAL_ASSISTANT: ChatMessage = {
   id: crypto.randomUUID(),
   role: "assistant",
   content:
-    "Hi! I’m your grant assistant. Upload an RFP or paste a URL and I’ll normalize the requirements, track coverage, and draft responses with citations.",
+    "Hi! I’m your grant assistant. Paste the RFP URL (or drag the PDF here), then share your org URL and a 3-5 sentence project idea so I can map coverage and suggest what to tackle next.",
   createdAt: Date.now(),
 };
 
@@ -67,8 +69,10 @@ function extractFilename(header: string | null): string | null {
   return match ? decodeURIComponent(match[1]) : null;
 }
 
-export default function Chat({ fixNext, sessionId, onEnvelope, onSourcesUpdate }: ChatProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>([INITIAL_ASSISTANT]);
+export default function Chat({ initialMessages = [], fixNext, sessionId, onEnvelope, onSourcesUpdate }: ChatProps) {
+  const [messages, setMessages] = useState<ChatMessage[]>(
+    initialMessages.length > 0 ? initialMessages : [INITIAL_ASSISTANT],
+  );
   const [input, setInput] = useState("");
   const [urlInput, setUrlInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
@@ -76,6 +80,14 @@ export default function Chat({ fixNext, sessionId, onEnvelope, onSourcesUpdate }
   const [activeFixNext, setActiveFixNext] = useState<string | null>(null);
   const chatScrollRef = useRef<HTMLDivElement | null>(null);
   const pendingAssistantId = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (initialMessages.length > 0) {
+      setMessages(initialMessages);
+    } else {
+      setMessages([INITIAL_ASSISTANT]);
+    }
+  }, [initialMessages]);
 
   const fixNextSuggestions = useMemo(() => (fixNext ? [fixNext] : []), [fixNext]);
 
@@ -131,6 +143,57 @@ export default function Chat({ fixNext, sessionId, onEnvelope, onSourcesUpdate }
     );
     pendingAssistantId.current = null;
   }, []);
+
+  const streamAgentRun = useCallback(
+    async (res: Response) => {
+      if (!res.ok || !res.body) {
+        throw new Error(`Agent request failed (${res.status})`);
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let pending = "";
+      let sawDoneEnvelope = false;
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (value) {
+          pending += decoder.decode(value, { stream: !done });
+        }
+
+        if (done) {
+          pending += decoder.decode();
+        }
+
+        const { envelopes, remainder } = consumeNdjsonBuffer(pending, done);
+        pending = remainder;
+
+        envelopes.forEach((envelope) => {
+          if (envelope.type === "message") {
+            if (envelope.delta) {
+              updateAssistantContent(envelope.delta);
+              scrollToBottom();
+            }
+            if (envelope.done) {
+              sawDoneEnvelope = true;
+              finalizeAssistantMessage();
+            }
+          } else {
+            onEnvelope?.(envelope);
+          }
+        });
+
+        if (done) {
+          break;
+        }
+      }
+
+      if (!sawDoneEnvelope) {
+        finalizeAssistantMessage();
+      }
+    },
+    [finalizeAssistantMessage, onEnvelope, scrollToBottom, updateAssistantContent],
+  );
 
   const exportLatestDraft = useCallback(async () => {
     const latestAssistant = [...messages]
@@ -196,7 +259,7 @@ export default function Chat({ fixNext, sessionId, onEnvelope, onSourcesUpdate }
     setIsStreaming(true);
 
     try {
-      const res = await fetch("/api/agent", {
+      const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -206,51 +269,7 @@ export default function Chat({ fixNext, sessionId, onEnvelope, onSourcesUpdate }
         }),
       });
 
-      if (!res.ok || !res.body) {
-        throw new Error(`Agent request failed (${res.status})`);
-      }
-
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let pending = "";
-      let sawDoneEnvelope = false;
-
-      while (true) {
-        const { value, done } = await reader.read();
-        if (value) {
-          pending += decoder.decode(value, { stream: !done });
-        }
-
-        if (done) {
-          pending += decoder.decode();
-        }
-
-        const { envelopes, remainder } = consumeNdjsonBuffer(pending, done);
-        pending = remainder;
-
-        envelopes.forEach((envelope) => {
-          if (envelope.type === "message") {
-            if (envelope.delta) {
-              updateAssistantContent(envelope.delta);
-              scrollToBottom();
-            }
-            if (envelope.done) {
-              sawDoneEnvelope = true;
-              finalizeAssistantMessage();
-            }
-          } else {
-            onEnvelope?.(envelope);
-          }
-        });
-
-        if (done) {
-          break;
-        }
-      }
-
-      if (!sawDoneEnvelope) {
-        finalizeAssistantMessage();
-      }
+      await streamAgentRun(res);
     } catch (error) {
       console.error(error);
       setMessages((prev) =>
@@ -269,18 +288,7 @@ export default function Chat({ fixNext, sessionId, onEnvelope, onSourcesUpdate }
       setIsStreaming(false);
       scrollToBottom();
     }
-  }, [
-    enqueueAssistant,
-    finalizeAssistantMessage,
-    fixNext?.id,
-    input,
-    isStreaming,
-    messages,
-    onEnvelope,
-    scrollToBottom,
-    sessionId,
-    updateAssistantContent,
-  ]);
+  }, [enqueueAssistant, fixNext?.id, input, isStreaming, messages, scrollToBottom, sessionId, streamAgentRun]);
 
   const handleSubmit = useCallback(
     (event: FormEvent<HTMLFormElement>) => {
@@ -290,31 +298,50 @@ export default function Chat({ fixNext, sessionId, onEnvelope, onSourcesUpdate }
     [sendMessage],
   );
 
-  const handleUpload = useCallback(
-    async (files: FileList | null) => {
-      if (!files?.length) return;
-      const formData = new FormData();
-      formData.set("sessionId", sessionId);
-      Array.from(files).forEach((file) => {
-        formData.append("files", file);
-      });
-
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!res.ok) {
-        console.error("Upload failed", await res.text());
+  const runCommand = useCallback(
+    async (command: string) => {
+      if (!command || isStreaming) {
         return;
       }
 
-      const json = (await res.json()) as { sources: SourceAttachment[] };
-      if (json.sources) {
-        onSourcesUpdate?.(json.sources);
+      const historyPayload = messages.map(({ role, content }) => ({ role, content }));
+      setActiveFixNext(null);
+      const assistantId = enqueueAssistant();
+      scrollToBottom();
+      setIsStreaming(true);
+
+      try {
+        const res = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sessionId,
+            command,
+            messages: historyPayload,
+          }),
+        });
+
+        await streamAgentRun(res);
+      } catch (error) {
+        console.error(error);
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === assistantId
+              ? {
+                  ...msg,
+                  pending: false,
+                  content:
+                    "Coverage update failed. Please try again or normalize the RFP manually.",
+                }
+              : msg,
+          ),
+        );
+      } finally {
+        setIsStreaming(false);
+        scrollToBottom();
       }
     },
-    [onSourcesUpdate, sessionId],
+    [enqueueAssistant, isStreaming, messages, scrollToBottom, sessionId, streamAgentRun],
   );
 
   const handleImport = useCallback(async () => {
@@ -339,7 +366,8 @@ export default function Chat({ fixNext, sessionId, onEnvelope, onSourcesUpdate }
     if (json.sources) {
       onSourcesUpdate?.(json.sources);
     }
-  }, [onSourcesUpdate, sessionId, urlInput]);
+    void runCommand("normalize_rfp");
+  }, [onSourcesUpdate, runCommand, sessionId, urlInput]);
 
   const handleInputKeyDown = useCallback(
     (event: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -386,16 +414,14 @@ export default function Chat({ fixNext, sessionId, onEnvelope, onSourcesUpdate }
         />
         <div className="composer-actions">
           <div className="composer-left">
-            <label className="upload-button">
-              <input
-                type="file"
-                accept="application/pdf"
-                multiple
-                onChange={(event) => handleUpload(event.target.files)}
-                hidden
-              />
-              Attach PDF
-            </label>
+            <UploadDropzone
+              sessionId={sessionId}
+              disabled={isStreaming || isExporting}
+              onUploaded={(uploadedSources) => {
+                onSourcesUpdate?.(uploadedSources);
+                void runCommand("normalize_rfp");
+              }}
+            />
             <div className="url-import">
               <input
                 type="url"
