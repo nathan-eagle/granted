@@ -338,7 +338,11 @@ export default function Chat({ initialMessages = [], fixNext, sessionId, onEnvel
       const historyPayload = messages.map(({ role, content }) => ({ role, content }));
       setActiveFixNext(null);
       setActivity(
-        command === "normalize_rfp" ? "Normalizing the RFP structure…" : "Granted is working on your request…",
+        command === "normalize_rfp"
+          ? "Normalizing the RFP structure…"
+          : command === "coverage_and_next"
+            ? "Refreshing coverage map…"
+            : "Granted is working on your request…",
       );
       const assistantId = enqueueAssistant();
       scrollToBottom();
@@ -410,7 +414,8 @@ export default function Chat({ initialMessages = [], fixNext, sessionId, onEnvel
     if (json.sources) {
       onSourcesUpdate?.(json.sources);
     }
-    void runCommand("normalize_rfp");
+    await runCommand("normalize_rfp");
+    await runCommand("coverage_and_next");
   }, [onSourcesUpdate, runCommand, sessionId, urlInput]);
 
   const handleInputKeyDown = useCallback(
@@ -477,7 +482,10 @@ export default function Chat({ initialMessages = [], fixNext, sessionId, onEnvel
               disabled={isStreaming || isExporting}
               onUploaded={(uploadedSources) => {
                 onSourcesUpdate?.(uploadedSources);
-                void runCommand("normalize_rfp");
+                void (async () => {
+                  await runCommand("normalize_rfp");
+                  await runCommand("coverage_and_next");
+                })();
               }}
               onUploadingChange={(busy) => {
                 if (busy) {

@@ -41,6 +41,15 @@ create table if not exists sources (
 
 create unique index if not exists sources_session_file_unique on sources (session_id, openai_file_id);
 
+create table if not exists drafts (
+  id bigserial primary key,
+  session_id uuid references sessions(id) on delete cascade,
+  section_id text not null,
+  markdown text not null default '',
+  updated_at timestamptz default now(),
+  unique (session_id, section_id)
+);
+
 create table if not exists coverage_snapshots (
   id bigserial primary key,
   session_id uuid references sessions(id) on delete cascade,

@@ -108,7 +108,7 @@ export default function UploadDropzone({ sessionId, disabled = false, onUploaded
       <input
         ref={inputRef}
         type="file"
-        accept=".pdf,.doc,.docx"
+        accept=".pdf,.doc,.docx,.txt"
         multiple
         hidden
         onChange={handleInputChange}

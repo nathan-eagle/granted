@@ -12,9 +12,10 @@ const EMPTY_COVERAGE: CoverageSnapshot = {
 
 export interface CoveragePanelProps {
   coverage?: CoverageSnapshot | null;
+  onSelect?: (slotId: string) => void;
 }
 
-export default function CoveragePanel({ coverage }: CoveragePanelProps) {
+export default function CoveragePanel({ coverage, onSelect }: CoveragePanelProps) {
   const snapshot = useMemo(() => coverage ?? EMPTY_COVERAGE, [coverage]);
   const formattedScore = Math.round(snapshot.score * 100);
 
@@ -42,7 +43,23 @@ export default function CoveragePanel({ coverage }: CoveragePanelProps) {
         ) : (
           <ul>
             {snapshot.slots.map((slot) => (
-              <li key={slot.id} className={`coverage-slot coverage-slot--${slot.status}`}>
+              <li
+                key={slot.id}
+                className={`coverage-slot coverage-slot--${slot.status}`}
+                onClick={() => onSelect?.(slot.id)}
+                role={onSelect ? "button" : undefined}
+                tabIndex={onSelect ? 0 : undefined}
+                onKeyDown={
+                  onSelect
+                    ? (event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          onSelect(slot.id);
+                        }
+                      }
+                    : undefined
+                }
+              >
                 <div>
                   <p className="coverage-slot__label">{slot.label}</p>
                   {slot.notes ? <p className="coverage-slot__notes">{slot.notes}</p> : null}

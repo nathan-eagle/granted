@@ -70,6 +70,14 @@ export type DbSourceRow = {
   created_at: string;
 };
 
+export type DbDraftRow = {
+  id: number;
+  session_id: string;
+  section_id: string;
+  markdown: string;
+  updated_at: string;
+};
+
 export type DbCoverageSnapshotRow = {
   id: number;
   session_id: string;

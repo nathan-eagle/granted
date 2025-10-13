@@ -7,6 +7,7 @@ import {
   type DbProject,
   type DbSession,
   type DbSourceRow,
+  type DbDraftRow,
 } from "./supabase";
 import type {
   ChatMessage,
@@ -325,5 +326,41 @@ export async function persistSources(sessionId: string, sources: SourceAttachmen
   });
   if (error) {
     console.error("Failed to persist sources", error);
+  }
+}
+
+export async function loadDraftMarkdown(sessionId: string, sectionId: string): Promise<string | null> {
+  const supabase = await getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("drafts")
+    .select("markdown")
+    .eq("session_id", sessionId)
+    .eq("section_id", sectionId)
+    .maybeSingle();
+
+  if (error) {
+    if (error.code !== "PGRST116") {
+      console.error("Failed to load draft", error);
+    }
+    return null;
+  }
+
+  return (data as Pick<DbDraftRow, "markdown"> | null)?.markdown ?? null;
+}
+
+export async function upsertDraftMarkdown(sessionId: string, sectionId: string, markdown: string): Promise<void> {
+  const supabase = await getSupabaseAdmin();
+  const { error } = await supabase.from("drafts").upsert(
+    {
+      session_id: sessionId,
+      section_id: sectionId,
+      markdown,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "session_id, section_id" },
+  );
+
+  if (error) {
+    throw error;
   }
 }
