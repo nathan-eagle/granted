@@ -88,6 +88,11 @@ export default function SectionEditor({ sessionId, slot, onClose }: SectionEdito
         throw new Error(`Failed to save draft (${res.status})`);
       }
       setStatusMessage("Draft saved.");
+      void fetch("/api/jobs/enqueue", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId, kind: "autodraft" }),
+      });
     } catch (err) {
       console.error(err);
       setError("Unable to save draft. Please try again.");
@@ -124,6 +129,11 @@ export default function SectionEditor({ sessionId, slot, onClose }: SectionEdito
       const json = (await res.json()) as { markdown?: string };
       setMarkdown(json.markdown ?? "");
       setStatusMessage("Generated a fresh draft.");
+      void fetch("/api/jobs/enqueue", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId, kind: "autodraft" }),
+      });
     } catch (err) {
       console.error(err);
       setError("Draft generation failed. Provide more context and try again.");

@@ -173,7 +173,7 @@ export async function coverageAndNext(context: GrantAgentContext): Promise<Cover
   const fixNext = selectFixNext(coverage);
   context.coverage = coverage;
   context.fixNext = fixNext;
-  if (creatingBaseline) {
+  if (creatingBaseline || coverage) {
     await saveCoverageSnapshot(context.sessionId, coverage);
   }
   return { coverage, fixNext };

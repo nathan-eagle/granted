@@ -14,6 +14,7 @@ import type {
   CoverageSnapshot,
   FixNextSuggestion,
   ProvenanceSnapshot,
+  SectionStatus,
   SourceAttachment,
   TightenSectionSnapshot,
 } from "./types";
@@ -56,7 +57,7 @@ function convertMessageRow(row: DbMessageRow): ChatMessage {
 
 function convertSourceRow(row: DbSourceRow): SourceAttachment {
   return {
-    id: row.openai_file_id,
+    id: row.openai_file_id ?? row.id,
     label: row.label,
     kind: row.kind,
     href: row.href ?? undefined,
@@ -66,9 +67,9 @@ function convertSourceRow(row: DbSourceRow): SourceAttachment {
 export async function ensureAppUser(authUserId: string, email?: string | null): Promise<DbAppUser> {
   const supabase = await getSupabaseAdmin();
   const { data, error } = await supabase
-    .from("app_users")
+    .from("profiles")
     .select("*")
-    .eq("auth_user_id", authUserId)
+    .eq("id", authUserId)
     .maybeSingle();
 
   if (error) {
@@ -77,16 +78,16 @@ export async function ensureAppUser(authUserId: string, email?: string | null): 
 
   if (data) {
     if (email && data.email !== email) {
-      await supabase.from("app_users").update({ email }).eq("id", data.id);
+      await supabase.from("profiles").update({ email }).eq("id", data.id);
       return { ...data, email };
     }
     return data;
   }
 
   const { data: inserted, error: insertError } = await supabase
-    .from("app_users")
+    .from("profiles")
     .insert({
-      auth_user_id: authUserId,
+      id: authUserId,
       email: email ?? null,
     })
     .select()
@@ -126,13 +127,17 @@ async function ensureProjectOwner(project: DbProject, ownerId: string | null): P
   return data;
 }
 
-async function createProject(ownerId?: string | null, title?: string | null): Promise<DbProject> {
+async function createProject(ownerId?: string | null, name?: string | null): Promise<DbProject> {
   const supabase = await getSupabaseAdmin();
   const insertPayload: Partial<DbProject> = {
-    title: title ?? undefined,
+    name: name ?? undefined,
     owner_id: ownerId ?? undefined,
   };
-  const { data, error } = await supabase.from("projects").insert(insertPayload).select().single();
+  const { data, error } = await supabase
+    .from("projects")
+    .insert(insertPayload)
+    .select()
+    .single();
   if (error || !data) {
     throw error ?? new Error("Failed to create project");
   }
@@ -162,9 +167,9 @@ async function createSession(projectId: string, explicitSessionId?: string): Pro
 async function createProjectAndSession(options: {
   ownerId?: string | null;
   explicitSessionId?: string | null;
-  title?: string | null;
+  name?: string | null;
 }): Promise<{ project: DbProject; session: DbSession }> {
-  const project = await createProject(options.ownerId ?? null, options.title ?? null);
+  const project = await createProject(options.ownerId ?? null, options.name ?? null);
   const session = await createSession(project.id, options.explicitSessionId ?? undefined);
   return { project, session };
 }
@@ -199,9 +204,12 @@ async function buildSessionState(
     .maybeSingle();
   const coverage = coverageRow
     ? ({
-        ...(coverageRow.payload as CoverageSnapshot),
-        score: Number(coverageRow.score),
-        summary: coverageRow.summary ?? (coverageRow.payload as CoverageSnapshot).summary,
+        score: coverageRow.score ?? 0,
+        summary:
+          coverageRow.summary ??
+          `Coverage ${(coverageRow.score ?? 0) * 100}%`,
+        slots: (coverageRow.slots as CoverageSnapshot["slots"]) ?? [],
+        updatedAt: new Date(coverageRow.created_at).getTime(),
       } satisfies CoverageSnapshot)
     : null;
 
@@ -239,7 +247,7 @@ async function buildSessionState(
   return {
     sessionId: session.id,
     projectId: project.id,
-    projectTitle: project.title ?? "Untitled project",
+    projectTitle: project.name ?? "Untitled project",
     appUserId: effectiveAppUser?.id ?? null,
     appUserEmail: effectiveAppUser?.email ?? null,
     messages,
@@ -353,6 +361,7 @@ export async function persistUserMessage(sessionId: string, content: string): Pr
 
 interface AssistantPersistencePayload {
   content: string;
+  runId?: string | null;
   coverage?: CoverageSnapshot | null;
   fixNext?: FixNextSuggestion | null;
   sources?: SourceAttachment[];
@@ -367,6 +376,7 @@ export async function persistAssistantTurn(sessionId: string, payload: Assistant
     session_id: sessionId,
     role: "assistant",
     content: payload.content,
+    run_id: payload.runId ?? null,
     envelope: {
       coverage: payload.coverage ?? null,
       fixNext: payload.fixNext ?? null,
@@ -406,14 +416,16 @@ export async function persistAssistantTurn(sessionId: string, payload: Assistant
 
   if (payload.sources && payload.sources.length > 0) {
     const rows = payload.sources.map((source) => ({
+      id: source.id,
       session_id: sessionId,
       label: source.label,
       kind: source.kind,
       href: source.href ?? null,
-      openai_file_id: source.id,
+      openai_file_id: source.kind === "file" ? source.id : null,
+      content_hash: source.meta?.hash ?? null,
     }));
     const { error: sourcesError } = await supabase.from("sources").upsert(rows, {
-      onConflict: "session_id, openai_file_id",
+      onConflict: "id",
     });
     if (sourcesError) {
       console.error("Failed to upsert sources", sourcesError);
@@ -432,14 +444,16 @@ export async function persistSources(sessionId: string, sources: SourceAttachmen
   if (sources.length === 0) return;
   const supabase = await getSupabaseAdmin();
   const rows = sources.map((source) => ({
+    id: source.id,
     session_id: sessionId,
     label: source.label,
     kind: source.kind,
     href: source.href ?? null,
-    openai_file_id: source.id,
+    openai_file_id: source.kind === "file" ? source.id : null,
+    content_hash: source.meta?.hash ?? null,
   }));
   const { error } = await supabase.from("sources").upsert(rows, {
-    onConflict: "session_id, openai_file_id",
+    onConflict: "id",
   });
   if (error) {
     console.error("Failed to persist sources", error);
@@ -449,7 +463,7 @@ export async function persistSources(sessionId: string, sources: SourceAttachmen
 export async function loadDraftMarkdown(sessionId: string, sectionId: string): Promise<string | null> {
   const supabase = await getSupabaseAdmin();
   const { data, error } = await supabase
-    .from("drafts")
+    .from("section_drafts")
     .select("markdown")
     .eq("session_id", sessionId)
     .eq("section_id", sectionId)
@@ -465,13 +479,19 @@ export async function loadDraftMarkdown(sessionId: string, sectionId: string): P
   return (data as Pick<DbDraftRow, "markdown"> | null)?.markdown ?? null;
 }
 
-export async function upsertDraftMarkdown(sessionId: string, sectionId: string, markdown: string): Promise<void> {
+export async function upsertDraftMarkdown(
+  sessionId: string,
+  sectionId: string,
+  markdown: string,
+  status: SectionStatus = "partial",
+): Promise<void> {
   const supabase = await getSupabaseAdmin();
-  const { error } = await supabase.from("drafts").upsert(
+  const { error } = await supabase.from("section_drafts").upsert(
     {
       session_id: sessionId,
       section_id: sectionId,
       markdown,
+      status,
       updated_at: new Date().toISOString(),
     },
     { onConflict: "session_id, section_id" },
@@ -488,7 +508,7 @@ export async function saveCoverageSnapshot(sessionId: string, snapshot: Coverage
     session_id: sessionId,
     score: snapshot.score,
     summary: snapshot.summary,
-    payload: snapshot,
+    slots: snapshot.slots,
   });
   if (error) {
     console.error("Failed to insert coverage snapshot", error);
@@ -508,8 +528,8 @@ export async function listProjectsForOwner(ownerId: string): Promise<DbProject[]
   return data ?? [];
 }
 
-export async function createProjectForOwner(ownerId: string, title: string): Promise<DbProject> {
-  return createProject(ownerId, title);
+export async function createProjectForOwner(ownerId: string, name: string): Promise<DbProject> {
+  return createProject(ownerId, name);
 }
 
 export async function createSessionForProject(projectId: string, explicitSessionId?: string): Promise<DbSession> {

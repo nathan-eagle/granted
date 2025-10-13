@@ -37,8 +37,19 @@ export default function AppHeader() {
 
   const [switchingGrant, setSwitchingGrant] = useState(false);
   const [creatingGrant, setCreatingGrant] = useState(false);
+  const [projectName, setProjectName] = useState("Untitled grant");
+  const [savingProjectName, setSavingProjectName] = useState(false);
 
   const activeGrantId = sessionState?.projectId ?? "";
+  useEffect(() => {
+    if (sessionState?.projectTitle) {
+      setProjectName(sessionState.projectTitle);
+    }
+  }, [sessionState?.projectTitle]);
+  const projectNameDirty = useMemo(() => {
+    const baseline = (sessionState?.projectTitle ?? "Untitled grant").trim();
+    return projectName.trim() !== baseline;
+  }, [projectName, sessionState?.projectTitle]);
   const refreshBootstrap = useCallback(async () => {
     setBootstrapLoading(true);
     try {
@@ -75,6 +86,39 @@ export default function AppHeader() {
       setGrantsLoading(false);
     }
   }, []);
+
+  const handleProjectRename = useCallback(
+    async (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      if (!sessionState?.projectId) {
+        return;
+      }
+
+      const trimmed = projectName.trim();
+      if (!trimmed) {
+        return;
+      }
+
+      setSavingProjectName(true);
+      try {
+        const res = await fetch(`/api/projects/${sessionState.projectId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: trimmed }),
+        });
+        if (!res.ok) {
+          throw new Error(`Rename failed (${res.status})`);
+        }
+        await refreshBootstrap();
+        await fetchGrants();
+      } catch (error) {
+        console.error("Failed to rename project", error);
+      } finally {
+        setSavingProjectName(false);
+      }
+    },
+    [fetchGrants, projectName, refreshBootstrap, sessionState?.projectId],
+  );
 
   useEffect(() => {
     let mounted = true;
@@ -221,8 +265,19 @@ export default function AppHeader() {
 
   return (
     <header className="app-header">
-      <div>
-        <h1 className="app-title">{sessionState?.projectTitle ?? "Granted"}</h1>
+      <div className="app-header-left">
+        <form className="project-name-form" onSubmit={handleProjectRename}>
+          <input
+            className="project-name-input"
+            value={projectName}
+            onChange={(event) => setProjectName(event.target.value)}
+            placeholder="Project name"
+            disabled={savingProjectName}
+          />
+          <button type="submit" disabled={!projectNameDirty || savingProjectName}>
+            {savingProjectName ? "Saving…" : "Save"}
+          </button>
+        </form>
         <p className="app-subtitle">
           Upload RFPs, chat through coverage, and export polished drafts without leaving this workspace.
         </p>

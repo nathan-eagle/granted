@@ -49,11 +49,41 @@ body {
   max-width: 720px;
 }
 
+.app-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
 .app-header-controls {
   display: flex;
   flex-direction: column;
   gap: 1rem;
   align-items: flex-start;
+}
+
+.project-name-form {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.project-name-input {
+  font-size: 1.6rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  background: rgba(10, 16, 24, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 0.75rem;
+  padding: 0.35rem 0.75rem;
+  min-width: 220px;
+}
+
+.project-name-form button {
+  padding: 0.4rem 0.9rem;
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.12);
+  font-weight: 600;
 }
 
 .auth-form {
@@ -583,6 +613,20 @@ select {
 .export-button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.auto-run-status {
+  font-size: 0.85rem;
+  margin-bottom: 0.4rem;
+  color: var(--text-secondary);
+}
+
+.auto-run-status--running {
+  color: #9fffa6;
+}
+
+.auto-run-status--queued {
+  color: #ffe082;
 }
 
 .upload-button {

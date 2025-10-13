@@ -11,6 +11,8 @@ import type {
   SourceAttachment,
 } from "@/lib/types";
 
+type JobKind = "normalize" | "autodraft" | "tighten" | "ingest_url" | "ingest_file";
+
 interface ChatProps {
   initialMessages?: ChatMessage[];
   fixNext?: FixNextSuggestion | null;
@@ -18,6 +20,8 @@ interface ChatProps {
   onEnvelope?: (envelope: AgentRunEnvelope) => void;
   onSourcesUpdate?: (sources: SourceAttachment[]) => void;
   canExport?: boolean;
+  autoState?: "idle" | "queued" | "running";
+  onRequestJob?: (kind: JobKind, payload?: Record<string, unknown>) => void;
 }
 
 const INITIAL_ASSISTANT: ChatMessage = {
@@ -70,7 +74,16 @@ function extractFilename(header: string | null): string | null {
   return match ? decodeURIComponent(match[1]) : null;
 }
 
-export default function Chat({ initialMessages = [], fixNext, sessionId, onEnvelope, onSourcesUpdate, canExport = false }: ChatProps) {
+export default function Chat({
+  initialMessages = [],
+  fixNext,
+  sessionId,
+  onEnvelope,
+  onSourcesUpdate,
+  canExport = false,
+  autoState = "idle",
+  onRequestJob,
+}: ChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>(
     initialMessages.length > 0 ? initialMessages : [INITIAL_ASSISTANT],
   );
@@ -296,6 +309,7 @@ export default function Chat({ initialMessages = [], fixNext, sessionId, onEnvel
       });
 
       await streamAgentRun(res);
+      onRequestJob?.("autodraft");
     } catch (error) {
       console.error(error);
       setMessages((prev) =>
@@ -320,7 +334,7 @@ export default function Chat({ initialMessages = [], fixNext, sessionId, onEnvel
         setActivity(null);
       }
     }
-  }, [enqueueAssistant, fixNext?.id, input, isStreaming, messages, scrollToBottom, sessionId, streamAgentRun]);
+  }, [enqueueAssistant, fixNext?.id, input, isStreaming, messages, onRequestJob, scrollToBottom, sessionId, streamAgentRun]);
 
   const handleSubmit = useCallback(
     (event: FormEvent<HTMLFormElement>) => {
@@ -417,7 +431,8 @@ export default function Chat({ initialMessages = [], fixNext, sessionId, onEnvel
     }
     await runCommand("normalize_rfp");
     await runCommand("coverage_and_next");
-  }, [onSourcesUpdate, runCommand, sessionId, urlInput]);
+    onRequestJob?.("normalize");
+  }, [onRequestJob, onSourcesUpdate, runCommand, sessionId, urlInput]);
 
   const handleInputKeyDown = useCallback(
     (event: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -465,6 +480,11 @@ export default function Chat({ initialMessages = [], fixNext, sessionId, onEnvel
       <FixNextChips suggestions={fixNextSuggestions} activeId={activeFixNext} onSelect={handleFixNextSelect} />
 
       <form className="chat-composer" onSubmit={handleSubmit}>
+        {autoState !== "idle" ? (
+          <div className={`auto-run-status auto-run-status--${autoState}`}>
+            {autoState === "queued" ? "Autodrafting queued…" : "Autodrafting…"}
+          </div>
+        ) : null}
         <textarea
           className="chat-input"
           placeholder="Ask for a summary, request a section draft, or provide new context."
@@ -492,6 +512,7 @@ export default function Chat({ initialMessages = [], fixNext, sessionId, onEnvel
                   await runCommand("normalize_rfp");
                   await runCommand("coverage_and_next");
                 })();
+                onRequestJob?.("normalize");
               }}
               onUploadingChange={(busy) => {
                 if (busy) {

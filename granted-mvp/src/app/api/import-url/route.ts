@@ -1,5 +1,6 @@
 import { ingestFromUrls } from "@/server/tools/ingestFromUrls";
 import { persistSources } from "@/lib/session-store";
+import { enqueueJob } from "@/lib/jobs";
 
 export const runtime = "nodejs";
 
@@ -20,6 +21,7 @@ export async function POST(req: Request): Promise<Response> {
   try {
     const result = await ingestFromUrls(body.sessionId, body.urls);
     await persistSources(body.sessionId, result.sources);
+    await enqueueJob(body.sessionId, "normalize");
     return new Response(JSON.stringify(result), {
       status: 200,
       headers: { "Content-Type": "application/json" },

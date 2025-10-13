@@ -7,13 +7,14 @@ import type { CoverageSnapshot, CoverageSlot, SourceAttachment } from "@/lib/typ
 import { saveCoverageSnapshot } from "@/lib/session-store";
 
 function toSourceAttachment(row: {
-  openai_file_id: string;
+  id: string;
+  openai_file_id: string | null;
   label: string;
   kind: string;
   href: string | null;
 }): SourceAttachment {
   return {
-    id: row.openai_file_id,
+    id: row.openai_file_id ?? row.id,
     label: row.label,
     kind: row.kind === "url" ? "url" : "file",
     href: row.href ?? undefined,
@@ -31,12 +32,13 @@ async function fetchSessionContext(sessionId: string): Promise<{
   sources: SourceAttachment[];
   userMessages: string[];
   assistantMessages: string[];
+  draftStatuses: Map<string, string>;
 }> {
   const supabase = await getSupabaseAdmin();
-  const [sourcesResult, messagesResult] = await Promise.all([
+  const [sourcesResult, messagesResult, draftsResult] = await Promise.all([
     supabase
       .from("sources")
-      .select("openai_file_id, label, kind, href")
+      .select("id, openai_file_id, label, kind, href")
       .eq("session_id", sessionId),
     supabase
       .from("messages")
@@ -44,6 +46,10 @@ async function fetchSessionContext(sessionId: string): Promise<{
       .eq("session_id", sessionId)
       .order("created_at", { ascending: true })
       .limit(200),
+    supabase
+      .from("section_drafts")
+      .select("section_id, status")
+      .eq("session_id", sessionId),
   ]);
 
   if (sourcesResult.error) {
@@ -51,6 +57,9 @@ async function fetchSessionContext(sessionId: string): Promise<{
   }
   if (messagesResult.error) {
     console.warn("normalizeRfp: failed to load messages", messagesResult.error);
+  }
+  if (draftsResult.error) {
+    console.warn("normalizeRfp: failed to load drafts", draftsResult.error);
   }
 
   const sources = (sourcesResult.data ?? []).map(toSourceAttachment);
@@ -61,7 +70,11 @@ async function fetchSessionContext(sessionId: string): Promise<{
     .filter((row) => row.role === "assistant" && typeof row.content === "string")
     .map((row) => row.content as string);
 
-  return { sources, userMessages, assistantMessages };
+  const draftStatuses = new Map<string, string>(
+    (draftsResult.data ?? []).map((row) => [row.section_id as string, row.status as string]),
+  );
+
+  return { sources, userMessages, assistantMessages, draftStatuses };
 }
 
 function inferSlotStatus(
@@ -105,7 +118,7 @@ export interface NormalizeRfpResult {
 }
 
 export async function normalizeRfp(context: GrantAgentContext): Promise<NormalizeRfpResult> {
-  const { sources, userMessages, assistantMessages } = await fetchSessionContext(context.sessionId);
+  const { sources, userMessages, assistantMessages, draftStatuses } = await fetchSessionContext(context.sessionId);
   const previousSlots = new Map(context.coverage?.slots?.map((slot) => [slot.id, slot]) ?? []);
   context.sources = sources;
 
@@ -118,7 +131,7 @@ export async function normalizeRfp(context: GrantAgentContext): Promise<Normaliz
     const assistantMatches = assistantMessages.some((message) =>
       textMatches(message, [...template.messageHints, template.label.toLowerCase()]),
     );
-    const status = inferSlotStatus(
+    let status = inferSlotStatus(
       template.id,
       "missing",
       previousSlots,
@@ -126,6 +139,13 @@ export async function normalizeRfp(context: GrantAgentContext): Promise<Normaliz
       userMatches,
       assistantMatches,
     );
+
+    const draftStatus = draftStatuses.get(template.id);
+    if (draftStatus === "complete") {
+      status = "complete";
+    } else if (draftStatus === "partial" && status === "missing") {
+      status = "partial";
+    }
 
     return {
       id: template.id,

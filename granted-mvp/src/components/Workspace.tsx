@@ -21,6 +21,8 @@ interface WorkspaceProps {
   initialState: SessionState;
 }
 
+type AutoState = "idle" | "queued" | "running";
+
 export default function Workspace({ initialState }: WorkspaceProps) {
   const [coverage, setCoverage] = useState<CoverageSnapshot | null>(initialState.coverage);
   const [fixNext, setFixNext] = useState<FixNextSuggestion | null>(initialState.fixNext);
@@ -29,7 +31,24 @@ export default function Workspace({ initialState }: WorkspaceProps) {
   const [, setProvenance] = useState<ProvenanceSnapshot | null>(initialState.provenance);
   const [initialMessages, setInitialMessages] = useState<ChatMessage[]>(initialState.messages);
   const [activeSlotId, setActiveSlotId] = useState<string | null>(null);
+  const [autoState, setAutoState] = useState<AutoState>("idle");
   const sessionId = useMemo(() => initialState.sessionId, [initialState.sessionId]);
+
+  const enqueueJob = useCallback(
+    async (kind: "normalize" | "autodraft" | "tighten" | "ingest_url" | "ingest_file") => {
+      try {
+        setAutoState((prev) => (prev === "running" ? prev : "queued"));
+        await fetch("/api/jobs/enqueue", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId, kind }),
+        });
+      } catch (error) {
+        console.error("Failed to enqueue job", error);
+      }
+    },
+    [sessionId],
+  );
 
   useEffect(() => {
     if (typeof document === "undefined") return;
@@ -52,6 +71,9 @@ export default function Workspace({ initialState }: WorkspaceProps) {
         setTighten(json.tighten ?? null);
         setProvenance(json.provenance ?? null);
         setInitialMessages(json.messages);
+        if (json.coverage?.slots?.some((slot) => slot.status !== "complete")) {
+          void enqueueJob("autodraft");
+        }
       } catch (error) {
         console.error("Failed to bootstrap session", error);
       }
@@ -64,7 +86,7 @@ export default function Workspace({ initialState }: WorkspaceProps) {
     return () => {
       active = false;
     };
-  }, [sessionId]);
+  }, [enqueueJob, sessionId]);
 
   useEffect(() => {
     if (!activeSlotId) return;
@@ -78,6 +100,43 @@ export default function Workspace({ initialState }: WorkspaceProps) {
     () => (activeSlotId ? coverage?.slots.find((slot) => slot.id === activeSlotId) ?? null : null),
     [activeSlotId, coverage],
   );
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const tick = async () => {
+      try {
+        const res = await fetch("/api/jobs/tick", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId }),
+        });
+        if (!res.ok || cancelled) return;
+        const json = (await res.json()) as { processed: boolean };
+        if (json.processed) {
+          setAutoState("running");
+          setTimeout(() => {
+            if (!cancelled) {
+              setAutoState("idle");
+            }
+          }, 2000);
+        } else {
+          setAutoState((prev) => (prev === "running" ? "idle" : prev));
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.error("Job tick failed", error);
+        }
+      }
+    };
+
+    void tick();
+    const id = setInterval(tick, 8000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [sessionId]);
 
   const sourceKey = useCallback((source: SourceAttachment) => {
     const href = source.href?.toLowerCase();
@@ -148,6 +207,8 @@ export default function Workspace({ initialState }: WorkspaceProps) {
           onEnvelope={handleEnvelope}
           onSourcesUpdate={handleSourcesUpdate}
           canExport={canExport}
+          autoState={autoState}
+          onRequestJob={enqueueJob}
         />
         <CoveragePanel coverage={coverage} onSelect={handleSlotSelect} />
       </div>

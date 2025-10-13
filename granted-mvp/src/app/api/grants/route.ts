@@ -34,7 +34,7 @@ export async function GET(): Promise<Response> {
   return NextResponse.json({
     grants: grants.map((grant) => ({
       id: grant.id,
-      name: grant.title,
+      name: grant.name,
       updatedAt: grant.updated_at,
     })),
   });
@@ -59,7 +59,7 @@ export async function POST(req: Request): Promise<Response> {
   return NextResponse.json({
     grant: {
       id: project.id,
-      name: project.title,
+      name: project.name,
       updatedAt: project.updated_at,
     },
   });

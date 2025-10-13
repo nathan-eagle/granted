@@ -22,6 +22,8 @@ export interface CoverageSlot {
   notes?: string;
 }
 
+export type SectionStatus = "missing" | "partial" | "complete";
+
 export interface CoverageSnapshot {
   score: number;
   summary: string;
