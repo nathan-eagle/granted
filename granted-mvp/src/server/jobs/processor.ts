@@ -93,6 +93,7 @@ async function runAutodraft(sessionId: string): Promise<void> {
     sectionId: slot.id,
     prompt,
     wordTarget: 450,
+    vectorStoreId: context.vectorStoreId,
   });
 
   await upsertDraftMarkdown(sessionId, slot.id, result.markdown, "complete");
