@@ -7,6 +7,7 @@ import SectionEditor from "./SectionEditor";
 import SourceRail from "./SourceRail";
 import type {
   AgentRunEnvelope,
+  ChatMessage,
   CoverageSnapshot,
   FixNextSuggestion,
   SourceAttachment,
@@ -26,12 +27,43 @@ export default function Workspace({ initialState }: WorkspaceProps) {
   const [sources, setSources] = useState<SourceAttachment[]>(initialState.sources);
   const [, setTighten] = useState<TightenSectionSnapshot | null>(initialState.tighten);
   const [, setProvenance] = useState<ProvenanceSnapshot | null>(initialState.provenance);
+  const [initialMessages, setInitialMessages] = useState<ChatMessage[]>(initialState.messages);
   const [activeSlotId, setActiveSlotId] = useState<string | null>(null);
   const sessionId = useMemo(() => initialState.sessionId, [initialState.sessionId]);
 
   useEffect(() => {
     if (typeof document === "undefined") return;
     getOrCreateSessionId(sessionId);
+  }, [sessionId]);
+
+  useEffect(() => {
+    let active = true;
+    const hydrate = async () => {
+      try {
+        const res = await fetch("/api/bootstrap", { headers: { "Cache-Control": "no-store" } });
+        if (!res.ok) {
+          return;
+        }
+        const json = (await res.json()) as SessionState;
+        if (!active) return;
+        setCoverage(json.coverage);
+        setFixNext(json.fixNext);
+        setSources(json.sources);
+        setTighten(json.tighten ?? null);
+        setProvenance(json.provenance ?? null);
+        setInitialMessages(json.messages);
+      } catch (error) {
+        console.error("Failed to bootstrap session", error);
+      }
+    };
+
+    if (typeof window !== "undefined") {
+      void hydrate();
+    }
+
+    return () => {
+      active = false;
+    };
   }, [sessionId]);
 
   useEffect(() => {
@@ -54,6 +86,13 @@ export default function Workspace({ initialState }: WorkspaceProps) {
     }
     return source.label.toLowerCase();
   }, []);
+
+  const canExport = useMemo(() => {
+    if (!coverage || !coverage.slots.length) {
+      return false;
+    }
+    return coverage.slots.every((slot) => slot.status === "complete");
+  }, [coverage]);
 
   const handleEnvelope = useCallback((envelope: AgentRunEnvelope) => {
     switch (envelope.type) {
@@ -103,11 +142,12 @@ export default function Workspace({ initialState }: WorkspaceProps) {
       <div className="workspace-grid">
         <SourceRail sources={sources} />
         <Chat
-          initialMessages={initialState.messages}
+          initialMessages={initialMessages}
           fixNext={fixNext}
           sessionId={sessionId}
           onEnvelope={handleEnvelope}
           onSourcesUpdate={handleSourcesUpdate}
+          canExport={canExport}
         />
         <CoveragePanel coverage={coverage} onSelect={handleSlotSelect} />
       </div>

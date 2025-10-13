@@ -17,6 +17,7 @@ interface ChatProps {
   sessionId: string;
   onEnvelope?: (envelope: AgentRunEnvelope) => void;
   onSourcesUpdate?: (sources: SourceAttachment[]) => void;
+  canExport?: boolean;
 }
 
 const INITIAL_ASSISTANT: ChatMessage = {
@@ -69,7 +70,7 @@ function extractFilename(header: string | null): string | null {
   return match ? decodeURIComponent(match[1]) : null;
 }
 
-export default function Chat({ initialMessages = [], fixNext, sessionId, onEnvelope, onSourcesUpdate }: ChatProps) {
+export default function Chat({ initialMessages = [], fixNext, sessionId, onEnvelope, onSourcesUpdate, canExport = false }: ChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>(
     initialMessages.length > 0 ? initialMessages : [INITIAL_ASSISTANT],
   );
@@ -434,10 +435,15 @@ export default function Chat({ initialMessages = [], fixNext, sessionId, onEnvel
       if (suggestion.kind === "question") {
         setInput(suggestion.label);
       } else if (suggestion.kind === "export") {
-        void exportLatestDraft();
+        if (canExport) {
+          void exportLatestDraft();
+        } else {
+          setActivity("Complete remaining coverage before exporting.");
+          setTimeout(() => setActivity(null), 3000);
+        }
       }
     },
-    [exportLatestDraft],
+    [canExport, exportLatestDraft],
   );
 
   return (
@@ -507,9 +513,19 @@ export default function Chat({ initialMessages = [], fixNext, sessionId, onEnvel
               </button>
             </div>
           </div>
-          <button className="send-button" type="submit" disabled={isStreaming || isExporting}>
-            {isStreaming ? "Streaming…" : isExporting ? "Exporting…" : "Send"}
-          </button>
+          <div className="composer-right">
+            <button
+              className="export-button"
+              type="button"
+              onClick={() => void exportLatestDraft()}
+              disabled={!canExport || isStreaming || isExporting}
+            >
+              {isExporting ? "Exporting…" : "Export DOCX"}
+            </button>
+            <button className="send-button" type="submit" disabled={isStreaming || isExporting}>
+              {isStreaming ? "Streaming…" : "Send"}
+            </button>
+          </div>
         </div>
       </form>
     </section>

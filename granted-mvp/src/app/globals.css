@@ -41,8 +41,96 @@ body {
 .app-header {
   display: flex;
   flex-direction: column;
+  gap: 1rem;
+  max-width: 100%;
+}
+
+.app-header > :first-child {
+  max-width: 720px;
+}
+
+.app-header-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  max-width: 360px;
+}
+
+.auth-form-row {
+  display: flex;
   gap: 0.5rem;
-  max-width: 960px;
+}
+
+.auth-form-row input {
+  flex: 1;
+  padding: 0.45rem 0.75rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(12, 18, 27, 0.75);
+}
+
+.auth-form-row button {
+  padding: 0.45rem 0.85rem;
+  border-radius: 0.75rem;
+  background: var(--accent);
+  color: #04060a;
+  font-weight: 600;
+}
+
+.auth-error {
+  color: #ff9494;
+  font-size: 0.85rem;
+}
+
+.auth-success {
+  color: #9fffa6;
+  font-size: 0.85rem;
+}
+
+.auth-block {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.auth-email {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.grant-switcher {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  max-width: 360px;
+}
+
+.grant-switcher-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.grant-switcher-row select {
+  flex: 1;
+  padding: 0.45rem 0.75rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(12, 18, 27, 0.75);
+  color: inherit;
+}
+
+.grant-switcher-row button {
+  padding: 0.45rem 0.85rem;
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.12);
+  font-weight: 600;
 }
 
 .app-title {
@@ -125,6 +213,19 @@ body {
 
   .workspace-grid > :last-child {
     grid-column: span 2;
+  }
+}
+
+@media (min-width: 960px) {
+  .app-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 2rem;
+  }
+
+  .app-header-controls {
+    align-items: flex-end;
   }
 }
 
@@ -457,6 +558,31 @@ select {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+}
+
+.composer-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.export-button {
+  padding: 0.55rem 1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+
+.export-button:not(:disabled):hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.export-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .upload-button {

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import AppHeader from "@/components/AppHeader";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -28,13 +29,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <div className="app-shell">
-          <header className="app-header">
-            <h1 className="app-title">{appName}</h1>
-            <p className="app-subtitle">
-              Upload RFPs, chat through coverage, and export polished drafts without leaving this
-              workspace.
-            </p>
-          </header>
+          <AppHeader />
           <main className="app-main">{children}</main>
         </div>
       </body>

@@ -2,6 +2,13 @@
 
 create extension if not exists "pgcrypto";
 
+create table if not exists app_users (
+  id uuid primary key default gen_random_uuid(),
+  auth_user_id uuid unique,
+  email text unique,
+  created_at timestamptz default now()
+);
+
 create table if not exists projects (
   id uuid primary key default gen_random_uuid(),
   title text not null default 'Untitled project',
@@ -10,6 +17,11 @@ create table if not exists projects (
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
+
+alter table projects
+  add column if not exists owner_id uuid references app_users(id) on delete set null;
+
+create index if not exists projects_owner_idx on projects (owner_id, updated_at desc);
 
 create table if not exists sessions (
   id uuid primary key default gen_random_uuid(),

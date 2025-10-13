@@ -3,6 +3,7 @@ import { z } from "zod";
 import { COVERAGE_TEMPLATES, createCoverageSnapshot } from "@/lib/coverage";
 import type { GrantAgentContext } from "@/lib/agent-context";
 import type { CoverageSnapshot, FixNextSuggestion } from "@/lib/types";
+import { saveCoverageSnapshot } from "@/lib/session-store";
 
 export interface CoverageAndNextResult {
   coverage: CoverageSnapshot;
@@ -157,6 +158,7 @@ export function selectFixNext(coverage: CoverageSnapshot): FixNextSuggestion {
 }
 
 export async function coverageAndNext(context: GrantAgentContext): Promise<CoverageAndNextResult> {
+  const creatingBaseline = !context.coverage;
   const coverage = context.coverage ??
     createCoverageSnapshot(
       COVERAGE_TEMPLATES.map((template, index) => ({
@@ -171,6 +173,9 @@ export async function coverageAndNext(context: GrantAgentContext): Promise<Cover
   const fixNext = selectFixNext(coverage);
   context.coverage = coverage;
   context.fixNext = fixNext;
+  if (creatingBaseline) {
+    await saveCoverageSnapshot(context.sessionId, coverage);
+  }
   return { coverage, fixNext };
 }
 

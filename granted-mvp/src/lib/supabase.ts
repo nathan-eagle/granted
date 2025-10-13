@@ -49,6 +49,7 @@ export type DbProject = {
   vector_store_id: string | null;
   created_at: string;
   updated_at: string;
+  owner_id: string | null;
 };
 
 export type DbMessageRow = {
@@ -103,5 +104,12 @@ export type DbProvenanceRow = {
   total_paragraphs: number;
   paragraphs_with_provenance: number;
   payload: Record<string, unknown>;
+  created_at: string;
+};
+
+export type DbAppUser = {
+  id: string;
+  auth_user_id: string | null;
+  email: string | null;
   created_at: string;
 };

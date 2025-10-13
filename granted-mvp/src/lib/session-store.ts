@@ -1,13 +1,13 @@
-"use server";
-
+import { randomUUID } from "crypto";
 import { cookies, headers } from "next/headers";
 import {
   getSupabaseAdmin,
+  type DbAppUser,
+  type DbDraftRow,
   type DbMessageRow,
   type DbProject,
   type DbSession,
   type DbSourceRow,
-  type DbDraftRow,
 } from "./supabase";
 import type {
   ChatMessage,
@@ -18,7 +18,8 @@ import type {
   TightenSectionSnapshot,
 } from "./types";
 
-const SESSION_COOKIE = "granted_session_id";
+export const SESSION_COOKIE = "granted_session_id";
+export const PROJECT_COOKIE = "granted_project_id";
 
 const INITIAL_ASSISTANT_MESSAGE =
   "Hi! I’m your grant assistant. Paste the RFP URL (or drag the PDF here), then share your org URL and a 3-5 sentence project idea so I can map coverage and suggest what to tackle next.";
@@ -26,12 +27,22 @@ const INITIAL_ASSISTANT_MESSAGE =
 export interface SessionState {
   sessionId: string;
   projectId: string;
+  projectTitle: string;
+  appUserId: string | null;
+  appUserEmail: string | null;
   messages: ChatMessage[];
   sources: SourceAttachment[];
   coverage: CoverageSnapshot | null;
   fixNext: FixNextSuggestion | null;
   tighten: TightenSectionSnapshot | null;
   provenance: ProvenanceSnapshot | null;
+}
+
+export interface EnsureSessionOptions {
+  sessionIdFromClient?: string | null;
+  projectIdFromClient?: string | null;
+  authUserId?: string | null;
+  authEmail?: string | null;
 }
 
 function convertMessageRow(row: DbMessageRow): ChatMessage {
@@ -52,22 +63,86 @@ function convertSourceRow(row: DbSourceRow): SourceAttachment {
   };
 }
 
-async function insertInitialSession(explicitSessionId?: string): Promise<{ project: DbProject; session: DbSession }> {
+export async function ensureAppUser(authUserId: string, email?: string | null): Promise<DbAppUser> {
   const supabase = await getSupabaseAdmin();
-  const { data: project, error: projectError } = await supabase.from("projects").insert({}).select().single();
-  if (projectError || !project) {
-    throw projectError ?? new Error("Failed to create project");
+  const { data, error } = await supabase
+    .from("app_users")
+    .select("*")
+    .eq("auth_user_id", authUserId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
   }
 
-  const sessionInsert = explicitSessionId
-    ? { id: explicitSessionId, project_id: project.id }
-    : { project_id: project.id };
+  if (data) {
+    if (email && data.email !== email) {
+      await supabase.from("app_users").update({ email }).eq("id", data.id);
+      return { ...data, email };
+    }
+    return data;
+  }
 
-  const { data: session, error: sessionError } = await supabase
-    .from("sessions")
-    .insert(sessionInsert)
+  const { data: inserted, error: insertError } = await supabase
+    .from("app_users")
+    .insert({
+      auth_user_id: authUserId,
+      email: email ?? null,
+    })
     .select()
     .single();
+
+  if (insertError || !inserted) {
+    throw insertError ?? new Error("Failed to create app user");
+  }
+
+  return inserted;
+}
+
+async function fetchProjectById(projectId: string): Promise<DbProject | null> {
+  const supabase = await getSupabaseAdmin();
+  const { data, error } = await supabase.from("projects").select("*").eq("id", projectId).maybeSingle();
+  if (error) {
+    throw error;
+  }
+  return data ?? null;
+}
+
+async function ensureProjectOwner(project: DbProject, ownerId: string | null): Promise<DbProject> {
+  if (!ownerId || project.owner_id === ownerId) {
+    return project;
+  }
+
+  const supabase = await getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("projects")
+    .update({ owner_id: ownerId })
+    .eq("id", project.id)
+    .select()
+    .single();
+  if (error || !data) {
+    throw error ?? new Error("Failed to assign project owner");
+  }
+  return data;
+}
+
+async function createProject(ownerId?: string | null, title?: string | null): Promise<DbProject> {
+  const supabase = await getSupabaseAdmin();
+  const insertPayload: Partial<DbProject> = {
+    title: title ?? undefined,
+    owner_id: ownerId ?? undefined,
+  };
+  const { data, error } = await supabase.from("projects").insert(insertPayload).select().single();
+  if (error || !data) {
+    throw error ?? new Error("Failed to create project");
+  }
+  return data;
+}
+
+async function createSession(projectId: string, explicitSessionId?: string): Promise<DbSession> {
+  const supabase = await getSupabaseAdmin();
+  const sessionInsert = explicitSessionId ? { id: explicitSessionId, project_id: projectId } : { project_id: projectId };
+  const { data: session, error: sessionError } = await supabase.from("sessions").insert(sessionInsert).select().single();
   if (sessionError || !session) {
     throw sessionError ?? new Error("Failed to create session");
   }
@@ -81,10 +156,24 @@ async function insertInitialSession(explicitSessionId?: string): Promise<{ proje
     throw messageError;
   }
 
+  return session;
+}
+
+async function createProjectAndSession(options: {
+  ownerId?: string | null;
+  explicitSessionId?: string | null;
+  title?: string | null;
+}): Promise<{ project: DbProject; session: DbSession }> {
+  const project = await createProject(options.ownerId ?? null, options.title ?? null);
+  const session = await createSession(project.id, options.explicitSessionId ?? undefined);
   return { project, session };
 }
 
-async function buildSessionState(session: DbSession, project: DbProject): Promise<SessionState> {
+async function buildSessionState(
+  session: DbSession,
+  project: DbProject,
+  appUser?: DbAppUser | null,
+): Promise<SessionState> {
   const supabase = await getSupabaseAdmin();
 
   const { data: messageRows } = await supabase
@@ -145,9 +234,14 @@ async function buildSessionState(session: DbSession, project: DbProject): Promis
     }
   }
 
+  const effectiveAppUser = appUser ?? (project.owner_id ? { id: project.owner_id, email: null, auth_user_id: null, created_at: "" } : null);
+
   return {
     sessionId: session.id,
     projectId: project.id,
+    projectTitle: project.title ?? "Untitled project",
+    appUserId: effectiveAppUser?.id ?? null,
+    appUserEmail: effectiveAppUser?.email ?? null,
     messages,
     sources,
     coverage,
@@ -170,9 +264,24 @@ async function fetchSessionAndProject(sessionId: string): Promise<{ session: DbS
   return { session, project };
 }
 
-export async function ensureSession(sessionIdFromClient?: string): Promise<SessionState> {
+export async function ensureSession(options: EnsureSessionOptions = {}): Promise<SessionState> {
   const cookieStore = await cookies();
-  let sessionId = sessionIdFromClient ?? cookieStore.get(SESSION_COOKIE)?.value ?? null;
+  const headerStore = await headers();
+
+  let sessionId =
+    options.sessionIdFromClient ??
+    cookieStore.get(SESSION_COOKIE)?.value ??
+    headerStore.get("x-granted-session") ??
+    null;
+  let projectId =
+    options.projectIdFromClient ??
+    cookieStore.get(PROJECT_COOKIE)?.value ??
+    headerStore.get("x-granted-project") ??
+    null;
+
+  const authUserId = options.authUserId ?? null;
+  const authEmail = options.authEmail ?? null;
+  const appUser = authUserId ? await ensureAppUser(authUserId, authEmail) : null;
 
   let session: DbSession | null = null;
   let project: DbProject | null = null;
@@ -181,28 +290,48 @@ export async function ensureSession(sessionIdFromClient?: string): Promise<Sessi
     const result = await fetchSessionAndProject(sessionId);
     if (result) {
       session = result.session;
-      project = result.project;
+      project = await ensureProjectOwner(result.project, appUser?.id ?? null);
+      projectId = project.id;
     } else {
       sessionId = null;
     }
   }
 
-  if (!session || !project) {
-    const headerStore = await headers();
-    const generated = sessionIdFromClient ?? headerStore.get("x-granted-session") ?? undefined;
-    const created = await insertInitialSession(generated);
-    session = created.session;
-    project = created.project;
+  if (!project && projectId) {
+    const fetchedProject = await fetchProjectById(projectId);
+    if (fetchedProject) {
+      project = await ensureProjectOwner(fetchedProject, appUser?.id ?? null);
+    } else {
+      projectId = null;
+    }
+  }
+
+  if (!session && project) {
+    session = await createSession(project.id, sessionId ?? undefined);
     sessionId = session.id;
   }
 
-  return buildSessionState(session, project);
+  if (!session || !project) {
+    const generatedSessionId = sessionId ?? randomUUID();
+    const created = await createProjectAndSession({
+      ownerId: appUser?.id ?? null,
+      explicitSessionId: generatedSessionId,
+    });
+    project = created.project;
+    session = created.session;
+    sessionId = session.id;
+    projectId = project.id;
+  }
+
+  return buildSessionState(session, project, appUser);
 }
 
 export async function loadSession(sessionId: string): Promise<SessionState | null> {
   const result = await fetchSessionAndProject(sessionId);
-  if (!result) return null;
-  return buildSessionState(result.session, result.project);
+  if (!result) {
+    return null;
+  }
+  return buildSessionState(result.session, result.project, null);
 }
 
 export async function persistUserMessage(sessionId: string, content: string): Promise<ChatMessage> {
@@ -248,18 +377,6 @@ export async function persistAssistantTurn(sessionId: string, payload: Assistant
   });
   if (messageError) {
     throw messageError;
-  }
-
-  if (payload.coverage) {
-    const { error: coverageError } = await supabase.from("coverage_snapshots").insert({
-      session_id: sessionId,
-      score: payload.coverage.score,
-      summary: payload.coverage.summary,
-      payload: payload.coverage,
-    });
-    if (coverageError) {
-      console.error("Failed to insert coverage snapshot", coverageError);
-    }
   }
 
   if (payload.tighten) {
@@ -363,4 +480,38 @@ export async function upsertDraftMarkdown(sessionId: string, sectionId: string, 
   if (error) {
     throw error;
   }
+}
+
+export async function saveCoverageSnapshot(sessionId: string, snapshot: CoverageSnapshot): Promise<void> {
+  const supabase = await getSupabaseAdmin();
+  const { error } = await supabase.from("coverage_snapshots").insert({
+    session_id: sessionId,
+    score: snapshot.score,
+    summary: snapshot.summary,
+    payload: snapshot,
+  });
+  if (error) {
+    console.error("Failed to insert coverage snapshot", error);
+  }
+}
+
+export async function listProjectsForOwner(ownerId: string): Promise<DbProject[]> {
+  const supabase = await getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("projects")
+    .select("*")
+    .eq("owner_id", ownerId)
+    .order("updated_at", { ascending: false });
+  if (error) {
+    throw error;
+  }
+  return data ?? [];
+}
+
+export async function createProjectForOwner(ownerId: string, title: string): Promise<DbProject> {
+  return createProject(ownerId, title);
+}
+
+export async function createSessionForProject(projectId: string, explicitSessionId?: string): Promise<DbSession> {
+  return createSession(projectId, explicitSessionId);
 }

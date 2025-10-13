@@ -4,6 +4,7 @@ import { createCoverageSnapshot, COVERAGE_TEMPLATES, promoteStatus } from "@/lib
 import type { GrantAgentContext } from "@/lib/agent-context";
 import { getSupabaseAdmin } from "@/lib/supabase";
 import type { CoverageSnapshot, CoverageSlot, SourceAttachment } from "@/lib/types";
+import { saveCoverageSnapshot } from "@/lib/session-store";
 
 function toSourceAttachment(row: {
   openai_file_id: string;
@@ -140,6 +141,7 @@ export async function normalizeRfp(context: GrantAgentContext): Promise<Normaliz
   const coverage = createCoverageSnapshot(slots, summarizeCoverage(slots));
 
   context.coverage = coverage;
+  await saveCoverageSnapshot(context.sessionId, coverage);
 
   return { coverage };
 }

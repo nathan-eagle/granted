@@ -186,7 +186,7 @@ create table if not exists drafts (
 
 - [x] Wire `onDrop` and `<input type="file" multiple accept=".pdf,.doc,.docx,.txt">` to `uploadFiles`.
 
-- [ ] Keep the existing `/api/upload` route (works with OpenAI Files + Vector Store). fileciteturn0file3
+- [x] Keep the existing `/api/upload` route (works with OpenAI Files + Vector Store). fileciteturn0file3
 
 ---
 
@@ -197,30 +197,30 @@ create table if not exists drafts (
 ---
 
 ## 7) Persist + reload messages and coverage via Supabase
-- [ ] Client boot sequence (in `Workspace` or `Chat`):
+- [x] Client boot sequence (in `Workspace` or `Chat`):
   1. Obtain `sessionId` (Step 3).
   2. `GET /api/bootstrap?sessionId=…` → returns: existing session row (or creates it), last 50 messages, latest coverage snapshot, and sources list.
   3. Hydrate UI with that payload.
 
-- [ ] Add `src/app/api/bootstrap/route.ts` (server):
+- [x] Add `src/app/api/bootstrap/route.ts` (server):
   - Upsert `sessions` (id from cookie)
   - Query `messages` (by session_id, order asc, limit 50)
   - Query latest `coverage_snapshots` (order by created_at desc limit 1)
   - Query `sources` (by session_id)
   - Return JSON payload
 
-- [ ] On every assistant/user message:
+- [x] On every assistant/user message:
   - Insert a `messages` row
   - If coverage changed, insert a snapshot (and update UI state)
 
-- [ ] Minimal server helpers:
+- [x] Minimal server helpers:
   - `src/lib/supa-server.ts` (service role, server-only)
   - `src/lib/supa-client.ts` (anon client for browser reads/writes when safe)
 
 ---
 
 ## 8) Deterministic Coverage that updates after ingest/drafts
-- [ ] Keep `normalizeRfp` + `coverageAndNext` tools but adapt to persist the **snapshot** to Supabase after execution.
+- [x] Keep `normalizeRfp` + `coverageAndNext` tools but adapt to persist the **snapshot** to Supabase after execution.
   - In each tool’s execute handler, after computing `coverage`, call `saveCoverageSnapshot(sessionId, coverage)` (server helper).
   - Return the `coverage` in the agent envelope so UI updates immediately.
   - Ensure “Fix next” chip always points to the **first non‑complete slot**. (Already implemented by `selectFixNext`.) fileciteturn0file3
@@ -258,9 +258,9 @@ create table if not exists drafts (
 ---
 
 ## 11) Auth + Grant switcher (simple Supabase Auth)
-- [ ] Add Supabase Auth UI (GitHub or magic link) to the header.
-- [ ] Add a “Grant” dropdown in the header; default grant created on first visit. Switching grant changes the active `grant_id` and resets/creates a **new session id** bound to that grant.
-- [ ] Endpoints to implement:
+- [x] Add Supabase Auth UI (GitHub or magic link) to the header.
+- [x] Add a “Grant” dropdown in the header; default grant created on first visit. Switching grant changes the active `grant_id` and resets/creates a **new session id** bound to that grant.
+- [x] Endpoints to implement:
   - `POST /api/grants` → create {{ name }} and return id
   - `GET /api/grants` → list user’s grants
   - `POST /api/use-grant` → set active grant in a cookie and create a fresh `sessions` row for it if needed
@@ -345,13 +345,13 @@ export interface CoveragePanelProps {
 ---
 
 ## 14) Acceptance criteria (must meet before adding any extras)
-- [ ] **Refresh persistence**: After importing an RFP URL or PDF and getting assistant replies, a **hard refresh** shows the same assistant messages, coverage %, and sources (no duplicates).
+- [x] **Refresh persistence**: After importing an RFP URL or PDF and getting assistant replies, a **hard refresh** shows the same assistant messages, coverage %, and sources (no duplicates).
 - [x] **Source dedupe**: Re-importing the same URL never creates multiple entries in the Sources rail.
 - [x] **Coverage clarity**: After import, chat explicitly says: “Coverage X% → Next focus: _{{slot}}_. Please provide: _{{items}}_.”
 - [x] **Drag‑and‑drop**: Dropping a PDF triggers upload, shows it in Sources, and bumps coverage when relevant.
-- [ ] **Login + switcher**: I can log in, create/select a Grant, and see separate sessions per grant.
+- [x] **Login + switcher**: I can log in, create/select a Grant, and see separate sessions per grant.
 - [x] **Section editor**: Clicking a slot opens a side editor with any existing draft and a clear list of remaining items; “Draft this section” produces/updates text.
-- [ ] **DOCX export**: When all required slots are “complete”, the Export button downloads a doc successfully.
+- [x] **DOCX export**: When all required slots are “complete”, the Export button downloads a doc successfully.
 
 ---
 
