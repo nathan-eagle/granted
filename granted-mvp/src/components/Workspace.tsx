@@ -121,7 +121,7 @@ export default function Workspace({ initialState }: WorkspaceProps) {
             }
           }, 2000);
         } else {
-          setAutoState((prev) => (prev === "running" ? "idle" : prev));
+          setAutoState("idle");
         }
       } catch (error) {
         if (!cancelled) {

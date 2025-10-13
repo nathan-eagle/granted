@@ -19,12 +19,12 @@ function extractChecklist(notes?: string): string[] {
 
 function formatFixNextMessage(coverage: CoverageSnapshot, next: FixNextSuggestion, slot: CoverageSlot): string {
   const percent = Math.round((coverage.score ?? 0) * 100);
-  const checklist = extractChecklist(slot.notes);
+const checklist = extractChecklist(slot.notes);
   if (checklist.length === 0) {
-    return `Coverage ${percent}% → Next focus: ${slot.label}. Please provide the remaining details so I can draft it.`;
+    return `Coverage ${percent}% → Next focus: ${slot.label}. Please provide the remaining detail so I can draft it.`;
   }
-  const list = checklist.map((item) => `• ${item}`).join("\n");
-  return `Coverage ${percent}% → Next focus: ${slot.label}.\nPlease provide:\n${list}`;
+  const [first] = checklist;
+  return `Coverage ${percent}% → Next focus: ${slot.label}. Please share ${first.toLowerCase()}.`;
 }
 
 async function runNormalize(sessionId: string): Promise<{ coverage: CoverageSnapshot; fixNext: FixNextSuggestion | null }> {
