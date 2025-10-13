@@ -113,6 +113,7 @@ async function runAutodraft(sessionId: string): Promise<void> {
 
 export async function processJob(job: DbJobRow): Promise<void> {
   try {
+    console.info("[jobs] processing", { id: job.id, kind: job.kind, sessionId: job.session_id });
     switch (job.kind) {
       case "normalize": {
         const { coverage, fixNext } = await runNormalize(job.session_id);
@@ -137,7 +138,7 @@ export async function processJob(job: DbJobRow): Promise<void> {
       }
     }
   } catch (error) {
-    console.error("Job processing failed", error);
+    console.error("[jobs] failed", { jobId: job.id, sessionId: job.session_id, error });
     const message = error instanceof Error ? error.message : "Unknown error";
     await completeJob(job.id, "error", null, message);
   }
