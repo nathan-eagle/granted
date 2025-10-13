@@ -139,7 +139,7 @@ async function runAutodraft(sessionId: string): Promise<void> {
     vectorStoreId: context.vectorStoreId,
   });
 
-  await upsertDraftMarkdown(sessionId, slot.id, result.markdown, "complete");
+  await upsertDraftMarkdown(sessionId, slot.id, result.markdown);
 
   await normalizeRfp(context);
   const followUp = await coverageAndNext(context);

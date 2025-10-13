@@ -14,7 +14,6 @@ import type {
   CoverageSnapshot,
   FixNextSuggestion,
   ProvenanceSnapshot,
-  SectionStatus,
   SourceAttachment,
   TightenSectionSnapshot,
 } from "./types";
@@ -463,7 +462,7 @@ export async function persistSources(sessionId: string, sources: SourceAttachmen
 export async function loadDraftMarkdown(sessionId: string, sectionId: string): Promise<string | null> {
   const supabase = await getSupabaseAdmin();
   const { data, error } = await supabase
-    .from("section_drafts")
+    .from("drafts")
     .select("markdown")
     .eq("session_id", sessionId)
     .eq("section_id", sectionId)
@@ -479,19 +478,13 @@ export async function loadDraftMarkdown(sessionId: string, sectionId: string): P
   return (data as Pick<DbDraftRow, "markdown"> | null)?.markdown ?? null;
 }
 
-export async function upsertDraftMarkdown(
-  sessionId: string,
-  sectionId: string,
-  markdown: string,
-  status: SectionStatus = "partial",
-): Promise<void> {
+export async function upsertDraftMarkdown(sessionId: string, sectionId: string, markdown: string): Promise<void> {
   const supabase = await getSupabaseAdmin();
-  const { error } = await supabase.from("section_drafts").upsert(
+  const { error } = await supabase.from("drafts").upsert(
     {
       session_id: sessionId,
       section_id: sectionId,
       markdown,
-      status,
       updated_at: new Date().toISOString(),
     },
     { onConflict: "session_id, section_id" },

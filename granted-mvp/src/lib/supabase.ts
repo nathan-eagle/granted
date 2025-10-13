@@ -76,7 +76,6 @@ export type DbDraftRow = {
   id: number;
   session_id: string;
   section_id: string;
-  status: "missing" | "partial" | "complete";
   markdown: string | null;
   updated_at: string;
 };
