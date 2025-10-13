@@ -8,23 +8,66 @@ import { draftSection } from "@/server/tools/draftSection";
 import type { CoverageSlot, CoverageSnapshot, FixNextSuggestion } from "@/lib/types";
 import type { GrantAgentContext } from "@/lib/agent-context";
 
-function extractChecklist(notes?: string): string[] {
-  if (!notes) return [];
-  return notes
-    .split(/[\n•]+/)
-    .flatMap((segment) => segment.split(/[,;]+/))
-    .map((item) => item.replace(/^[•\-\u2013\u2014]+\s*/, "").trim())
-    .filter((item) => item.length > 0);
-}
-
 function formatFixNextMessage(coverage: CoverageSnapshot, next: FixNextSuggestion, slot: CoverageSlot): string {
   const percent = Math.round((coverage.score ?? 0) * 100);
-const checklist = extractChecklist(slot.notes);
-  if (checklist.length === 0) {
-    return `Coverage ${percent}% → Next focus: ${slot.label}. Please provide the remaining detail so I can draft it.`;
+  const question = selectSpecificQuestion(slot);
+  return `Coverage ${percent}% → Next focus: ${slot.label}. ${question}`;
+}
+
+const SLOT_QUESTIONS: Record<string, { missing: string; partial?: string; fallback?: string }> = {
+  "rfp-overview": {
+    missing: "What is the official solicitation title?",
+    partial: "What is the full proposal deadline and submission portal?",
+    fallback: "Share any remaining submission logistics so I can lock this in.",
+  },
+  eligibility: {
+    missing: "Confirm the applicant is a U.S.-owned small business (≤500 employees) with a U.S. citizen or permanent resident PI employed ≥51% at the company.",
+    partial:
+      "Provide SAM registration status, UEI, and any required certifications or compliance checkpoints (e.g., human subjects, export).",
+    fallback: "Share any remaining compliance details (registrations or certifications).",
+  },
+  "project-narrative": {
+    missing: "Summarize the problem, beneficiaries, and solution in 3-4 sentences.",
+    partial: "Add evidence of impact or differentiation that strengthens the story.",
+  },
+  "org-capacity": {
+    missing: "Describe your organization's track record delivering similar work and key infrastructure.",
+    partial: "Add a recent win or partnership that proves capacity.",
+  },
+  "key-personnel": {
+    missing: "Provide bios or resumes for key personnel (names, roles, relevant experience).",
+    partial: "Clarify time commitment and responsibilities for each key person.",
+  },
+  budget: {
+    missing: "Share high-level budget line items and any required cost share or indirect rates.",
+    partial: "Clarify assumptions for major line items or cost share commitments.",
+  },
+  timeline: {
+    missing: "Outline major milestones with target dates for the project.",
+    partial: "Add dependencies or deliverables for the remaining milestones.",
+  },
+  evaluation: {
+    missing: "List the success metrics and how/when you'll collect the data.",
+    partial: "Provide baselines or targets for those metrics.",
+  },
+  appendices: {
+    missing: "List required attachments (letters, forms, certifications) and which ones you already have.",
+    partial: "Upload or describe any outstanding attachments that are still missing.",
+  },
+};
+
+function selectSpecificQuestion(slot: CoverageSlot): string {
+  const entry = SLOT_QUESTIONS[slot.id];
+  if (!entry) {
+    return "Please share the remaining detail so I can finish this section.";
   }
-  const [first] = checklist;
-  return `Coverage ${percent}% → Next focus: ${slot.label}. Please share ${first.toLowerCase()}.`;
+  if (slot.status === "missing") {
+    return entry.missing;
+  }
+  if (slot.status === "partial" && entry.partial) {
+    return entry.partial;
+  }
+  return entry.fallback ?? "Share any remaining detail for this section.";
 }
 
 async function runNormalize(sessionId: string): Promise<{ coverage: CoverageSnapshot; fixNext: FixNextSuggestion | null }> {
