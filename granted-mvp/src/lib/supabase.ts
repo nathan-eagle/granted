@@ -72,11 +72,12 @@ export type DbSourceRow = {
   created_at: string;
 };
 
-export type DbDraftRow = {
+export type DbSectionDraftRow = {
   id: number;
   session_id: string;
   section_id: string;
   markdown: string | null;
+  status: "missing" | "partial" | "complete";
   updated_at: string;
 };
 

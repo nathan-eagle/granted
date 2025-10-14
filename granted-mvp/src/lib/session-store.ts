@@ -3,7 +3,7 @@ import { cookies, headers } from "next/headers";
 import {
   getSupabaseAdmin,
   type DbAppUser,
-  type DbDraftRow,
+  type DbSectionDraftRow,
   type DbMessageRow,
   type DbProject,
   type DbSession,
@@ -462,7 +462,7 @@ export async function persistSources(sessionId: string, sources: SourceAttachmen
 export async function loadDraftMarkdown(sessionId: string, sectionId: string): Promise<string | null> {
   const supabase = await getSupabaseAdmin();
   const { data, error } = await supabase
-    .from("drafts")
+    .from("section_drafts")
     .select("markdown")
     .eq("session_id", sessionId)
     .eq("section_id", sectionId)
@@ -475,16 +475,21 @@ export async function loadDraftMarkdown(sessionId: string, sectionId: string): P
     return null;
   }
 
-  return (data as Pick<DbDraftRow, "markdown"> | null)?.markdown ?? null;
+  return (data as Pick<DbSectionDraftRow, "markdown"> | null)?.markdown ?? null;
 }
 
 export async function upsertDraftMarkdown(sessionId: string, sectionId: string, markdown: string): Promise<void> {
   const supabase = await getSupabaseAdmin();
-  const { error } = await supabase.from("drafts").upsert(
+  const trimmed = markdown.trim();
+  const status: DbSectionDraftRow["status"] =
+    trimmed.length === 0 ? "missing" : trimmed.length > 400 ? "complete" : "partial";
+
+  const { error } = await supabase.from("section_drafts").upsert(
     {
       session_id: sessionId,
       section_id: sectionId,
       markdown,
+      status,
       updated_at: new Date().toISOString(),
     },
     { onConflict: "session_id, section_id" },

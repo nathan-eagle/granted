@@ -47,8 +47,8 @@ async function fetchSessionContext(sessionId: string): Promise<{
       .order("created_at", { ascending: true })
       .limit(200),
     supabase
-      .from("drafts")
-      .select("section_id, markdown")
+      .from("section_drafts")
+      .select("section_id, status, markdown")
       .eq("session_id", sessionId),
   ]);
 
@@ -72,10 +72,14 @@ async function fetchSessionContext(sessionId: string): Promise<{
 
   const draftStatuses = new Map<string, string>(
     (draftsResult.data ?? []).map((row) => {
+      const statusColumn = typeof row.status === "string" ? row.status : null;
+      if (statusColumn === "missing" || statusColumn === "partial" || statusColumn === "complete") {
+        return [row.section_id as string, statusColumn];
+      }
       const text = (row.markdown as string | null) ?? "";
       const trimmed = text.trim();
-      const status = trimmed.length === 0 ? "missing" : trimmed.length > 400 ? "complete" : "partial";
-      return [row.section_id as string, status];
+      const fallback = trimmed.length === 0 ? "missing" : trimmed.length > 400 ? "complete" : "partial";
+      return [row.section_id as string, fallback];
     }),
   );
 
