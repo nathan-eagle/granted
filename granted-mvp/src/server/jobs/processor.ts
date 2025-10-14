@@ -7,6 +7,7 @@ import { coverageAndNext } from "@/server/tools/coverageAndNext";
 import { draftSection } from "@/server/tools/draftSection";
 import type { CoverageSlot, CoverageSnapshot, FixNextSuggestion } from "@/lib/types";
 import type { GrantAgentContext } from "@/lib/agent-context";
+import { inspect } from "util";
 
 function formatFixNextMessage(coverage: CoverageSnapshot, next: FixNextSuggestion, slot: CoverageSlot): string {
   const percent = Math.round((coverage.score ?? 0) * 100);
@@ -182,8 +183,51 @@ export async function processJob(job: DbJobRow): Promise<void> {
       }
     }
   } catch (error) {
-    console.error("[jobs] failed", { jobId: job.id, sessionId: job.session_id, error });
-    const message = error instanceof Error ? error.message : "Unknown error";
-    await completeJob(job.id, "error", null, message);
+    const details = serializeJobError(error);
+    console.error("[jobs] failed", {
+      jobId: job.id,
+      sessionId: job.session_id,
+      kind: job.kind,
+      ...details,
+    });
+    await completeJob(
+      job.id,
+      "error",
+      { error: details },
+      details.message ?? "Unknown error",
+    );
+  }
+}
+
+function serializeJobError(error: unknown): {
+  message?: string;
+  name?: string;
+  stack?: string;
+  cause?: unknown;
+  raw?: string;
+} {
+  if (error instanceof Error) {
+    return {
+      message: error.message,
+      name: error.name,
+      stack: error.stack ?? undefined,
+      cause: "cause" in error ? (error as { cause?: unknown }).cause : undefined,
+    };
+  }
+
+  if (typeof error === "string") {
+    return { message: error };
+  }
+
+  try {
+    return {
+      message: JSON.stringify(error),
+      raw: inspect(error, { depth: 5 }),
+    };
+  } catch {
+    return {
+      message: "Unknown error",
+      raw: inspect(error, { depth: 1 }),
+    };
   }
 }
