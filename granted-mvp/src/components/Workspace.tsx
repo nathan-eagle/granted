@@ -210,7 +210,7 @@ export default function Workspace({ initialState }: WorkspaceProps) {
           autoState={autoState}
           onRequestJob={enqueueJob}
         />
-        <CoveragePanel coverage={coverage} onSelect={handleSlotSelect} />
+        <CoveragePanel coverage={coverage} onSelect={handleSlotSelect} sources={sources} />
       </div>
       {activeSlot ? (
         <SectionEditor sessionId={sessionId} slot={activeSlot} onClose={() => setActiveSlotId(null)} />

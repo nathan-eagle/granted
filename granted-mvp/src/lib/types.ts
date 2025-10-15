@@ -15,11 +15,20 @@ export interface FixNextSuggestion {
   kind: "question" | "tighten" | "export";
 }
 
+export interface CoverageSlotFact {
+  slotId: string;
+  valueText: string;
+  confidence: number;
+  evidence?: RfpFactEvidence | null;
+}
+
 export interface CoverageSlot {
   id: string;
   label: string;
   status: "complete" | "partial" | "missing";
   notes?: string;
+  facts?: CoverageSlotFact[];
+  missingFactSlotIds?: string[];
 }
 
 export type SectionStatus = "missing" | "partial" | "complete";
@@ -62,4 +71,25 @@ export interface TightenSectionSnapshot {
 export interface ProvenanceSnapshot {
   paragraphsWithProvenance: number;
   totalParagraphs: number;
+}
+
+export interface RfpFactEvidence {
+  fileId?: string | null;
+  page?: number | null;
+  snippet?: string | null;
+  href?: string | null;
+  offsets?: Record<string, unknown> | null;
+}
+
+export interface RfpFact {
+  id: string;
+  sessionId: string;
+  slotId: string;
+  valueText: string;
+  valueJson: Record<string, unknown> | null;
+  confidence: number;
+  evidence: RfpFactEvidence | null;
+  hash: string;
+  createdAt: number;
+  updatedAt: number;
 }

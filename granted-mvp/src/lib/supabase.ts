@@ -127,3 +127,29 @@ export type DbJobRow = {
   started_at: string | null;
   finished_at: string | null;
 };
+
+export type DbRfpFactRow = {
+  id: string;
+  session_id: string;
+  slot_id: string;
+  value_text: string;
+  value_json: Record<string, unknown> | null;
+  confidence: number;
+  evidence_file_id: string | null;
+  evidence_page: number | null;
+  evidence_snippet: string | null;
+  evidence_href: string | null;
+  evidence_offsets: Record<string, unknown> | null;
+  hash: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DbRfpFactEventRow = {
+  id: number;
+  fact_id: string;
+  session_id: string;
+  kind: "ingested" | "promoted" | "deprecated";
+  payload: Record<string, unknown> | null;
+  created_at: string;
+};

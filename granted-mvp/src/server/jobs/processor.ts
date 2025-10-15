@@ -2,17 +2,38 @@ import type { DbJobRow } from "@/lib/supabase";
 import { enqueueJob, completeJob } from "@/lib/jobs";
 import { ensureVectorStore } from "@/lib/vector-store";
 import { persistAssistantTurn, upsertDraftMarkdown } from "@/lib/session-store";
-import { normalizeRfp } from "@/server/tools/normalizeRfp";
+import { normalizeRfp, type NormalizeRfpResult } from "@/server/tools/normalizeRfp";
 import { coverageAndNext } from "@/server/tools/coverageAndNext";
 import { draftSection } from "@/server/tools/draftSection";
 import type { CoverageSlot, CoverageSnapshot, FixNextSuggestion } from "@/lib/types";
 import type { GrantAgentContext } from "@/lib/agent-context";
 import { inspect } from "util";
+import { RFP_FACT_SLOTS } from "@/lib/rfp-fact-slots";
+
+const FACT_LABELS = new Map(RFP_FACT_SLOTS.map((definition) => [definition.slotId, definition.summary]));
 
 function formatFixNextMessage(coverage: CoverageSnapshot, next: FixNextSuggestion, slot: CoverageSlot): string {
   const percent = Math.round((coverage.score ?? 0) * 100);
   const question = selectSpecificQuestion(slot);
-  return `Coverage ${percent}% → Next focus: ${slot.label}. ${question}`;
+  const missing = formatMissingFacts(slot.missingFactSlotIds ?? []);
+  const suffix = missing ? `${question} Missing: ${missing}.` : question;
+  return `Coverage ${percent}% → Next focus: ${slot.label}. ${suffix}`;
+}
+
+function formatMissingFacts(ids: string[]): string | null {
+  if (!ids.length) {
+    return null;
+  }
+  const labels = ids
+    .map((id) => FACT_LABELS.get(id) ?? id)
+    .filter((label): label is string => Boolean(label));
+  if (!labels.length) {
+    return null;
+  }
+  if (labels.length === 1) {
+    return labels[0];
+  }
+  return `${labels.slice(0, -1).join(", ")} and ${labels.at(-1)}`;
 }
 
 const SLOT_QUESTIONS: Record<string, { missing: string; partial?: string; fallback?: string }> = {
@@ -71,15 +92,23 @@ function selectSpecificQuestion(slot: CoverageSlot): string {
   return entry.fallback ?? "Share any remaining detail for this section.";
 }
 
-async function runNormalize(sessionId: string): Promise<{ coverage: CoverageSnapshot; fixNext: FixNextSuggestion | null }> {
+async function runNormalize(sessionId: string): Promise<{
+  coverage: CoverageSnapshot;
+  fixNext: FixNextSuggestion | null;
+  promotions: NormalizeRfpResult["promotions"];
+}> {
   const { vectorStoreId } = await ensureVectorStore(sessionId);
   const context: GrantAgentContext = {
     sessionId,
     vectorStoreId,
   };
-  await normalizeRfp(context);
-  const result = await coverageAndNext(context);
-  return { coverage: result.coverage, fixNext: result.fixNext ?? null };
+  const normalizeResult = await normalizeRfp(context);
+  const coverageResult = await coverageAndNext(context);
+  return {
+    coverage: coverageResult.coverage,
+    fixNext: coverageResult.fixNext ?? null,
+    promotions: normalizeResult.promotions,
+  };
 }
 
 async function runAutodraft(sessionId: string): Promise<void> {
@@ -138,6 +167,7 @@ async function runAutodraft(sessionId: string): Promise<void> {
     prompt,
     wordTarget: 450,
     vectorStoreId: context.vectorStoreId,
+    facts: slot.facts ?? null,
   });
 
   await upsertDraftMarkdown(sessionId, slot.id, result.markdown);
@@ -161,7 +191,13 @@ export async function processJob(job: DbJobRow): Promise<void> {
     console.info("[jobs] processing", { id: job.id, kind: job.kind, sessionId: job.session_id });
     switch (job.kind) {
       case "normalize": {
-        const { coverage, fixNext } = await runNormalize(job.session_id);
+        const { coverage, fixNext, promotions } = await runNormalize(job.session_id);
+        console.info("[jobs] normalize.coverage", {
+          jobId: job.id,
+          sessionId: job.session_id,
+          coverageScore: coverage.score,
+          promotions,
+        });
         await persistAssistantTurn(job.session_id, {
           content: `Coverage updated. ${Math.round((coverage.score ?? 0) * 100)}% of sections mapped.`,
           coverage,

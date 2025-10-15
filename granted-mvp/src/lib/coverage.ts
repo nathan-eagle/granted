@@ -9,6 +9,9 @@ export interface CoverageSlotTemplate {
   priority: number;
   sourceHints: string[];
   messageHints: string[];
+  factSlotIds?: string[];
+  factPartialThreshold?: number;
+  factCompleteThreshold?: number;
 }
 
 export const COVERAGE_TEMPLATES: CoverageSlotTemplate[] = [
@@ -19,6 +22,9 @@ export const COVERAGE_TEMPLATES: CoverageSlotTemplate[] = [
     priority: 1,
     sourceHints: ["rfp", "solicitation", "opportunity", "notice", "funding"],
     messageHints: ["deadline", "submission", "opportunity overview", "program description"],
+    factSlotIds: ["rfp.title", "rfp.deadline", "rfp.portal"],
+    factPartialThreshold: 1,
+    factCompleteThreshold: 2,
   },
   {
     id: "eligibility",
@@ -27,6 +33,9 @@ export const COVERAGE_TEMPLATES: CoverageSlotTemplate[] = [
     priority: 2,
     sourceHints: ["eligibility", "compliance", "sam.gov", "registration", "duns"],
     messageHints: ["eligible", "eligible applicants", "sam", "registrations", "compliance"],
+    factSlotIds: ["eligibility.summary"],
+    factPartialThreshold: 1,
+    factCompleteThreshold: 1,
   },
   {
     id: "project-narrative",
@@ -35,6 +44,9 @@ export const COVERAGE_TEMPLATES: CoverageSlotTemplate[] = [
     priority: 3,
     sourceHints: ["narrative", "project description", "statement of need", "impact"],
     messageHints: ["project narrative", "summary", "need", "impact", "beneficiaries"],
+    factSlotIds: ["project.focus", "format.page_limit"],
+    factPartialThreshold: 1,
+    factCompleteThreshold: 1,
   },
   {
     id: "org-capacity",
@@ -43,6 +55,9 @@ export const COVERAGE_TEMPLATES: CoverageSlotTemplate[] = [
     priority: 4,
     sourceHints: ["organization", "capacity", "about us", "track record"],
     messageHints: ["org capacity", "experience", "track record"],
+    factSlotIds: ["org.capacity"],
+    factPartialThreshold: 1,
+    factCompleteThreshold: 1,
   },
   {
     id: "key-personnel",
@@ -51,6 +66,9 @@ export const COVERAGE_TEMPLATES: CoverageSlotTemplate[] = [
     priority: 5,
     sourceHints: ["resume", "cv", "bio", "team", "personnel"],
     messageHints: ["key personnel", "team", "staff", "resume", "bio"],
+    factSlotIds: ["personnel.requirements"],
+    factPartialThreshold: 1,
+    factCompleteThreshold: 1,
   },
   {
     id: "budget",
@@ -59,6 +77,9 @@ export const COVERAGE_TEMPLATES: CoverageSlotTemplate[] = [
     priority: 6,
     sourceHints: ["budget", "financial", "cost share", "match", "narrative budget"],
     messageHints: ["budget", "cost share", "matching", "financial plan"],
+    factSlotIds: ["budget.cap", "budget.match"],
+    factPartialThreshold: 1,
+    factCompleteThreshold: 1,
   },
   {
     id: "timeline",
@@ -67,6 +88,9 @@ export const COVERAGE_TEMPLATES: CoverageSlotTemplate[] = [
     priority: 7,
     sourceHints: ["timeline", "schedule", "milestone", "gantt", "work plan"],
     messageHints: ["timeline", "milestone", "schedule", "workplan"],
+    factSlotIds: ["timeline.requirements"],
+    factPartialThreshold: 1,
+    factCompleteThreshold: 1,
   },
   {
     id: "evaluation",
@@ -75,6 +99,9 @@ export const COVERAGE_TEMPLATES: CoverageSlotTemplate[] = [
     priority: 8,
     sourceHints: ["evaluation", "metrics", "logic model", "measurement"],
     messageHints: ["evaluation", "metrics", "measure", "outcomes"],
+    factSlotIds: ["evaluation.criteria"],
+    factPartialThreshold: 1,
+    factCompleteThreshold: 1,
   },
   {
     id: "appendices",
@@ -83,6 +110,9 @@ export const COVERAGE_TEMPLATES: CoverageSlotTemplate[] = [
     priority: 9,
     sourceHints: ["appendix", "attachment", "form", "letter", "support"],
     messageHints: ["attachments", "appendix", "support letter"],
+    factSlotIds: ["appendices.requirements"],
+    factPartialThreshold: 1,
+    factCompleteThreshold: 1,
   },
 ];
 

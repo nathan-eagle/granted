@@ -4,6 +4,7 @@ import { COVERAGE_TEMPLATES, createCoverageSnapshot } from "@/lib/coverage";
 import type { GrantAgentContext } from "@/lib/agent-context";
 import type { CoverageSnapshot, FixNextSuggestion } from "@/lib/types";
 import { saveCoverageSnapshot } from "@/lib/session-store";
+import { RFP_FACT_SLOTS } from "@/lib/rfp-fact-slots";
 
 export interface CoverageAndNextResult {
   coverage: CoverageSnapshot;
@@ -11,6 +12,7 @@ export interface CoverageAndNextResult {
 }
 
 const PRIORITY = new Map(COVERAGE_TEMPLATES.map((template) => [template.id, template.priority]));
+const FACT_LABELS = new Map(RFP_FACT_SLOTS.map((definition) => [definition.slotId, definition.summary]));
 
 const FIX_NEXT_CONFIG: Record<
   string,
@@ -113,22 +115,40 @@ const FIX_NEXT_CONFIG: Record<
 
 function buildQuestion(slot: CoverageSnapshot["slots"][number]): FixNextSuggestion {
   const config = FIX_NEXT_CONFIG[slot.id];
+  const missingFactLabels = (slot.missingFactSlotIds ?? [])
+    .map((factId) => FACT_LABELS.get(factId) ?? factId)
+    .filter(Boolean);
+
   if (!config) {
     return {
       id: slot.id,
       label: `Provide details for ${slot.label}`,
-      description: slot.notes,
+      description: buildDescription(slot.notes, missingFactLabels),
       kind: "question",
     };
   }
 
   const variant = slot.status === "partial" && config.partial ? config.partial : config.missing;
+  const description = buildDescription(variant.description, missingFactLabels);
   return {
     id: slot.id,
     label: variant.label,
-    description: variant.description,
+    description,
     kind: "question",
   };
+}
+
+function buildDescription(base: string | undefined, missingFactLabels: string[]): string | undefined {
+  if (!missingFactLabels.length) {
+    return base;
+  }
+  const list = missingFactLabels.length === 1
+    ? missingFactLabels[0]
+    : `${missingFactLabels.slice(0, -1).join(", ")} and ${missingFactLabels.at(-1)}`;
+  if (!base) {
+    return `Missing: ${list}.`;
+  }
+  return `${base} Missing: ${list}.`;
 }
 
 export function selectFixNext(coverage: CoverageSnapshot): FixNextSuggestion {

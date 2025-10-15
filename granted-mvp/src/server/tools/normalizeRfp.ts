@@ -3,8 +3,11 @@ import { z } from "zod";
 import { createCoverageSnapshot, COVERAGE_TEMPLATES, promoteStatus } from "@/lib/coverage";
 import type { GrantAgentContext } from "@/lib/agent-context";
 import { getSupabaseAdmin } from "@/lib/supabase";
-import type { CoverageSnapshot, CoverageSlot, SourceAttachment } from "@/lib/types";
+import type { CoverageSnapshot, CoverageSlot, RfpFact, SourceAttachment } from "@/lib/types";
 import { saveCoverageSnapshot } from "@/lib/session-store";
+import { isFactsIngestionEnabled } from "@/lib/feature-flags";
+import { fetchFactsForSession, groupFactsBySlot, ingestFactsForSession } from "@/server/ingestion/rfpFacts";
+import { evaluateFactStatus } from "@/server/tools/factStatus";
 
 function toSourceAttachment(row: {
   id: string;
@@ -124,12 +127,69 @@ function summarizeCoverage(slots: CoverageSlot[]): string {
 
 export interface NormalizeRfpResult {
   coverage: CoverageSnapshot;
+  promotions: Array<{
+    slotId: string;
+    from: CoverageSlot["status"] | null;
+    to: CoverageSlot["status"];
+    viaFacts: boolean;
+  }>;
 }
 
 export async function normalizeRfp(context: GrantAgentContext): Promise<NormalizeRfpResult> {
   const { sources, userMessages, assistantMessages, draftStatuses } = await fetchSessionContext(context.sessionId);
   const previousSlots = new Map(context.coverage?.slots?.map((slot) => [slot.id, slot]) ?? []);
   context.sources = sources;
+
+  let facts: RfpFact[] = [];
+  const existingHashes = new Set<string>();
+  try {
+    facts = await fetchFactsForSession(context.sessionId);
+    for (const fact of facts) {
+      existingHashes.add(fact.hash);
+    }
+  } catch (error) {
+    console.warn("[normalize.ingest] failed to load existing facts", {
+      sessionId: context.sessionId,
+      error,
+    });
+  }
+
+  const factIngestionEnabled = isFactsIngestionEnabled();
+  const fileSources = sources.filter((source) => source.kind === "file");
+  if (factIngestionEnabled && fileSources.length > 0 && context.vectorStoreId) {
+    try {
+      const ingestResult = await ingestFactsForSession({
+        sessionId: context.sessionId,
+        vectorStoreId: context.vectorStoreId,
+        sources: fileSources,
+        existingHashes,
+      });
+      if (ingestResult.inserted.length > 0) {
+        for (const fact of ingestResult.inserted) {
+          facts.push(fact);
+          existingHashes.add(fact.hash);
+        }
+        console.info("[metric] normalize.ingest.inserted", {
+          sessionId: context.sessionId,
+          count: ingestResult.inserted.length,
+        });
+      }
+      if (ingestResult.skipped > 0) {
+        console.info("[metric] normalize.ingest.skipped", {
+          sessionId: context.sessionId,
+          count: ingestResult.skipped,
+        });
+      }
+    } catch (error) {
+      console.warn("[normalize.ingest] failed to ingest facts", {
+        sessionId: context.sessionId,
+        error,
+      });
+    }
+  }
+
+  const factsBySlot = groupFactsBySlot(facts);
+  const promotions: NormalizeRfpResult["promotions"] = [];
 
   const slots: CoverageSlot[] = COVERAGE_TEMPLATES.map((template) => {
     const sourceMatches = sources.some(
@@ -149,6 +209,11 @@ export async function normalizeRfp(context: GrantAgentContext): Promise<Normaliz
       assistantMatches,
     );
 
+    const factStatus = evaluateFactStatus(template.factSlotIds ?? [], template.factPartialThreshold, template.factCompleteThreshold, factsBySlot);
+    if (factStatus.status !== "missing") {
+      status = promoteStatus(status, factStatus.status);
+    }
+
     const draftStatus = draftStatuses.get(template.id);
     if (draftStatus === "complete") {
       status = "complete";
@@ -156,11 +221,26 @@ export async function normalizeRfp(context: GrantAgentContext): Promise<Normaliz
       status = "partial";
     }
 
+    const slotFacts = factStatus.facts.length > 0 ? factStatus.facts : undefined;
+    const missingFactSlotIds = factStatus.missingSlots.length > 0 ? factStatus.missingSlots : undefined;
+
+    const previousStatus = previousSlots.get(template.id)?.status ?? null;
+    if (previousStatus !== status) {
+      promotions.push({
+        slotId: template.id,
+        from: previousStatus,
+        to: status,
+        viaFacts: factStatus.status !== "missing",
+      });
+    }
+
     return {
       id: template.id,
       label: template.label,
       status,
       notes: template.notes,
+      facts: slotFacts,
+      missingFactSlotIds,
     };
   }).sort((a, b) => {
     const priority = new Map(COVERAGE_TEMPLATES.map((item, index) => [item.id, item.priority ?? index]));
@@ -171,8 +251,12 @@ export async function normalizeRfp(context: GrantAgentContext): Promise<Normaliz
 
   context.coverage = coverage;
   await saveCoverageSnapshot(context.sessionId, coverage);
+  console.info("[metric] coverage.percent", {
+    sessionId: context.sessionId,
+    value: coverage.score,
+  });
 
-  return { coverage };
+  return { coverage, promotions };
 }
 
 export const normalizeRfpTool = tool({
