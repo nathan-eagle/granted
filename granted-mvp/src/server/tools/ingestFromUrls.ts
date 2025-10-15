@@ -59,6 +59,15 @@ function inferExtension(filename: string, contentType: string): string {
   return "txt";
 }
 
+function inferKindFromName(filename: string, contentType: string): string {
+  const lower = filename.toLowerCase();
+  if (contentType.includes("pdf") || lower.endsWith(".pdf")) return "rfp";
+  if (lower.includes("solicitation") || lower.includes("funding") || lower.includes("grants")) {
+    return "rfp";
+  }
+  return "reference";
+}
+
 export async function ingestFromUrls(sessionId: string, urls: string[]): Promise<{
   fileIds: string[];
   sources: SourceAttachment[];
@@ -91,6 +100,12 @@ export async function ingestFromUrls(sessionId: string, urls: string[]): Promise
       }
       const file = await toFile(fileData, filename, { type: contentType });
 
+      const metadata = {
+        kind: inferKindFromName(filename, contentType.toLowerCase()),
+        source: "url",
+        url,
+      };
+
       const uploaded = await client.files.create({
         file,
         purpose: "assistants",
@@ -103,6 +118,7 @@ export async function ingestFromUrls(sessionId: string, urls: string[]): Promise
           label: filename,
           kind: "url" as const,
           href: url,
+          meta: metadata,
         },
       };
     }),

@@ -22,6 +22,21 @@ export interface CoverageSlotFact {
   evidence?: RfpFactEvidence | null;
 }
 
+export interface CoverageQuestion {
+  id: string;
+  sectionId: string;
+  prompt: string;
+  factIds: string[];
+  answerKind: AnswerKind;
+}
+
+export interface DefinitionOfDoneStatus {
+  id: string;
+  label: string;
+  factIds: string[];
+  satisfied: boolean;
+}
+
 export interface CoverageSlot {
   id: string;
   label: string;
@@ -29,6 +44,8 @@ export interface CoverageSlot {
   notes?: string;
   facts?: CoverageSlotFact[];
   missingFactSlotIds?: string[];
+  items?: DefinitionOfDoneStatus[];
+  questions?: CoverageQuestion[];
 }
 
 export type SectionStatus = "missing" | "partial" | "complete";
@@ -89,7 +106,10 @@ export interface RfpFact {
   valueJson: Record<string, unknown> | null;
   confidence: number;
   evidence: RfpFactEvidence | null;
+  annotations?: Record<string, unknown> | null;
+  source?: string;
   hash: string;
   createdAt: number;
   updatedAt: number;
 }
+import type { AnswerKind } from "./dod";

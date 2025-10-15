@@ -14,6 +14,7 @@ const EMPTY_COVERAGE: CoverageSnapshot = {
 export interface CoveragePanelProps {
   coverage?: CoverageSnapshot | null;
   onSelect?: (slotId: string) => void;
+  selectedId?: string | null;
   sources?: SourceAttachment[];
 }
 
@@ -79,7 +80,7 @@ function formatMissingList(labels: string[]): string {
   return `${labels.slice(0, -1).join(", ")} and ${labels.at(-1)}`;
 }
 
-export default function CoveragePanel({ coverage, onSelect, sources = [] }: CoveragePanelProps) {
+export default function CoveragePanel({ coverage, onSelect, selectedId, sources = [] }: CoveragePanelProps) {
   const snapshot = useMemo(() => coverage ?? EMPTY_COVERAGE, [coverage]);
   const formattedScore = Math.round(snapshot.score * 100);
   const sourceLabels = useMemo(() => new Map(sources.map((source) => [source.id, source.label])), [sources]);
@@ -110,7 +111,7 @@ export default function CoveragePanel({ coverage, onSelect, sources = [] }: Cove
             {snapshot.slots.map((slot) => (
               <li
                 key={slot.id}
-                className={`coverage-slot coverage-slot--${slot.status}`}
+                className={`coverage-slot coverage-slot--${slot.status}${selectedId === slot.id ? " coverage-slot--selected" : ""}`}
                 onClick={() => onSelect?.(slot.id)}
                 role={onSelect ? "button" : undefined}
                 tabIndex={onSelect ? 0 : undefined}
@@ -128,6 +129,21 @@ export default function CoveragePanel({ coverage, onSelect, sources = [] }: Cove
                 <div>
                   <p className="coverage-slot__label">{slot.label}</p>
                   {slot.notes ? <p className="coverage-slot__notes">{slot.notes}</p> : null}
+                  {slot.items && slot.items.length > 0 ? (
+                    <ul className="coverage-dod-list">
+                      {slot.items.map((item) => (
+                        <li
+                          key={item.id}
+                          className={`coverage-dod-item coverage-dod-item--${item.satisfied ? "done" : "open"}`}
+                        >
+                          <span className="coverage-dod-indicator" aria-hidden="true">
+                            {item.satisfied ? "✓" : "○"}
+                          </span>
+                          <span>{item.label}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
                   {slot.facts && slot.facts.length > 0 ? (
                     <ul className="coverage-fact-list">
                       {slot.facts.map((fact, index) => {
@@ -141,6 +157,9 @@ export default function CoveragePanel({ coverage, onSelect, sources = [] }: Cove
                         );
                       })}
                     </ul>
+                  ) : null}
+                  {slot.questions && slot.questions.length > 0 ? (
+                    <p className="coverage-slot__questions">{slot.questions.length} open question{slot.questions.length > 1 ? "s" : ""}</p>
                   ) : null}
                   {slot.missingFactSlotIds && slot.missingFactSlotIds.length > 0 ? (
                     <p className="coverage-slot__missing">

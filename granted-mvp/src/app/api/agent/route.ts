@@ -159,7 +159,11 @@ export async function POST(req: Request): Promise<Response> {
 
           controller.close();
         } catch (error) {
-          console.error(error);
+          if (error instanceof Error) {
+            console.error("Agent stream failed", { message: error.message, stack: error.stack });
+          } else {
+            console.error("Agent stream failed", error);
+          }
           write({ type: "message", delta: "", done: true });
           controller.close();
         }
@@ -197,13 +201,21 @@ export async function POST(req: Request): Promise<Response> {
         tighten: latestTighten ?? null,
         provenance: latestProvenance ?? null,
       }).catch((error) => {
-        console.error("Failed to persist assistant turn", error);
+        if (error instanceof Error) {
+          console.error("Failed to persist assistant turn", { message: error.message, stack: error.stack });
+        } else {
+          console.error("Failed to persist assistant turn", error);
+        }
       });
     });
 
     return response;
   } catch (error) {
-    console.error(error);
+    if (error instanceof Error) {
+      console.error("Failed to start agent", { message: error.message, stack: error.stack });
+    } else {
+      console.error("Failed to start agent", error);
+    }
     return new Response(JSON.stringify({ error: "Failed to start agent" }), {
       status: 500,
       headers: { "Content-Type": "application/json" },

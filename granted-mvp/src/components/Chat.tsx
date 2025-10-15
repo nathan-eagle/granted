@@ -7,6 +7,7 @@ import UploadDropzone from "./UploadDropzone";
 import type {
   AgentRunEnvelope,
   ChatMessage,
+  CoverageQuestion,
   FixNextSuggestion,
   SourceAttachment,
 } from "@/lib/types";
@@ -22,6 +23,9 @@ interface ChatProps {
   canExport?: boolean;
   autoState?: "idle" | "queued" | "running";
   onRequestJob?: (kind: JobKind, payload?: Record<string, unknown>) => void;
+  activeQuestions?: CoverageQuestion[];
+  onAnswerQuestion?: (question: CoverageQuestion, valueText: string) => Promise<void>;
+  activeSectionLabel?: string | null;
 }
 
 const INITIAL_ASSISTANT: ChatMessage = {
@@ -83,6 +87,9 @@ export default function Chat({
   canExport = false,
   autoState = "idle",
   onRequestJob,
+  activeQuestions = [],
+  onAnswerQuestion,
+  activeSectionLabel,
 }: ChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>(
     initialMessages.length > 0 ? initialMessages : [INITIAL_ASSISTANT],
@@ -93,6 +100,8 @@ export default function Chat({
   const [isExporting, setIsExporting] = useState(false);
   const [activeFixNext, setActiveFixNext] = useState<string | null>(null);
   const [activity, setActivity] = useState<string | null>(null);
+  const [questionDrafts, setQuestionDrafts] = useState<Record<string, string>>({});
+  const [questionPending, setQuestionPending] = useState<Record<string, boolean>>({});
   const chatScrollRef = useRef<HTMLDivElement | null>(null);
   const pendingAssistantId = useRef<string | null>(null);
 
@@ -103,6 +112,16 @@ export default function Chat({
       setMessages([INITIAL_ASSISTANT]);
     }
   }, [initialMessages]);
+
+  useEffect(() => {
+    setQuestionDrafts((prev) => {
+      const next: Record<string, string> = {};
+      for (const question of activeQuestions) {
+        next[question.id] = prev[question.id] ?? "";
+      }
+      return next;
+    });
+  }, [activeQuestions]);
 
   const fixNextSuggestions = useMemo(() => (fixNext ? [fixNext] : []), [fixNext]);
 
@@ -158,6 +177,26 @@ export default function Chat({
     );
     pendingAssistantId.current = null;
   }, []);
+
+  const handleAnswerSubmit = useCallback(
+    async (question: CoverageQuestion) => {
+      if (!onAnswerQuestion) return;
+      const draft = (questionDrafts[question.id] ?? "").trim();
+      if (!draft) return;
+      setQuestionPending((prev) => ({ ...prev, [question.id]: true }));
+      try {
+        await onAnswerQuestion(question, draft);
+        setQuestionDrafts((prev) => ({ ...prev, [question.id]: "" }));
+      } catch (error) {
+        console.error("Failed to submit answer", error);
+        setActivity("Unable to record that answer. Try again.");
+        window.setTimeout(() => setActivity(null), 3000);
+      } finally {
+        setQuestionPending((prev) => ({ ...prev, [question.id]: false }));
+      }
+    },
+    [onAnswerQuestion, questionDrafts],
+  );
 
   const streamAgentRun = useCallback(
     async (res: Response) => {
@@ -463,6 +502,55 @@ export default function Chat({
 
   return (
     <section className="panel-surface chat-panel">
+      <section className="active-questions">
+        <header className="active-questions__header">
+          <h3>Active questions</h3>
+          {activeSectionLabel ? <span className="active-questions__section">{activeSectionLabel}</span> : null}
+        </header>
+        {activeQuestions.length === 0 ? (
+          <p className="active-questions__empty">No outstanding questions—move on to drafting!</p>
+        ) : (
+          <ul className="active-questions__list">
+            {activeQuestions.map((question) => (
+              <li key={question.id} className="active-question">
+                <p className="active-question__prompt">{question.prompt}</p>
+                <form
+                  className="active-question__form"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void handleAnswerSubmit(question);
+                  }}
+                >
+                  {question.answerKind === "text" ? (
+                    <textarea
+                      value={questionDrafts[question.id] ?? ""}
+                      onChange={(event) =>
+                        setQuestionDrafts((prev) => ({ ...prev, [question.id]: event.target.value }))
+                      }
+                      rows={3}
+                      placeholder="Add the answer here"
+                      required
+                    />
+                  ) : (
+                    <input
+                      type={question.answerKind === "date" ? "date" : "url"}
+                      value={questionDrafts[question.id] ?? ""}
+                      onChange={(event) =>
+                        setQuestionDrafts((prev) => ({ ...prev, [question.id]: event.target.value }))
+                      }
+                      required
+                    />
+                  )}
+                  <button type="submit" disabled={questionPending[question.id] === true}>
+                    {questionPending[question.id] ? "Saving…" : "Submit"}
+                  </button>
+                </form>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
       <div className="chat-stream scroll-area" ref={chatScrollRef}>
         <div className="chat-messages">
           {messages.map((message) => (

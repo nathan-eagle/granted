@@ -6,6 +6,15 @@ import { enqueueJob } from "@/lib/jobs";
 
 export const runtime = "nodejs";
 
+function inferFileKind(filename: string, mimeType: string | null): string {
+  const lower = filename.toLowerCase();
+  if (mimeType?.includes("pdf") || lower.endsWith(".pdf")) return "rfp";
+  if (lower.includes("solicitation") || lower.includes("funding") || lower.includes("notice")) {
+    return "rfp";
+  }
+  return "reference";
+}
+
 export async function POST(req: Request): Promise<Response> {
   const formData = await req.formData();
   const sessionId = formData.get("sessionId");
@@ -28,6 +37,11 @@ export async function POST(req: Request): Promise<Response> {
     const client = getOpenAI();
     const uploads = await Promise.all(
       files.map(async (file) => {
+        const metadata = {
+          kind: inferFileKind(file.name, file.type ?? null),
+          source: "upload",
+          filename: file.name,
+        };
         const created = await client.files.create({
           file,
           purpose: "assistants",
@@ -39,6 +53,7 @@ export async function POST(req: Request): Promise<Response> {
             id: created.id,
             label: file.name,
             kind: "file" as const,
+            meta: metadata,
           } satisfies SourceAttachment,
         };
       }),
@@ -60,7 +75,11 @@ export async function POST(req: Request): Promise<Response> {
       },
     );
   } catch (error) {
-    console.error(error);
+    if (error instanceof Error) {
+      console.error("Upload failed", { message: error.message, stack: error.stack });
+    } else {
+      console.error("Upload failed", error);
+    }
     return new Response(JSON.stringify({ error: "Upload failed" }), {
       status: 500,
       headers: { "Content-Type": "application/json" },

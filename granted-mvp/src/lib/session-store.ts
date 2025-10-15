@@ -60,6 +60,7 @@ function convertSourceRow(row: DbSourceRow): SourceAttachment {
     label: row.label,
     kind: row.kind,
     href: row.href ?? undefined,
+    meta: (row.metadata as Record<string, string | number> | null) ?? undefined,
   };
 }
 
@@ -203,11 +204,16 @@ async function buildSessionState(
     .maybeSingle();
   const coverage = coverageRow
     ? ({
-        score: coverageRow.score ?? 0,
+        score: coverageRow.score ?? (coverageRow.payload as CoverageSnapshot | null)?.score ?? 0,
         summary:
           coverageRow.summary ??
-          `Coverage ${(coverageRow.score ?? 0) * 100}%`,
-        slots: (coverageRow.slots as CoverageSnapshot["slots"]) ?? [],
+          (typeof coverageRow.payload === "object" && coverageRow.payload !== null
+            ? (coverageRow.payload as CoverageSnapshot).summary
+            : `Coverage ${(coverageRow.score ?? 0) * 100}%`),
+        slots:
+          (coverageRow.slots && Array.isArray(coverageRow.slots)
+            ? (coverageRow.slots as CoverageSnapshot["slots"])
+            : (coverageRow.payload as CoverageSnapshot | null)?.slots ?? []),
         updatedAt: new Date(coverageRow.created_at).getTime(),
       } satisfies CoverageSnapshot)
     : null;
@@ -450,6 +456,7 @@ export async function persistSources(sessionId: string, sources: SourceAttachmen
     href: source.href ?? null,
     openai_file_id: source.kind === "file" ? source.id : null,
     content_hash: source.meta?.hash ?? null,
+    metadata: source.meta ?? null,
   }));
   const { error } = await supabase.from("sources").upsert(rows, {
     onConflict: "id",
@@ -459,23 +466,45 @@ export async function persistSources(sessionId: string, sources: SourceAttachmen
   }
 }
 
-export async function loadDraftMarkdown(sessionId: string, sectionId: string): Promise<string | null> {
+export async function loadDraftWithHistory(sessionId: string, sectionId: string): Promise<{
+  current: string | null;
+  previous: string | null;
+  updatedAt: string | null;
+}> {
   const supabase = await getSupabaseAdmin();
-  const { data, error } = await supabase
-    .from("section_drafts")
-    .select("markdown")
-    .eq("session_id", sessionId)
-    .eq("section_id", sectionId)
-    .maybeSingle();
+  const [{ data: draftRow, error: draftError }, { data: previousRows, error: historyError }] = await Promise.all([
+    supabase
+      .from("section_drafts")
+      .select("markdown, updated_at")
+      .eq("session_id", sessionId)
+      .eq("section_id", sectionId)
+      .maybeSingle(),
+    supabase
+      .from("section_draft_versions")
+      .select("markdown")
+      .eq("session_id", sessionId)
+      .eq("section_id", sectionId)
+      .order("created_at", { ascending: false })
+      .limit(1),
+  ]);
 
-  if (error) {
-    if (error.code !== "PGRST116") {
-      console.error("Failed to load draft", error);
-    }
-    return null;
+  if (draftError && draftError.code !== "PGRST116") {
+    console.error("Failed to load draft", draftError);
+  }
+  if (historyError && historyError.code !== "PGRST116") {
+    console.error("Failed to load draft history", historyError);
   }
 
-  return (data as Pick<DbSectionDraftRow, "markdown"> | null)?.markdown ?? null;
+  const current = (draftRow as { markdown?: string } | null)?.markdown ?? null;
+  const updatedAt = (draftRow as { updated_at?: string } | null)?.updated_at ?? null;
+  const previous = previousRows && previousRows.length > 0 ? (previousRows[0] as { markdown: string }).markdown : null;
+
+  return { current, previous, updatedAt };
+}
+
+export async function loadDraftMarkdown(sessionId: string, sectionId: string): Promise<string | null> {
+  const result = await loadDraftWithHistory(sessionId, sectionId);
+  return result.current;
 }
 
 export async function upsertDraftMarkdown(sessionId: string, sectionId: string, markdown: string): Promise<void> {
@@ -483,6 +512,26 @@ export async function upsertDraftMarkdown(sessionId: string, sectionId: string, 
   const trimmed = markdown.trim();
   const status: DbSectionDraftRow["status"] =
     trimmed.length === 0 ? "missing" : trimmed.length > 400 ? "complete" : "partial";
+
+  const { data: existing } = await supabase
+    .from("section_drafts")
+    .select("markdown")
+    .eq("session_id", sessionId)
+    .eq("section_id", sectionId)
+    .maybeSingle();
+
+  const previousMarkdown = (existing as { markdown?: string } | null)?.markdown ?? null;
+
+  if (previousMarkdown && previousMarkdown.trim().length > 0) {
+    const { error: historyError } = await supabase.from("section_draft_versions").insert({
+      session_id: sessionId,
+      section_id: sectionId,
+      markdown: previousMarkdown,
+    });
+    if (historyError) {
+      console.error("Failed to record draft history", historyError);
+    }
+  }
 
   const { error } = await supabase.from("section_drafts").upsert(
     {
@@ -506,6 +555,7 @@ export async function saveCoverageSnapshot(sessionId: string, snapshot: Coverage
     session_id: sessionId,
     score: snapshot.score,
     summary: snapshot.summary,
+    payload: snapshot,
     slots: snapshot.slots,
   });
   if (error) {

@@ -4,6 +4,7 @@ import type { GrantAgentContext } from "@/lib/agent-context";
 import type { CoverageSlotFact, ProvenanceSnapshot } from "@/lib/types";
 import { getOpenAI } from "@/lib/openai";
 import { RFP_FACT_SLOTS } from "@/lib/rfp-fact-slots";
+import { SECTION_DEFINITIONS } from "@/lib/dod";
 
 export interface DraftSectionInput {
   sectionId: string;
@@ -60,6 +61,13 @@ export async function draftSection({
 }: DraftSectionInput): Promise<DraftSectionResult> {
   const client = getOpenAI();
   const factSummary = summarizeFacts(facts);
+  const definition = SECTION_DEFINITIONS.find((section) => section.id === sectionId);
+  const dodSummary = definition
+    ? [
+        "Definition of Done for this section:",
+        ...definition.items.map((item, index) => `${index + 1}. ${item.label}`),
+      ].join("\n")
+    : null;
   const instructions = [
     `You are drafting the "${sectionId}" section of a grant proposal.`,
     "Write in markdown with headings, concise paragraphs, and persuasive but factual language.",
@@ -100,6 +108,14 @@ export async function draftSection({
                   {
                     type: "input_text" as const,
                     text: factSummary,
+                  },
+                ]
+              : []),
+            ...(dodSummary
+              ? [
+                  {
+                    type: "input_text" as const,
+                    text: dodSummary,
                   },
                 ]
               : []),

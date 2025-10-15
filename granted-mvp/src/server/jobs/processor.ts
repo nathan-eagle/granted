@@ -9,6 +9,7 @@ import type { CoverageSlot, CoverageSnapshot, FixNextSuggestion } from "@/lib/ty
 import type { GrantAgentContext } from "@/lib/agent-context";
 import { inspect } from "util";
 import { RFP_FACT_SLOTS } from "@/lib/rfp-fact-slots";
+import { logJob } from "@/lib/job-logs";
 
 const FACT_LABELS = new Map(RFP_FACT_SLOTS.map((definition) => [definition.slotId, definition.summary]));
 
@@ -187,14 +188,20 @@ async function runAutodraft(sessionId: string): Promise<void> {
 }
 
 export async function processJob(job: DbJobRow): Promise<void> {
+  const startedAt = Date.now();
   try {
     console.info("[jobs] processing", { id: job.id, kind: job.kind, sessionId: job.session_id });
+    await logJob(job.id, "info", `processing ${job.kind}`, { sessionId: job.session_id });
     switch (job.kind) {
       case "normalize": {
         const { coverage, fixNext, promotions } = await runNormalize(job.session_id);
         console.info("[jobs] normalize.coverage", {
           jobId: job.id,
           sessionId: job.session_id,
+          coverageScore: coverage.score,
+          promotions,
+        });
+        await logJob(job.id, "info", "normalize coverage updated", {
           coverageScore: coverage.score,
           promotions,
         });
@@ -207,15 +214,18 @@ export async function processJob(job: DbJobRow): Promise<void> {
           await enqueueJob(job.session_id, "autodraft");
         }
         await completeJob(job.id, "done", { coverage });
+        await logJob(job.id, "info", "normalize job completed", { coverageScore: coverage.score });
         break;
       }
       case "autodraft": {
         await runAutodraft(job.session_id);
         await completeJob(job.id, "done");
+        await logJob(job.id, "info", "autodraft job completed", { sessionId: job.session_id });
         break;
       }
       default: {
         await completeJob(job.id, "canceled", null, `Unsupported job kind: ${job.kind}`);
+        await logJob(job.id, "warn", "unsupported job kind", { kind: job.kind });
       }
     }
   } catch (error) {
@@ -226,12 +236,20 @@ export async function processJob(job: DbJobRow): Promise<void> {
       kind: job.kind,
       ...details,
     });
+    await logJob(job.id, "error", "job failed", {
+      kind: job.kind,
+      ...details,
+    });
     await completeJob(
       job.id,
       "error",
       { error: details },
       details.message ?? "Unknown error",
     );
+  } finally {
+    const durationMs = Date.now() - startedAt;
+    console.info("[jobs] completed", { id: job.id, kind: job.kind, durationMs });
+    await logJob(job.id, "info", "job finished", { durationMs });
   }
 }
 

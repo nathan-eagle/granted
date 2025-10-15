@@ -33,6 +33,11 @@ export default function SourceRail({ sources }: SourceRailProps) {
               <li key={attachment.id} className={`source-item source-item--${attachment.kind}`}>
                 <div>
                   <p className="source-item__label">{attachment.label}</p>
+                  {attachment.meta?.kind ? (
+                    <span className={`source-item__badge source-item__badge--${attachment.meta.kind}`}>
+                      {String(attachment.meta.kind).toUpperCase()}
+                    </span>
+                  ) : null}
                   {attachment.href ? (
                     <a href={attachment.href} target="_blank" rel="noreferrer" className="source-item__href">
                       View source

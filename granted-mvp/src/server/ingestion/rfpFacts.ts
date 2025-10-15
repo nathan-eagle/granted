@@ -173,6 +173,8 @@ function convertRow(row: DbRfpFactRow): RfpFact {
         }
       : null,
     hash: row.hash,
+    source: (row as { source?: string }).source ?? "ingested",
+    annotations: (row as { annotations?: Record<string, unknown> | null }).annotations ?? null,
     createdAt: new Date(row.created_at).getTime(),
     updatedAt: new Date(row.updated_at).getTime(),
   };
@@ -191,6 +193,8 @@ interface NormalizedFactInsert {
     offsets?: Record<string, unknown> | null;
   } | null;
   hash: string;
+  annotations?: Record<string, unknown> | null;
+  source?: string;
 }
 
 export async function fetchFactsForSession(sessionId: string): Promise<RfpFact[]> {
@@ -278,6 +282,8 @@ function normalizeRawFact(raw: z.infer<typeof FactListSchema>["facts"][number]):
           offsets: evidence?.offsets ?? null,
         }
       : null,
+    annotations: evidenceProvided ? (evidence as Record<string, unknown> | null) : null,
+    source: "ingested",
     hash,
   };
 }
@@ -302,6 +308,8 @@ async function insertNewFacts(sessionId: string, inserts: NormalizedFactInsert[]
         evidence_href: fact.evidence?.href ?? null,
         evidence_offsets: fact.evidence?.offsets ?? null,
         hash: fact.hash,
+        annotations: fact.annotations ?? null,
+        source: fact.source ?? "ingested",
       })),
     )
     .select();
@@ -338,75 +346,98 @@ export async function ingestFactsForSession(options: IngestFactsOptions): Promis
   const { sessionId, vectorStoreId, sources, existingHashes } = options;
   const client = getOpenAI();
 
-  const requestPayload = {
-    model: INGEST_MODEL,
-    input: [
-      {
-        role: "system",
-        content: [
-          {
-            type: "input_text",
-            text: SYSTEM_PROMPT,
-          },
-        ],
+  const rfpFileIds = sources
+    .filter((source) => (source.meta?.kind ?? (source.kind === "file" ? "reference" : "reference")) === "rfp")
+    .map((source) => source.id);
+
+  const executeExtraction = async (fileIds: string[] | null) => {
+    const requestPayload: Record<string, unknown> = {
+      model: INGEST_MODEL,
+      input: [
+        {
+          role: "system",
+          content: [
+            {
+              type: "input_text",
+              text: SYSTEM_PROMPT,
+            },
+          ],
+        },
+        {
+          role: "user",
+          content: [
+            {
+              type: "input_text",
+              text: buildUserPrompt(sources),
+            },
+          ],
+        },
+      ],
+      tools: [
+        {
+          type: "file_search",
+          vector_store_ids: [vectorStoreId],
+          file_ids: fileIds ?? undefined,
+        },
+      ],
+      max_output_tokens: 800,
+      response_format: {
+        type: "json_schema",
+        json_schema: FACT_RESPONSE_SCHEMA,
       },
-      {
-        role: "user",
-        content: [
-          {
-            type: "input_text",
-            text: buildUserPrompt(sources),
-          },
-        ],
-      },
-    ],
-    tools: [
-      {
-        type: "file_search",
-        vector_store_ids: [vectorStoreId],
-      },
-    ],
-    max_output_tokens: 800,
-    response_format: {
-      type: "json_schema",
-      json_schema: FACT_RESPONSE_SCHEMA,
-    },
+    };
+
+    const response = await client.responses.create(
+      requestPayload as unknown as Parameters<typeof client.responses.create>[0],
+    );
+
+    const rawText = ((response as { output_text?: string }).output_text ?? "").trim();
+    if (!rawText) {
+      return { inserted: [] as RfpFact[], skipped: 0 };
+    }
+
+    let parsed: z.infer<typeof FactListSchema>;
+    try {
+      parsed = FactListSchema.parse(JSON.parse(rawText));
+    } catch (error) {
+      console.warn("[normalize.ingest] Failed to parse fact payload", error);
+      return { inserted: [] as RfpFact[], skipped: 0 };
+    }
+
+    const normalized = parsed.facts
+      .map(normalizeRawFact)
+      .filter((fact): fact is NormalizedFactInsert => Boolean(fact));
+
+    const seenHashes = new Set(existingHashes);
+    const deduped: NormalizedFactInsert[] = [];
+    let skipped = 0;
+    for (const fact of normalized) {
+      if (seenHashes.has(fact.hash)) {
+        skipped += 1;
+        continue;
+      }
+      seenHashes.add(fact.hash);
+      deduped.push(fact);
+    }
+
+    const inserted = await insertNewFacts(sessionId, deduped);
+    return { inserted, skipped };
   };
 
-  // Cast while waiting for official typings to expose response_format + file_search.
-  const response = await client.responses.create(requestPayload as unknown as Parameters<typeof client.responses.create>[0]);
-
-  const rawText = (response as { output_text?: string }).output_text ?? "";
-  if (!rawText.trim()) {
-    return { inserted: [], skipped: 0 };
-  }
-
-  let parsed: z.infer<typeof FactListSchema>;
-  try {
-    parsed = FactListSchema.parse(JSON.parse(rawText));
-  } catch (error) {
-    console.warn("[normalize.ingest] Failed to parse fact payload", error);
-    return { inserted: [], skipped: 0 };
-  }
-
-  const normalized = parsed.facts
-    .map(normalizeRawFact)
-    .filter((fact): fact is NormalizedFactInsert => Boolean(fact));
-
-  const seenHashes = new Set(existingHashes);
-  const deduped: NormalizedFactInsert[] = [];
-  let skipped = 0;
-  for (const fact of normalized) {
-    if (seenHashes.has(fact.hash)) {
-      skipped += 1;
-      continue;
+  let totalSkipped = 0;
+  if (rfpFileIds.length > 0) {
+    const primary = await executeExtraction(rfpFileIds);
+    totalSkipped += primary.skipped;
+    if (primary.inserted.length > 0) {
+      return primary;
     }
-    seenHashes.add(fact.hash);
-    deduped.push(fact);
   }
 
-  const inserted = await insertNewFacts(sessionId, deduped);
-  return { inserted, skipped };
+  const fallback = await executeExtraction(null);
+  return {
+    inserted: fallback.inserted,
+    skipped: totalSkipped + fallback.skipped,
+  };
 }
 
 export function groupFactsBySlot(facts: RfpFact[]): Map<string, RfpFact[]> {

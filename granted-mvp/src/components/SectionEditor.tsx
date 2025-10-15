@@ -1,32 +1,38 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { diffLines } from "diff";
 import type { CoverageSlot } from "@/lib/types";
 
 export interface SectionEditorProps {
   sessionId: string;
   slot: CoverageSlot;
-  onClose: () => void;
 }
 
-function extractChecklist(notes?: string): string[] {
-  if (!notes) return [];
-  return notes
-    .split(/[\n•]+/)
-    .flatMap((segment) => segment.split(/[,;]+/))
-    .map((item) => item.replace(/^[•\-\u2013\u2014]+\s*/, "").trim())
-    .filter((item) => item.length > 0);
+interface DraftResponseShape {
+  markdown?: string;
+  previousMarkdown?: string | null;
+  updatedAt?: string | null;
 }
 
-export default function SectionEditor({ sessionId, slot, onClose }: SectionEditorProps) {
+export default function SectionEditor({ sessionId, slot }: SectionEditorProps) {
   const [markdown, setMarkdown] = useState("");
+  const [previousMarkdown, setPreviousMarkdown] = useState<string | null>(null);
+  const [updatedAt, setUpdatedAt] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const checklist = useMemo(() => extractChecklist(slot.notes), [slot.notes]);
+  const remainingItems = useMemo(
+    () => slot.items?.filter((item) => !item.satisfied) ?? [],
+    [slot.items],
+  );
+  const diff = useMemo(() => {
+    if (!previousMarkdown) return [];
+    return diffLines(previousMarkdown, markdown);
+  }, [previousMarkdown, markdown]);
 
   useEffect(() => {
     setLoading(true);
@@ -46,8 +52,10 @@ export default function SectionEditor({ sessionId, slot, onClose }: SectionEdito
         if (!res.ok) {
           throw new Error(`Failed to load draft (${res.status})`);
         }
-        const json = (await res.json()) as { markdown?: string };
+        const json = (await res.json()) as DraftResponseShape;
         setMarkdown(json.markdown ?? "");
+        setPreviousMarkdown(json.previousMarkdown ?? null);
+        setUpdatedAt(json.updatedAt ?? null);
       } catch (err) {
         if (!(err instanceof DOMException && err.name === "AbortError")) {
           console.error(err);
@@ -87,6 +95,10 @@ export default function SectionEditor({ sessionId, slot, onClose }: SectionEdito
       if (!res.ok) {
         throw new Error(`Failed to save draft (${res.status})`);
       }
+      const json = (await res.json()) as DraftResponseShape;
+      setMarkdown(json.markdown ?? "");
+      setPreviousMarkdown(json.previousMarkdown ?? null);
+      setUpdatedAt(json.updatedAt ?? null);
       setStatusMessage("Draft saved.");
       void fetch("/api/jobs/enqueue", {
         method: "POST",
@@ -108,7 +120,9 @@ export default function SectionEditor({ sessionId, slot, onClose }: SectionEdito
     try {
       const promptParts = [
         `Draft the "${slot.label}" section for our grant proposal.`,
-        checklist.length ? `Focus on: ${checklist.join("; ")}.` : null,
+        remainingItems.length
+          ? `Fill in the remaining items: ${remainingItems.map((item) => item.label).join(", ")}.`
+          : null,
         "Include persuasive but concise language in markdown format.",
         "Cite any provided sources in brackets like [RFP] when applicable.",
       ].filter(Boolean);
@@ -126,8 +140,10 @@ export default function SectionEditor({ sessionId, slot, onClose }: SectionEdito
       if (!res.ok) {
         throw new Error(`Draft generation failed (${res.status})`);
       }
-      const json = (await res.json()) as { markdown?: string };
+      const json = (await res.json()) as DraftResponseShape;
       setMarkdown(json.markdown ?? "");
+      setPreviousMarkdown(json.previousMarkdown ?? null);
+      setUpdatedAt(json.updatedAt ?? null);
       setStatusMessage("Generated a fresh draft.");
       void fetch("/api/jobs/enqueue", {
         method: "POST",
@@ -143,32 +159,53 @@ export default function SectionEditor({ sessionId, slot, onClose }: SectionEdito
   };
 
   return (
-    <aside className="section-editor-overlay" role="dialog" aria-labelledby="section-editor-heading">
+    <div className="section-editor" role="region" aria-labelledby="section-editor-heading">
       <header className="section-editor-header">
         <div>
           <h2 id="section-editor-heading">{slot.label}</h2>
           <p className="section-editor-subtitle">
             Status: <span className={`section-status section-status--${slot.status}`}>{slot.status}</span>
           </p>
+          {updatedAt ? <p className="section-editor-timestamp">Last updated {new Date(updatedAt).toLocaleString()}</p> : null}
         </div>
-        <button type="button" className="section-editor-close" onClick={onClose} aria-label="Close section editor">
-          ✕
-        </button>
       </header>
 
       <div className="section-editor-content">
         <section className="section-editor-checklist">
-          <h3>Remaining items</h3>
-          {checklist.length === 0 ? (
-            <p>No specific checklist items for this section.</p>
-          ) : (
+          <h3>Definition of Done</h3>
+          {slot.items && slot.items.length > 0 ? (
             <ul>
-              {checklist.map((item) => (
-                <li key={item}>{item}</li>
+              {slot.items.map((item) => (
+                <li key={item.id} className={item.satisfied ? "dod-item dod-item--done" : "dod-item"}>
+                  <span className="dod-indicator" aria-hidden="true">
+                    {item.satisfied ? "✓" : "○"}
+                  </span>
+                  {item.label}
+                </li>
               ))}
             </ul>
+          ) : (
+            <p>No structured requirements configured for this section.</p>
           )}
         </section>
+
+        {previousMarkdown ? (
+          <section className="section-editor-diff">
+            <h3>Changes since last version</h3>
+            <pre>
+              {diff.map((part, index) => (
+                <span
+                  key={`${part.added ? "added" : part.removed ? "removed" : "neutral"}-${index}`}
+                  className={
+                    part.added ? "diff-chunk diff-chunk--added" : part.removed ? "diff-chunk diff-chunk--removed" : "diff-chunk"
+                  }
+                >
+                  {part.value}
+                </span>
+              ))}
+            </pre>
+          </section>
+        ) : null}
 
         <section className="section-editor-draft">
           <label htmlFor="section-editor-textarea">Draft markdown</label>
@@ -179,7 +216,7 @@ export default function SectionEditor({ sessionId, slot, onClose }: SectionEdito
               id="section-editor-textarea"
               value={markdown}
               onChange={(event) => setMarkdown(event.target.value)}
-              rows={16}
+              rows={18}
               spellCheck={false}
               placeholder="Start drafting this section here."
             />
@@ -199,6 +236,6 @@ export default function SectionEditor({ sessionId, slot, onClose }: SectionEdito
           </button>
         </div>
       </footer>
-    </aside>
+    </div>
   );
 }

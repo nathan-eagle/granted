@@ -9,6 +9,7 @@ import type {
   AgentRunEnvelope,
   ChatMessage,
   CoverageSnapshot,
+  CoverageQuestion,
   FixNextSuggestion,
   SourceAttachment,
   TightenSectionSnapshot,
@@ -30,7 +31,9 @@ export default function Workspace({ initialState }: WorkspaceProps) {
   const [, setTighten] = useState<TightenSectionSnapshot | null>(initialState.tighten);
   const [, setProvenance] = useState<ProvenanceSnapshot | null>(initialState.provenance);
   const [initialMessages, setInitialMessages] = useState<ChatMessage[]>(initialState.messages);
-  const [activeSlotId, setActiveSlotId] = useState<string | null>(null);
+  const [activeSlotId, setActiveSlotId] = useState<string | null>(
+    initialState.coverage?.slots?.[0]?.id ?? null,
+  );
   const [autoState, setAutoState] = useState<AutoState>("idle");
   const sessionId = useMemo(() => initialState.sessionId, [initialState.sessionId]);
 
@@ -92,7 +95,7 @@ export default function Workspace({ initialState }: WorkspaceProps) {
     if (!activeSlotId) return;
     const slotExists = coverage?.slots?.some((slot) => slot.id === activeSlotId);
     if (!slotExists) {
-      setActiveSlotId(null);
+      setActiveSlotId(coverage?.slots?.[0]?.id ?? null);
     }
   }, [activeSlotId, coverage]);
 
@@ -193,13 +196,61 @@ export default function Workspace({ initialState }: WorkspaceProps) {
   }, [sourceKey]);
 
   const handleSlotSelect = useCallback((slotId: string) => {
-    setActiveSlotId((prev) => (prev === slotId ? null : slotId));
+    setActiveSlotId(slotId);
   }, []);
 
+  const handleAnswerQuestion = useCallback(
+    async (question: CoverageQuestion, valueText: string) => {
+      if (!valueText.trim()) {
+        return;
+      }
+      try {
+        const res = await fetch("/api/coach/answer", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sessionId,
+            factIds: question.factIds,
+            valueText,
+            answerKind: question.answerKind,
+          }),
+        });
+        if (!res.ok) {
+          throw new Error(`Failed to record answer (${res.status})`);
+        }
+        const json = (await res.json()) as { coverage: CoverageSnapshot; fixNext: FixNextSuggestion };
+        setCoverage(json.coverage);
+        setFixNext(json.fixNext ?? null);
+      } catch (error) {
+        console.error("Failed to record answer", error);
+        throw error;
+      }
+    },
+    [sessionId],
+  );
+
   return (
-    <>
-      <div className="workspace-grid">
+    <div className="workspace-grid">
+      <div className="workspace-left">
         <SourceRail sources={sources} />
+        <CoveragePanel
+          coverage={coverage}
+          onSelect={handleSlotSelect}
+          selectedId={activeSlotId}
+          sources={sources}
+        />
+      </div>
+      <main className="panel-surface workspace-center">
+        {activeSlot ? (
+          <SectionEditor sessionId={sessionId} slot={activeSlot} />
+        ) : (
+          <div className="editor-placeholder">
+            <h2>Select a section to begin drafting</h2>
+            <p>Choose a section on the left to view its requirements and start writing.</p>
+          </div>
+        )}
+      </main>
+      <section className="panel-surface workspace-right">
         <Chat
           initialMessages={initialMessages}
           fixNext={fixNext}
@@ -209,12 +260,11 @@ export default function Workspace({ initialState }: WorkspaceProps) {
           canExport={canExport}
           autoState={autoState}
           onRequestJob={enqueueJob}
+          activeQuestions={activeSlot?.questions ?? []}
+          onAnswerQuestion={handleAnswerQuestion}
+          activeSectionLabel={activeSlot?.label}
         />
-        <CoveragePanel coverage={coverage} onSelect={handleSlotSelect} sources={sources} />
-      </div>
-      {activeSlot ? (
-        <SectionEditor sessionId={sessionId} slot={activeSlot} onClose={() => setActiveSlotId(null)} />
-      ) : null}
-    </>
+      </section>
+    </div>
   );
 }

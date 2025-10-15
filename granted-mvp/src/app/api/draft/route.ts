@@ -1,5 +1,5 @@
 import { draftSection } from "@/server/tools/draftSection";
-import { loadDraftMarkdown, upsertDraftMarkdown } from "@/lib/session-store";
+import { loadDraftWithHistory, upsertDraftMarkdown } from "@/lib/session-store";
 
 export const runtime = "nodejs";
 
@@ -24,10 +24,14 @@ export async function GET(req: Request): Promise<Response> {
   }
 
   try {
-    const markdown = (await loadDraftMarkdown(sessionId, sectionId)) ?? "";
-    return jsonResponse({ markdown });
+    const { current, previous, updatedAt } = await loadDraftWithHistory(sessionId, sectionId);
+    return jsonResponse({ markdown: current ?? "", previousMarkdown: previous, updatedAt });
   } catch (error) {
-    console.error("Failed to load draft", error);
+    if (error instanceof Error) {
+      console.error("Failed to load draft", { message: error.message, stack: error.stack });
+    } else {
+      console.error("Failed to load draft", error);
+    }
     return jsonResponse({ error: "Failed to load draft" }, 500);
   }
 }
@@ -63,14 +67,20 @@ export async function POST(req: Request): Promise<Response> {
         wordTarget: body.wordTarget ?? null,
       });
       await upsertDraftMarkdown(sessionId, sectionId, result.markdown);
-      return jsonResponse({ markdown: result.markdown });
+      const { current, previous, updatedAt } = await loadDraftWithHistory(sessionId, sectionId);
+      return jsonResponse({ markdown: current ?? "", previousMarkdown: previous, updatedAt });
     }
 
     const markdown = typeof body.markdown === "string" ? body.markdown : "";
     await upsertDraftMarkdown(sessionId, sectionId, markdown);
-    return jsonResponse({ markdown });
+    const { current, previous, updatedAt } = await loadDraftWithHistory(sessionId, sectionId);
+    return jsonResponse({ markdown: current ?? "", previousMarkdown: previous, updatedAt });
   } catch (error) {
-    console.error("Failed to persist draft", error);
+    if (error instanceof Error) {
+      console.error("Failed to persist draft", { message: error.message, stack: error.stack });
+    } else {
+      console.error("Failed to persist draft", error);
+    }
     return jsonResponse({ error: "Failed to persist draft" }, 500);
   }
 }

@@ -69,6 +69,7 @@ export type DbSourceRow = {
   href: string | null;
   openai_file_id: string | null;
   content_hash: string | null;
+  metadata: Record<string, unknown> | null;
   created_at: string;
 };
 
@@ -140,6 +141,8 @@ export type DbRfpFactRow = {
   evidence_snippet: string | null;
   evidence_href: string | null;
   evidence_offsets: Record<string, unknown> | null;
+  annotations?: Record<string, unknown> | null;
+  source?: string | null;
   hash: string;
   created_at: string;
   updated_at: string;

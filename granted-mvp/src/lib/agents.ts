@@ -1,42 +1,6 @@
-import { Agent, run, type AgentInputItem, assistant, system, user } from "@openai/agents";
-import { fileSearchTool, webSearchTool } from "@openai/agents-openai";
-import type { StreamedRunResult, AgentOutputType } from "@openai/agents-core";
+import type { StreamedRunResult } from "@openai/agents-core";
 import type { GrantAgentContext } from "@/lib/agent-context";
-import { getOpenAIProvider } from "./openai";
-import { ensureVectorStore } from "@/lib/vector-store";
-import { coverageAndNextTool } from "@/server/tools/coverageAndNext";
-import { draftSectionTool } from "@/server/tools/draftSection";
-import { exportDocxTool } from "@/server/tools/exportDocx";
-import { ingestFromUrlsTool } from "@/server/tools/ingestFromUrls";
-import { normalizeRfpTool } from "@/server/tools/normalizeRfp";
-import { tightenSectionTool } from "@/server/tools/tightenSection";
-
-const DEFAULT_MODEL = process.env.GRANTED_MODEL ?? "gpt-4.1-mini";
-
-export function buildGrantAgent(vectorStoreId: string): Agent<GrantAgentContext, AgentOutputType> {
-  getOpenAIProvider();
-  return new Agent<GrantAgentContext, AgentOutputType>({
-    name: "Granted Assistant",
-    instructions: `You are the Grant Assistant. Goal: produce a solid first draft by asking for one missing item at a time.
-- Always summarize progress, cite sources, and track coverage slots.
-- Offer exactly one actionable Fix-next suggestion per turn.
-- Prefer File Search for authoritative answers and Web Search when materials are missing.
-- Maintain provenance tags like [RFP], [ORG], [BIO:Name].
-- Call tighten_section before export if limits look tight.`,
-    handoffDescription: "Conversational grant strategist that orchestrates ingest, coverage, and drafting.",
-    model: DEFAULT_MODEL,
-    tools: [
-      fileSearchTool(vectorStoreId),
-      webSearchTool({ searchContextSize: "medium" }),
-      ingestFromUrlsTool,
-      normalizeRfpTool,
-      draftSectionTool,
-      coverageAndNextTool,
-      tightenSectionTool,
-      exportDocxTool,
-    ],
-  });
-}
+import { buildGrantCoachAgent, runGrantCoach } from "@/server/agents/grantCoach";
 
 export interface RunAgentOptions {
   sessionId: string;
@@ -45,37 +9,9 @@ export interface RunAgentOptions {
 
 export interface StreamAgentResponse {
   context: GrantAgentContext;
-  stream: StreamedRunResult<GrantAgentContext, ReturnType<typeof buildGrantAgent>>;
+  stream: StreamedRunResult<GrantAgentContext, ReturnType<typeof buildGrantCoachAgent>>;
 }
 
-export async function streamAgentResponse({ sessionId, messages }: RunAgentOptions): Promise<StreamAgentResponse> {
-  const { vectorStoreId } = await ensureVectorStore(sessionId);
-  const agent = buildGrantAgent(vectorStoreId);
-  const context: GrantAgentContext = {
-    sessionId,
-    vectorStoreId,
-  };
-
-  const history: AgentInputItem[] = [
-    system(
-      "You are working inside a single-session workspace. Uphold the Fix-next policy and emit JSON tool results when calling hosted tools.",
-    ),
-  ];
-
-  messages.forEach(({ role, content }) => {
-    if (role === "assistant") {
-      history.push(assistant(content));
-    } else if (role === "system") {
-      history.push(system(content));
-    } else {
-      history.push(user(content));
-    }
-  });
-
-  const stream = await run(agent, history, {
-    stream: true,
-    context,
-  });
-
-  return { stream, context };
+export async function streamAgentResponse(options: RunAgentOptions): Promise<StreamAgentResponse> {
+  return runGrantCoach(options);
 }

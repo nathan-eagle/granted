@@ -1,13 +1,13 @@
 import { tool } from "@openai/agents";
 import { z } from "zod";
-import { createCoverageSnapshot, COVERAGE_TEMPLATES, promoteStatus } from "@/lib/coverage";
+import { createCoverageSnapshot, COVERAGE_TEMPLATES } from "@/lib/coverage";
 import type { GrantAgentContext } from "@/lib/agent-context";
 import { getSupabaseAdmin } from "@/lib/supabase";
-import type { CoverageSnapshot, CoverageSlot, RfpFact, SourceAttachment } from "@/lib/types";
+import type { CoverageSnapshot, CoverageSlot, RfpFact, SourceAttachment, CoverageSlotFact, CoverageQuestion } from "@/lib/types";
 import { saveCoverageSnapshot } from "@/lib/session-store";
 import { isFactsIngestionEnabled } from "@/lib/feature-flags";
 import { fetchFactsForSession, groupFactsBySlot, ingestFactsForSession } from "@/server/ingestion/rfpFacts";
-import { evaluateFactStatus } from "@/server/tools/factStatus";
+import { SECTION_DEFINITIONS } from "@/lib/dod";
 
 function toSourceAttachment(row: {
   id: string;
@@ -15,40 +15,27 @@ function toSourceAttachment(row: {
   label: string;
   kind: string;
   href: string | null;
+  metadata: Record<string, unknown> | null;
 }): SourceAttachment {
   return {
     id: row.openai_file_id ?? row.id,
     label: row.label,
     kind: row.kind === "url" ? "url" : "file",
     href: row.href ?? undefined,
+    meta: (row.metadata as Record<string, string | number> | null) ?? undefined,
   };
 }
 
-function textMatches(text: string | null | undefined, keywords: string[]): boolean {
-  if (!text) return false;
-  const lower = text.toLowerCase();
-  return keywords.some((keyword) => lower.includes(keyword));
-}
-
-
 async function fetchSessionContext(sessionId: string): Promise<{
   sources: SourceAttachment[];
-  userMessages: string[];
-  assistantMessages: string[];
   draftStatuses: Map<string, string>;
 }> {
   const supabase = await getSupabaseAdmin();
-  const [sourcesResult, messagesResult, draftsResult] = await Promise.all([
+  const [sourcesResult, draftsResult] = await Promise.all([
     supabase
       .from("sources")
-      .select("id, openai_file_id, label, kind, href")
+      .select("id, openai_file_id, label, kind, href, metadata")
       .eq("session_id", sessionId),
-    supabase
-      .from("messages")
-      .select("role, content")
-      .eq("session_id", sessionId)
-      .order("created_at", { ascending: true })
-      .limit(200),
     supabase
       .from("section_drafts")
       .select("section_id, status, markdown")
@@ -58,20 +45,11 @@ async function fetchSessionContext(sessionId: string): Promise<{
   if (sourcesResult.error) {
     console.warn("normalizeRfp: failed to load sources", sourcesResult.error);
   }
-  if (messagesResult.error) {
-    console.warn("normalizeRfp: failed to load messages", messagesResult.error);
-  }
   if (draftsResult.error) {
     console.warn("normalizeRfp: failed to load drafts", draftsResult.error);
   }
 
   const sources = (sourcesResult.data ?? []).map(toSourceAttachment);
-  const userMessages = (messagesResult.data ?? [])
-    .filter((row) => row.role === "user" && typeof row.content === "string")
-    .map((row) => row.content as string);
-  const assistantMessages = (messagesResult.data ?? [])
-    .filter((row) => row.role === "assistant" && typeof row.content === "string")
-    .map((row) => row.content as string);
 
   const draftStatuses = new Map<string, string>(
     (draftsResult.data ?? []).map((row) => {
@@ -86,29 +64,7 @@ async function fetchSessionContext(sessionId: string): Promise<{
     }),
   );
 
-  return { sources, userMessages, assistantMessages, draftStatuses };
-}
-
-function inferSlotStatus(
-  templateId: string,
-  defaultStatus: CoverageSlot["status"],
-  previous: Map<string, CoverageSlot>,
-  sourceMatches: boolean,
-  userMatches: boolean,
-  assistantMatches: boolean,
-): CoverageSlot["status"] {
-  const baseline: CoverageSlot["status"] = sourceMatches && assistantMatches
-    ? "complete"
-    : sourceMatches || userMatches
-      ? "partial"
-      : defaultStatus;
-
-  const previousSlot = previous.get(templateId);
-  if (!previousSlot) {
-    return baseline;
-  }
-
-  return promoteStatus(previousSlot.status, baseline);
+  return { sources, draftStatuses };
 }
 
 function summarizeCoverage(slots: CoverageSlot[]): string {
@@ -135,8 +91,46 @@ export interface NormalizeRfpResult {
   }>;
 }
 
+const HIGH_CONFIDENCE = 0.8;
+const MEDIUM_CONFIDENCE = 0.6;
+
+function isHighConfidenceFact(fact: RfpFact): boolean {
+  return (fact.source === "user" && fact.confidence >= 0.5) || fact.confidence >= HIGH_CONFIDENCE;
+}
+
+function isMediumConfidenceFact(fact: RfpFact): boolean {
+  return (fact.source === "user" && fact.confidence >= 0.5) || fact.confidence >= MEDIUM_CONFIDENCE;
+}
+
+function selectFacts(factIds: string[], factsBySlot: Map<string, RfpFact[]>, limitPerSlot = 2): CoverageSlotFact[] {
+  const picks: CoverageSlotFact[] = [];
+  factIds.forEach((slotId) => {
+    const slotFacts = factsBySlot.get(slotId) ?? [];
+    slotFacts.slice(0, limitPerSlot).forEach((fact) => {
+      picks.push({
+        slotId,
+        valueText: fact.valueText,
+        confidence: fact.confidence,
+        evidence: fact.evidence ?? undefined,
+      });
+    });
+  });
+  return picks;
+}
+
+function mergeFactsUnique(facts: CoverageSlotFact[]): CoverageSlotFact[] {
+  const seen = new Map<string, CoverageSlotFact>();
+  for (const fact of facts) {
+    const key = `${fact.slotId}:${fact.valueText}`;
+    if (!seen.has(key)) {
+      seen.set(key, fact);
+    }
+  }
+  return Array.from(seen.values());
+}
+
 export async function normalizeRfp(context: GrantAgentContext): Promise<NormalizeRfpResult> {
-  const { sources, userMessages, assistantMessages, draftStatuses } = await fetchSessionContext(context.sessionId);
+  const { sources, draftStatuses } = await fetchSessionContext(context.sessionId);
   const previousSlots = new Map(context.coverage?.slots?.map((slot) => [slot.id, slot]) ?? []);
   context.sources = sources;
 
@@ -192,26 +186,34 @@ export async function normalizeRfp(context: GrantAgentContext): Promise<Normaliz
   const promotions: NormalizeRfpResult["promotions"] = [];
 
   const slots: CoverageSlot[] = COVERAGE_TEMPLATES.map((template) => {
-    const sourceMatches = sources.some(
-      (source) =>
-        textMatches(source.label, template.sourceHints) || textMatches(source.href, template.sourceHints),
-    );
-    const userMatches = userMessages.some((message) => textMatches(message, template.messageHints));
-    const assistantMatches = assistantMessages.some((message) =>
-      textMatches(message, [...template.messageHints, template.label.toLowerCase()]),
-    );
-    let status = inferSlotStatus(
-      template.id,
-      "missing",
-      previousSlots,
-      sourceMatches,
-      userMatches,
-      assistantMatches,
-    );
+    const definition = SECTION_DEFINITIONS.find((section) => section.id === template.id);
+    const items = definition?.items ?? [];
+    const fallbackFactIds = template.factSlotIds ?? [];
 
-    const factStatus = evaluateFactStatus(template.factSlotIds ?? [], template.factPartialThreshold, template.factCompleteThreshold, factsBySlot);
-    if (factStatus.status !== "missing") {
-      status = promoteStatus(status, factStatus.status);
+    const itemStatuses = items.map((item) => {
+      const slotFacts = item.factIds.flatMap((slotId) => factsBySlot.get(slotId) ?? []);
+      const satisfied = slotFacts.some(isHighConfidenceFact);
+      return {
+        id: item.id,
+        label: item.label,
+        factIds: item.factIds,
+        satisfied,
+        hasSignal: slotFacts.some(isMediumConfidenceFact),
+      };
+    });
+
+    const satisfiedCount = itemStatuses.filter((item) => item.satisfied).length;
+    const hasSignal = itemStatuses.some((item) => item.hasSignal);
+
+    let status: CoverageSlot["status"];
+    if (!items.length) {
+      status = previousSlots.get(template.id)?.status ?? "missing";
+    } else if (satisfiedCount === items.length) {
+      status = "complete";
+    } else if (satisfiedCount > 0 || hasSignal) {
+      status = "partial";
+    } else {
+      status = "missing";
     }
 
     const draftStatus = draftStatuses.get(template.id);
@@ -221,8 +223,24 @@ export async function normalizeRfp(context: GrantAgentContext): Promise<Normaliz
       status = "partial";
     }
 
-    const slotFacts = factStatus.facts.length > 0 ? factStatus.facts : undefined;
-    const missingFactSlotIds = factStatus.missingSlots.length > 0 ? factStatus.missingSlots : undefined;
+    const pendingQuestions: CoverageQuestion[] = itemStatuses
+      .filter((item) => !item.satisfied)
+      .map((item) => {
+        const definitionItem = items.find((candidate) => candidate.id === item.id);
+        return {
+          id: `${template.id}-${item.id}`,
+          sectionId: template.id,
+          prompt: definitionItem?.question ?? `Provide details for ${item.label}.`,
+          factIds: definitionItem?.factIds ?? [],
+          answerKind: definitionItem?.answerKind ?? "text",
+        };
+      });
+
+    const factIdsForSlot = items.length > 0 ? items.flatMap((item) => item.factIds) : fallbackFactIds;
+    const slotFacts = mergeFactsUnique(factIdsForSlot.length ? selectFacts(factIdsForSlot, factsBySlot) : []);
+    const missingFactSlotIds = pendingQuestions.length
+      ? pendingQuestions.flatMap((question) => (question.factIds.length ? question.factIds : fallbackFactIds))
+      : fallbackFactIds;
 
     const previousStatus = previousSlots.get(template.id)?.status ?? null;
     if (previousStatus !== status) {
@@ -230,7 +248,7 @@ export async function normalizeRfp(context: GrantAgentContext): Promise<Normaliz
         slotId: template.id,
         from: previousStatus,
         to: status,
-        viaFacts: factStatus.status !== "missing",
+        viaFacts: satisfiedCount > 0 || hasSignal,
       });
     }
 
@@ -239,8 +257,15 @@ export async function normalizeRfp(context: GrantAgentContext): Promise<Normaliz
       label: template.label,
       status,
       notes: template.notes,
-      facts: slotFacts,
-      missingFactSlotIds,
+      facts: slotFacts.length ? slotFacts : undefined,
+      missingFactSlotIds: missingFactSlotIds.length ? missingFactSlotIds : undefined,
+      items: itemStatuses.map((item) => ({
+        id: item.id,
+        label: item.label,
+        factIds: item.factIds,
+        satisfied: item.satisfied,
+      })),
+      questions: pendingQuestions.slice(0, 3),
     };
   }).sort((a, b) => {
     const priority = new Map(COVERAGE_TEMPLATES.map((item, index) => [item.id, item.priority ?? index]));
