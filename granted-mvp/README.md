@@ -19,31 +19,27 @@ pnpm dev
 - DOCX export pipeline using the `docx` package
 - Coverage slots surface grounded facts with inline evidence and confidence
 
-## Fact ingestion & coverage
+## Fact discovery, ingestion & coverage
 
-Plan12 adds a deterministic ingestion pass inside `normalizeRfp`:
+Plan15 replaces the static coverage template with an RFP-as-schema pipeline:
 
 1. Uploaded sources are attached to a per-project OpenAI vector store.
-2. The normalize job calls `file_search` with a targeted fact schema (title, deadline, eligibility, budget caps, etc.).
-3. Extracted facts are hashed and stored in `rfp_facts` (with history in `rfp_facts_events`).
-4. Coverage slots merge those facts with chat/draft heuristics; evidence now appears inline in the UI with confidence badges.
+2. `discoverDoD` runs a file-search-only pass that emits the solicitation-specific checklist (sections, slots, constraints, conditional items).
+3. For each `must` / `should` slot we call the Responses API with `tool_choice:"required"` to extract grounded facts (and we skip inserts when citations are missing).
+4. Facts are hashed and stored in `rfp_facts` (`rfp_facts_events` keeps history). Coverage now renders the discovered sections with Verified/Unverified badges, conditional N/A toggles, and weighted scoring (must = 1.0, should = 0.5).
 
-### How coverage scoring works
+### Coverage scoring
 
-Coverage promotes each slot based on grounded facts:
-
-- **Opportunity overview** – needs any 1 medium-confidence fact for partial (title/deadline/portal) and any 2 high-confidence facts for complete.
-- **Eligibility & compliance** – completes with a single high-confidence eligibility summary.
-- **Project narrative** – partial with either project focus or formatting constraints; complete with a high-confidence focus summary.
-- **Organizational capacity** – complete when a high-confidence capacity requirement is found.
-- **Key personnel** – partial/complete thresholds mirror capacity (one grounded requirement).
-- **Budget & cost share** – partial when either cap or match data appears; complete with a high-confidence cap or match fact.
-- **Timeline & milestones**, **Evaluation plan**, **Attachments & appendices** – partial/complete thresholds require one medium/high-confidence grounded fact.
+- Sections are **complete** when all applicable `must` slots (or `conditional` slots marked N/A) are satisfied with cited facts.
+- **Partial** sections have at least one satisfied slot but still need evidence or additional detail.
+- The overall score is a weighted fill rate (`must` = 1.0, `should` = 0.5) and is persisted with the DoD version used to compute it.
 
 ### Environment flags
 
 - `INGEST_FACTS_ENABLED` – defaults to `true` locally; set to `true` in production when ready to roll out.
+- `GRANTED_DISCOVER_MODEL` – optional override for the discovery Responses model (defaults to `gpt-4.1-mini`).
 - `GRANTED_INGEST_MODEL` – optional override for the ingestion Responses model (defaults to `gpt-4.1-mini`).
+- `VERCEL_TOKEN`, `VERCEL_PROJECT_ID`, `VERCEL_TEAM_ID` – required for the `/api/logs/[deploymentId]` endpoint to call the Vercel Logs API.
 
 ### Supabase migrations
 
@@ -62,8 +58,15 @@ You can seed a demo fact with `node scripts/seed-rfp-fact.js <session-id>`.
 - `POST /api/agent` – Streams agent responses as server-sent events
 - `POST /api/upload` – Upload PDFs and attach them to the session's vector store
 - `POST /api/import-url` – Fetch remote URLs and ingest them as searchable files
+- `GET /api/logs/[deploymentId]` – Fetch runtime logs for a Vercel deployment (requires auth + Vercel token envs)
+- `POST /api/coverage/na` – Toggle a discovered slot as Not Applicable and refresh coverage
 - `POST /api/export` – Build and download a DOCX from markdown
 - `GET /api/health` – Health check used by Vercel and monitors
+
+
+## Debug scripts
+
+- `pnpm tsx scripts/debug-extract.ts --session <session-id> [--slot <slotId|all>] [--dry-run]` — inspect what the discovered DoD extractor would insert, without mutating the database when `--dry-run` is supplied.
 
 ## Testing
 

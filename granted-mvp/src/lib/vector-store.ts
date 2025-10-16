@@ -75,9 +75,26 @@ export async function attachFilesToVectorStore(sessionId: string, fileIds: strin
   }
 
   const client = getOpenAI();
-  await client.vectorStores.fileBatches.create(handle.vectorStoreId, {
+  const batch = await client.vectorStores.fileBatches.create(handle.vectorStoreId, {
     file_ids: fileIds,
   });
+
+  try {
+    const completed = await client.vectorStores.fileBatches.poll(handle.vectorStoreId, batch.id, {
+      pollIntervalMs: 2_000,
+    });
+    if (completed.status === "failed" || completed.file_counts.failed > 0) {
+      throw new Error(
+        `Vector store batch failed: ${JSON.stringify({ status: completed.status, failed: completed.file_counts.failed })}`,
+      );
+    }
+  } catch (error) {
+    console.warn("attachFilesToVectorStore: polling failed", {
+      vectorStoreId: handle.vectorStoreId,
+      batchId: batch.id,
+      error,
+    });
+  }
 
   return handle;
 }

@@ -3,11 +3,25 @@ import { z } from "zod";
 import { createCoverageSnapshot, COVERAGE_TEMPLATES } from "@/lib/coverage";
 import type { GrantAgentContext } from "@/lib/agent-context";
 import { getSupabaseAdmin } from "@/lib/supabase";
-import type { CoverageSnapshot, CoverageSlot, RfpFact, SourceAttachment, CoverageSlotFact, CoverageQuestion } from "@/lib/types";
+import type {
+  CoverageQuestion,
+  CoverageSnapshot,
+  CoverageSlot,
+  CoverageSlotFact,
+  RfpFact,
+  SourceAttachment,
+} from "@/lib/types";
 import { saveCoverageSnapshot } from "@/lib/session-store";
 import { isFactsIngestionEnabled } from "@/lib/feature-flags";
 import { fetchFactsForSession, groupFactsBySlot, ingestFactsForSession } from "@/server/ingestion/rfpFacts";
+import { computeSourcesSignature, discoverDoD, loadDiscoveredDoD, saveDiscoveredDoD } from "@/server/discovery/discoveredDoD";
+import { extractFactsFromDiscoveredDoD } from "@/server/ingestion/discoveredFacts";
+import { createCoverageFromDiscoveredDoD } from "@/server/coverage/discoveredCoverage";
+import type { DiscoveredDoD } from "@/lib/discovered-dod";
 import { SECTION_DEFINITIONS } from "@/lib/dod";
+
+const DISCOVERY_MODEL = process.env.GRANTED_DISCOVER_MODEL ?? process.env.GRANTED_MODEL ?? "gpt-4.1-mini";
+const INGEST_MODEL = process.env.GRANTED_INGEST_MODEL ?? process.env.GRANTED_MODEL ?? "gpt-4.1-mini";
 
 function toSourceAttachment(row: {
   id: string;
@@ -68,12 +82,15 @@ async function fetchSessionContext(sessionId: string): Promise<{
 }
 
 function summarizeCoverage(slots: CoverageSlot[]): string {
+  if (!slots.length) {
+    return "Tracking active RFP sections.";
+  }
   const total = slots.length;
   const complete = slots.filter((slot) => slot.status === "complete").length;
   const partial = slots.filter((slot) => slot.status === "partial").length;
   const missing = total - complete - partial;
   const nextTarget = slots.find((slot) => slot.status === "missing") ?? slots.find((slot) => slot.status === "partial");
-  const scorePercent = Math.round((complete + partial * 0.5) / total * 100);
+  const scorePercent = total > 0 ? Math.round(((complete + partial * 0.5) / total) * 100) : 0;
   const segments = [
     `Coverage ${scorePercent}% (${complete}/${total} complete, ${partial} partial, ${missing} missing).`,
     nextTarget ? `Next focus: ${nextTarget.label}.` : "All sections mapped. Ready to export.",
@@ -89,6 +106,8 @@ export interface NormalizeRfpResult {
     to: CoverageSlot["status"];
     viaFacts: boolean;
   }>;
+  dodVersion?: number | null;
+  discoveryToast?: { fromVersion?: number | null; toVersion: number } | null;
 }
 
 const HIGH_CONFIDENCE = 0.8;
@@ -112,6 +131,7 @@ function selectFacts(factIds: string[], factsBySlot: Map<string, RfpFact[]>, lim
         valueText: fact.valueText,
         confidence: fact.confidence,
         evidence: fact.evidence ?? undefined,
+        verified: Boolean(fact.evidence),
       });
     });
   });
@@ -129,60 +149,15 @@ function mergeFactsUnique(facts: CoverageSlotFact[]): CoverageSlotFact[] {
   return Array.from(seen.values());
 }
 
-export async function normalizeRfp(context: GrantAgentContext): Promise<NormalizeRfpResult> {
-  const { sources, draftStatuses } = await fetchSessionContext(context.sessionId);
-  const previousSlots = new Map(context.coverage?.slots?.map((slot) => [slot.id, slot]) ?? []);
-  context.sources = sources;
-
-  let facts: RfpFact[] = [];
-  const existingHashes = new Set<string>();
-  try {
-    facts = await fetchFactsForSession(context.sessionId);
-    for (const fact of facts) {
-      existingHashes.add(fact.hash);
-    }
-  } catch (error) {
-    console.warn("[normalize.ingest] failed to load existing facts", {
-      sessionId: context.sessionId,
-      error,
-    });
-  }
-
-  const factIngestionEnabled = isFactsIngestionEnabled();
-  const fileSources = sources.filter((source) => source.kind === "file");
-  if (factIngestionEnabled && fileSources.length > 0 && context.vectorStoreId) {
-    try {
-      const ingestResult = await ingestFactsForSession({
-        sessionId: context.sessionId,
-        vectorStoreId: context.vectorStoreId,
-        sources: fileSources,
-        existingHashes,
-      });
-      if (ingestResult.inserted.length > 0) {
-        for (const fact of ingestResult.inserted) {
-          facts.push(fact);
-          existingHashes.add(fact.hash);
-        }
-        console.info("[metric] normalize.ingest.inserted", {
-          sessionId: context.sessionId,
-          count: ingestResult.inserted.length,
-        });
-      }
-      if (ingestResult.skipped > 0) {
-        console.info("[metric] normalize.ingest.skipped", {
-          sessionId: context.sessionId,
-          count: ingestResult.skipped,
-        });
-      }
-    } catch (error) {
-      console.warn("[normalize.ingest] failed to ingest facts", {
-        sessionId: context.sessionId,
-        error,
-      });
-    }
-  }
-
-  const factsBySlot = groupFactsBySlot(facts);
+function buildTemplateCoverage({
+  factsBySlot,
+  previousSlots,
+  draftStatuses,
+}: {
+  factsBySlot: Map<string, RfpFact[]>;
+  previousSlots: Map<string, CoverageSlot>;
+  draftStatuses: Map<string, string>;
+}): { slots: CoverageSlot[]; promotions: NormalizeRfpResult["promotions"] } {
   const promotions: NormalizeRfpResult["promotions"] = [];
 
   const slots: CoverageSlot[] = COVERAGE_TEMPLATES.map((template) => {
@@ -266,22 +241,268 @@ export async function normalizeRfp(context: GrantAgentContext): Promise<Normaliz
         satisfied: item.satisfied,
       })),
       questions: pendingQuestions.slice(0, 3),
-    };
+    } satisfies CoverageSlot;
   }).sort((a, b) => {
     const priority = new Map(COVERAGE_TEMPLATES.map((item, index) => [item.id, item.priority ?? index]));
     return (priority.get(a.id) ?? 99) - (priority.get(b.id) ?? 99);
   });
 
-  const coverage = createCoverageSnapshot(slots, summarizeCoverage(slots));
+  return { slots, promotions };
+}
+
+function computePromotions(previousSlots: Map<string, CoverageSlot>, currentSlots: CoverageSlot[]): NormalizeRfpResult["promotions"] {
+  const promotions: NormalizeRfpResult["promotions"] = [];
+  for (const slot of currentSlots) {
+    const previous = previousSlots.get(slot.id);
+    const previousStatus = previous?.status ?? null;
+    if (previousStatus !== slot.status) {
+      promotions.push({
+        slotId: slot.id,
+        from: previousStatus,
+        to: slot.status,
+        viaFacts: Boolean(slot.facts && slot.facts.length > 0),
+      });
+    }
+  }
+  return promotions;
+}
+
+async function ensureDiscoveredDoD({
+  sessionId,
+  sources,
+  vectorStoreId,
+  existing,
+}: {
+  sessionId: string;
+  sources: SourceAttachment[];
+  vectorStoreId?: string | null;
+  existing: Awaited<ReturnType<typeof loadDiscoveredDoD>> | null;
+}): Promise<{
+  dod: DiscoveredDoD | null;
+  version: number | null;
+  toast: { fromVersion?: number | null; toVersion: number } | null;
+}> {
+  const { signature, files } = computeSourcesSignature(sources);
+
+  if (!vectorStoreId || files.length === 0) {
+    return {
+      dod: existing?.dod ?? null,
+      version: existing?.version ?? null,
+      toast: null,
+    };
+  }
+
+  if (existing && existing.sourcesSignature === signature) {
+    return {
+      dod: existing.dod,
+      version: existing.version,
+      toast: null,
+    };
+  }
+
+  const discovered = await discoverDoD({
+    sessionId,
+    vectorStoreId,
+    sources,
+    modelId: DISCOVERY_MODEL,
+  });
+
+  if (!discovered) {
+    return {
+      dod: existing?.dod ?? null,
+      version: existing?.version ?? null,
+      toast: null,
+    };
+  }
+
+  const version = existing ? existing.version + 1 : 1;
+  const normalized: DiscoveredDoD = {
+    ...discovered,
+    version,
+  };
+
+  await saveDiscoveredDoD({
+    sessionId,
+    dod: normalized,
+    signature,
+    vectorStoreId,
+    files,
+    modelId: DISCOVERY_MODEL,
+    previous: existing,
+  });
+
+  console.info("[normalize.discover] updated DoD", {
+    sessionId,
+    version,
+    sections: normalized.sections.length,
+    slots: normalized.sections.reduce((acc, section) => acc + section.slots.length, 0),
+  });
+
+  return {
+    dod: normalized,
+    version,
+    toast: existing ? { fromVersion: existing.version, toVersion: version } : null,
+  };
+}
+
+export async function normalizeRfp(context: GrantAgentContext): Promise<NormalizeRfpResult> {
+  const { sources, draftStatuses } = await fetchSessionContext(context.sessionId);
+  const previousSlots = new Map(context.coverage?.slots?.map((slot) => [slot.id, slot]) ?? []);
+  context.sources = sources;
+
+  let facts: RfpFact[] = [];
+  const existingHashes = new Set<string>();
+  try {
+    facts = await fetchFactsForSession(context.sessionId);
+    for (const fact of facts) {
+      existingHashes.add(fact.hash);
+    }
+  } catch (error) {
+    console.warn("[normalize.ingest] failed to load existing facts", {
+      sessionId: context.sessionId,
+      error,
+    });
+  }
+
+  const factIngestionEnabled = isFactsIngestionEnabled();
+  const fileSources = sources.filter((source) => source.kind === "file");
+
+  const existingDoDRecord = await loadDiscoveredDoD(context.sessionId);
+  const discoveryResult = await ensureDiscoveredDoD({
+    sessionId: context.sessionId,
+    sources,
+    vectorStoreId: context.vectorStoreId,
+    existing: existingDoDRecord,
+  });
+
+  let discoveredDoD = discoveryResult.dod;
+  let dodVersion = discoveryResult.version;
+  const discoveryToast = discoveryResult.toast;
+
+  if (!discoveredDoD && existingDoDRecord) {
+    discoveredDoD = existingDoDRecord.dod;
+    dodVersion = existingDoDRecord.version;
+  }
+
+  const shouldRunLegacyIngestion = (!discoveredDoD || discoveredDoD.sections.length === 0) && factIngestionEnabled;
+
+  if (shouldRunLegacyIngestion && fileSources.length > 0 && context.vectorStoreId) {
+    try {
+      const ingestResult = await ingestFactsForSession({
+        sessionId: context.sessionId,
+        vectorStoreId: context.vectorStoreId,
+        sources: fileSources,
+        existingHashes,
+      });
+      if (ingestResult.inserted.length > 0) {
+        for (const fact of ingestResult.inserted) {
+          facts.push(fact);
+          existingHashes.add(fact.hash);
+        }
+        console.info("[metric] normalize.ingest.inserted", {
+          sessionId: context.sessionId,
+          count: ingestResult.inserted.length,
+        });
+      }
+      if (ingestResult.skipped > 0) {
+        console.info("[metric] normalize.ingest.skipped", {
+          sessionId: context.sessionId,
+          count: ingestResult.skipped,
+        });
+      }
+    } catch (error) {
+      console.warn("[normalize.ingest] failed to ingest facts", {
+        sessionId: context.sessionId,
+        error,
+      });
+    }
+  }
+
+  const shouldRunDiscoveredExtraction =
+    factIngestionEnabled && discoveredDoD && discoveredDoD.sections.length > 0 && context.vectorStoreId;
+
+  if (shouldRunDiscoveredExtraction) {
+    try {
+      const result = await extractFactsFromDiscoveredDoD({
+        sessionId: context.sessionId,
+        dod: discoveredDoD!,
+        vectorStoreId: context.vectorStoreId!,
+        modelId: INGEST_MODEL,
+        existingHashes,
+      });
+      console.info("[metric] normalize.discovered.summary", {
+        sessionId: context.sessionId,
+        attempts: result.attempts,
+        skipped: result.skipped,
+        candidates: result.candidates.length,
+        inserted: result.inserted.length,
+      });
+      if (result.inserted.length > 0) {
+        for (const fact of result.inserted) {
+          facts.push(fact);
+          existingHashes.add(fact.hash);
+        }
+        console.info("[metric] normalize.discovered.inserted", {
+          sessionId: context.sessionId,
+          count: result.inserted.length,
+        });
+      }
+    } catch (error) {
+      console.warn("[normalize.discovered] extraction failed", {
+        sessionId: context.sessionId,
+        error,
+      });
+    }
+  }
+
+  const factsBySlot = groupFactsBySlot(facts);
+
+  let coverage: CoverageSnapshot;
+  let promotions: NormalizeRfpResult["promotions"] = [];
+
+  if (discoveredDoD && discoveredDoD.sections.length > 0) {
+    const coverageComputation = createCoverageFromDiscoveredDoD({
+      dod: discoveredDoD,
+      factsBySlot,
+      draftStatuses,
+    });
+    const summary = summarizeCoverage(coverageComputation.slots);
+    coverage = createCoverageSnapshot(coverageComputation.slots, summary, dodVersion ?? discoveredDoD.version);
+    coverage.score = coverageComputation.weightedScore;
+    coverage.dodVersion = dodVersion ?? discoveredDoD.version;
+    promotions = computePromotions(previousSlots, coverage.slots);
+    context.discoveredDoD = discoveredDoD;
+    context.dodVersion = coverage.dodVersion ?? null;
+    context.discoveryToast = discoveryToast ?? undefined;
+  } else {
+    const fallback = buildTemplateCoverage({
+      factsBySlot,
+      previousSlots,
+      draftStatuses,
+    });
+    const summary = summarizeCoverage(fallback.slots);
+    coverage = createCoverageSnapshot(fallback.slots, summary);
+    promotions = fallback.promotions;
+    context.discoveredDoD = null;
+    context.dodVersion = null;
+    context.discoveryToast = undefined;
+  }
 
   context.coverage = coverage;
-  await saveCoverageSnapshot(context.sessionId, coverage);
+  await saveCoverageSnapshot(context.sessionId, coverage, coverage.dodVersion ?? null);
+
   console.info("[metric] coverage.percent", {
     sessionId: context.sessionId,
     value: coverage.score,
+    dodVersion: coverage.dodVersion ?? null,
   });
 
-  return { coverage, promotions };
+  return {
+    coverage,
+    promotions,
+    dodVersion: coverage.dodVersion ?? null,
+    discoveryToast: discoveryToast ?? null,
+  };
 }
 
 export const normalizeRfpTool = tool({

@@ -6,9 +6,10 @@ const EMPTY_ATTACHMENTS: SourceAttachment[] = [];
 
 export interface SourceRailProps {
   sources?: SourceAttachment[] | null;
+  onStartNewGrant?: () => void;
 }
 
-export default function SourceRail({ sources }: SourceRailProps) {
+export default function SourceRail({ sources, onStartNewGrant }: SourceRailProps) {
   const attachments = sources ?? EMPTY_ATTACHMENTS;
 
   return (
@@ -18,7 +19,14 @@ export default function SourceRail({ sources }: SourceRailProps) {
           <h2 className="panel-title">Sources</h2>
           <p className="panel-subtitle">Uploads &amp; URLs tracked this session</p>
         </div>
-        <span className="source-count">{attachments.length}</span>
+        <div className="source-header-actions">
+          <span className="source-count">{attachments.length}</span>
+          {onStartNewGrant ? (
+            <button type="button" className="source-new-button" onClick={onStartNewGrant}>
+              New grant
+            </button>
+          ) : null}
+        </div>
       </header>
 
       <section className="scroll-area source-list">

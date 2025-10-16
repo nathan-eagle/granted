@@ -46,7 +46,14 @@ export async function persistUserFact({
     throw new Error("valueText cannot be empty");
   }
 
-  const valueJson = buildValueJson(answerKind, trimmed);
+  let valueJson = buildValueJson(answerKind, trimmed);
+  if (annotations && typeof annotations === "object" && (annotations as Record<string, unknown>).na === true) {
+    valueJson = {
+      ...(valueJson ?? {}),
+      na: true,
+      reason: (annotations as Record<string, unknown>).reason ?? null,
+    };
+  }
   const hash = hashCanonical(slotId, trimmed, valueJson, annotations ?? null);
 
   const payload = {
@@ -95,5 +102,26 @@ export async function persistUserFact({
 
   if (eventError) {
     console.warn("[persistUserFact] failed to insert event", { eventError, factId });
+  }
+}
+
+export async function clearNotApplicableFact({
+  sessionId,
+  slotId,
+}: {
+  sessionId: string;
+  slotId: string;
+}): Promise<void> {
+  const supabase = await getSupabaseAdmin();
+  const { error } = await supabase
+    .from("rfp_facts")
+    .delete()
+    .eq("session_id", sessionId)
+    .eq("slot_id", slotId)
+    .eq("source", "user")
+    .contains("value_json", { na: true });
+
+  if (error) {
+    console.error("[persistUserFact] failed to clear N/A fact", { sessionId, slotId, error });
   }
 }

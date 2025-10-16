@@ -180,7 +180,7 @@ function convertRow(row: DbRfpFactRow): RfpFact {
   };
 }
 
-interface NormalizedFactInsert {
+export interface NormalizedFactInsert {
   slotId: string;
   valueText: string;
   valueJson: Record<string, unknown> | null;
@@ -288,7 +288,7 @@ function normalizeRawFact(raw: z.infer<typeof FactListSchema>["facts"][number]):
   };
 }
 
-async function insertNewFacts(sessionId: string, inserts: NormalizedFactInsert[]): Promise<RfpFact[]> {
+export async function insertFacts(sessionId: string, inserts: NormalizedFactInsert[]): Promise<RfpFact[]> {
   if (inserts.length === 0) {
     return [];
   }
@@ -420,7 +420,7 @@ export async function ingestFactsForSession(options: IngestFactsOptions): Promis
       deduped.push(fact);
     }
 
-    const inserted = await insertNewFacts(sessionId, deduped);
+    const inserted = await insertFacts(sessionId, deduped);
     return { inserted, skipped };
   };
 

@@ -140,11 +140,12 @@ export function computeCoverageScore(slots: CoverageSlot[]): number {
   return Math.min(1, points / slots.length);
 }
 
-export function createCoverageSnapshot(slots: CoverageSlot[], summary?: string): CoverageSnapshot {
+export function createCoverageSnapshot(slots: CoverageSlot[], summary?: string, dodVersion?: number | null): CoverageSnapshot {
   return {
     score: computeCoverageScore(slots),
     summary: summary ?? "Tracking active RFP sections.",
     slots,
     updatedAt: Date.now(),
+    dodVersion,
   };
 }

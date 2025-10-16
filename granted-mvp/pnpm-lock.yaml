@@ -23,6 +23,9 @@ importers:
       '@supabase/supabase-js':
         specifier: ^2.75.0
         version: 2.75.0
+      '@vercel/sdk':
+        specifier: ^1.13.9
+        version: 1.13.9
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
@@ -32,6 +35,9 @@ importers:
       docx:
         specifier: ^9.5.1
         version: 9.5.1
+      dotenv:
+        specifier: ^16.4.5
+        version: 16.6.1
       js-cookie:
         specifier: ^3.0.5
         version: 3.0.5
@@ -895,6 +901,15 @@ packages:
     cpu: [x64]
     os: [win32]
 
+  '@vercel/sdk@1.13.9':
+    resolution: {integrity: sha512-kRIwYNYWSK+afhBR5SmVDgKogN9GcWVsmh7T+8GydyKWVDVXguREUbgna8LPJfOfb77ov0zvirFvKbxETjfsiQ==}
+    hasBin: true
+    peerDependencies:
+      '@modelcontextprotocol/sdk': '>=1.5.0 <1.10.0'
+    peerDependenciesMeta:
+      '@modelcontextprotocol/sdk':
+        optional: true
+
   '@vitest/expect@1.6.1':
     resolution: {integrity: sha512-jXL+9+ZNIJKruofqXuuTClf44eSpcHlgj3CiuNihUF3Ioujtmc0zIa3UJOW5RjDK1YLBJZnWBlPuqhYycLioog==}
 
@@ -1210,6 +1225,10 @@ packages:
   docx@9.5.1:
     resolution: {integrity: sha512-ABDI7JEirFD2+bHhOBlsGZxaG1UgZb2M/QMKhLSDGgVNhxDesTCDcP+qoDnDGjZ4EOXTRfUjUgwHVuZ6VSTfWQ==}
     engines: {node: '>=10'}
+
+  dotenv@16.6.1:
+    resolution: {integrity: sha512-uBq4egWHTcTt33a72vpSG0z3HnPuIl6NqYcTrKEg2azoEyl2hpW0zqlxysq2pK9HlDIHyHyakeYaYnSAwd8bow==}
+    engines: {node: '>=12'}
 
   dunder-proto@1.0.1:
     resolution: {integrity: sha512-KIN/nDJBQRcXw0MLVhZE9iQHmG68qAVIBg9CqmUYjmQIhgij9U5MFvrqkUL5FbtyyzZuOeOt0zdeRe4UY7ct+A==}
@@ -3463,6 +3482,10 @@ snapshots:
   '@unrs/resolver-binding-win32-x64-msvc@1.11.1':
     optional: true
 
+  '@vercel/sdk@1.13.9':
+    dependencies:
+      zod: 3.25.76
+
   '@vitest/expect@1.6.1':
     dependencies:
       '@vitest/spy': 1.6.1
@@ -3819,6 +3842,8 @@ snapshots:
       nanoid: 5.1.6
       xml: 1.0.1
       xml-js: 1.6.11
+
+  dotenv@16.6.1: {}
 
   dunder-proto@1.0.1:
     dependencies:

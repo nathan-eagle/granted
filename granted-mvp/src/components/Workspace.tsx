@@ -199,6 +199,47 @@ export default function Workspace({ initialState }: WorkspaceProps) {
     setActiveSlotId(slotId);
   }, []);
 
+  const handleToggleNA = useCallback(
+    async (slotId: string, current: boolean, label: string, condition?: string | null) => {
+      try {
+        let reason: string | null = null;
+        if (!current) {
+          reason = window.prompt(
+            `Mark "${label}" as Not Applicable. Add a short note (optional).`,
+            condition ?? "",
+          );
+        }
+        const res = await fetch("/api/coverage/na", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId, slotId, na: !current, reason }),
+        });
+        if (!res.ok) {
+          throw new Error(`Failed to toggle N/A (${res.status})`);
+        }
+        const json = (await res.json()) as { coverage: CoverageSnapshot; fixNext: FixNextSuggestion };
+        setCoverage(json.coverage);
+        setFixNext(json.fixNext ?? null);
+      } catch (error) {
+        console.error("Failed to toggle N/A", error);
+      }
+    },
+    [sessionId],
+  );
+
+  const handleStartNewGrant = useCallback(async () => {
+    try {
+      const res = await fetch("/api/session/new", { method: "POST" });
+      if (res.ok) {
+        window.location.href = "/";
+      } else {
+        console.error("Failed to start new grant", await res.text());
+      }
+    } catch (error) {
+      console.error("Failed to start new grant", error);
+    }
+  }, []);
+
   const handleAnswerQuestion = useCallback(
     async (question: CoverageQuestion, valueText: string) => {
       if (!valueText.trim()) {
@@ -232,12 +273,13 @@ export default function Workspace({ initialState }: WorkspaceProps) {
   return (
     <div className="workspace-grid">
       <div className="workspace-left">
-        <SourceRail sources={sources} />
+        <SourceRail sources={sources} onStartNewGrant={handleStartNewGrant} />
         <CoveragePanel
           coverage={coverage}
           onSelect={handleSlotSelect}
           selectedId={activeSlotId}
           sources={sources}
+          onToggleNA={handleToggleNA}
         />
       </div>
       <main className="panel-surface workspace-center">

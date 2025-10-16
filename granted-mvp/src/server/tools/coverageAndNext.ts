@@ -2,7 +2,7 @@ import { tool } from "@openai/agents";
 import { z } from "zod";
 import { COVERAGE_TEMPLATES, createCoverageSnapshot } from "@/lib/coverage";
 import type { GrantAgentContext } from "@/lib/agent-context";
-import type { CoverageSnapshot, FixNextSuggestion } from "@/lib/types";
+import type { CoverageSnapshot, CoverageSlot, FixNextSuggestion } from "@/lib/types";
 import { saveCoverageSnapshot } from "@/lib/session-store";
 
 export interface CoverageAndNextResult {
@@ -11,8 +11,15 @@ export interface CoverageAndNextResult {
 }
 
 const PRIORITY = new Map(COVERAGE_TEMPLATES.map((template) => [template.id, template.priority]));
+const STATUS_WEIGHT: Record<CoverageSlot["status"], number> = {
+  missing: 0,
+  partial: 1,
+  complete: 2,
+};
 export function selectFixNext(coverage: CoverageSnapshot): FixNextSuggestion {
   const sorted = [...coverage.slots].sort((a, b) => {
+    const statusDelta = (STATUS_WEIGHT[a.status] ?? 3) - (STATUS_WEIGHT[b.status] ?? 3);
+    if (statusDelta !== 0) return statusDelta;
     const aPriority = PRIORITY.get(a.id) ?? Number.MAX_SAFE_INTEGER;
     const bPriority = PRIORITY.get(b.id) ?? Number.MAX_SAFE_INTEGER;
     if (aPriority !== bPriority) return aPriority - bPriority;
@@ -55,8 +62,8 @@ export async function coverageAndNext(context: GrantAgentContext): Promise<Cover
   const fixNext = selectFixNext(coverage);
   context.coverage = coverage;
   context.fixNext = fixNext;
-  if (creatingBaseline || coverage) {
-    await saveCoverageSnapshot(context.sessionId, coverage);
+  if (creatingBaseline) {
+    await saveCoverageSnapshot(context.sessionId, coverage, coverage.dodVersion ?? null);
   }
   return { coverage, fixNext };
 }

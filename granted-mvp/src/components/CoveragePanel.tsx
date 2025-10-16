@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { CoverageSnapshot, SourceAttachment, CoverageSlotFact } from "@/lib/types";
+import { CoverageSnapshot, SourceAttachment, CoverageSlotFact, DefinitionOfDoneStatus } from "@/lib/types";
 import { RFP_FACT_SLOTS } from "@/lib/rfp-fact-slots";
 
 const EMPTY_COVERAGE: CoverageSnapshot = {
@@ -16,6 +16,7 @@ export interface CoveragePanelProps {
   onSelect?: (slotId: string) => void;
   selectedId?: string | null;
   sources?: SourceAttachment[];
+  onToggleNA?: (slotId: string, current: boolean, label: string, condition?: string | null) => void;
 }
 
 const STATUS_META = {
@@ -80,7 +81,15 @@ function formatMissingList(labels: string[]): string {
   return `${labels.slice(0, -1).join(", ")} and ${labels.at(-1)}`;
 }
 
-export default function CoveragePanel({ coverage, onSelect, selectedId, sources = [] }: CoveragePanelProps) {
+function shouldShowNaToggle(item: DefinitionOfDoneStatus): boolean {
+  if (item.requiredness === "conditional") {
+    return true;
+  }
+  const text = `${item.label} ${item.condition ?? ""}`.toLowerCase();
+  return text.includes("if ") || text.includes(" only if") || text.includes("conditional");
+}
+
+export default function CoveragePanel({ coverage, onSelect, selectedId, sources = [], onToggleNA }: CoveragePanelProps) {
   const snapshot = useMemo(() => coverage ?? EMPTY_COVERAGE, [coverage]);
   const formattedScore = Math.round(snapshot.score * 100);
   const sourceLabels = useMemo(() => new Map(sources.map((source) => [source.id, source.label])), [sources]);
@@ -131,17 +140,38 @@ export default function CoveragePanel({ coverage, onSelect, selectedId, sources 
                   {slot.notes ? <p className="coverage-slot__notes">{slot.notes}</p> : null}
                   {slot.items && slot.items.length > 0 ? (
                     <ul className="coverage-dod-list">
-                      {slot.items.map((item) => (
-                        <li
-                          key={item.id}
-                          className={`coverage-dod-item coverage-dod-item--${item.satisfied ? "done" : "open"}`}
-                        >
-                          <span className="coverage-dod-indicator" aria-hidden="true">
-                            {item.satisfied ? "✓" : "○"}
-                          </span>
-                          <span>{item.label}</span>
-                        </li>
-                      ))}
+                      {slot.items.map((item) => {
+                        const isNA = Boolean(item.notApplicable);
+                        const showToggle = typeof onToggleNA === "function" && shouldShowNaToggle(item);
+                        return (
+                          <li
+                            key={item.id}
+                            className={`coverage-dod-item coverage-dod-item--${item.satisfied ? "done" : "open"}${isNA ? " coverage-dod-item--na" : ""}`}
+                          >
+                            <span className="coverage-dod-indicator" aria-hidden="true">
+                              {item.satisfied ? "✓" : isNA ? "–" : "○"}
+                            </span>
+                            <span className="coverage-dod-label">
+                              {item.label}
+                              {item.condition ? (
+                                <span className="coverage-dod-condition">{item.condition}</span>
+                              ) : null}
+                            </span>
+                            {showToggle ? (
+                              <button
+                                type="button"
+                                className={`coverage-na-toggle${isNA ? " coverage-na-toggle--active" : ""}`}
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  onToggleNA?.(item.id, isNA, item.label, item.condition ?? null);
+                                }}
+                              >
+                                {isNA ? "Clear N/A" : "Mark N/A"}
+                              </button>
+                            ) : null}
+                          </li>
+                        );
+                      })}
                     </ul>
                   ) : null}
                   {slot.facts && slot.facts.length > 0 ? (
@@ -153,6 +183,13 @@ export default function CoveragePanel({ coverage, onSelect, selectedId, sources 
                           <li key={`${fact.slotId}-${index}`} className="coverage-fact" title={tooltip}>
                             <span className="coverage-fact__label">{label}</span>
                             <span className="coverage-fact__value">{fact.valueText}</span>
+                            {typeof fact.verified === "boolean" ? (
+                              <span
+                                className={`coverage-fact__badge coverage-fact__badge--${fact.verified ? "verified" : "unverified"}`}
+                              >
+                                {fact.verified ? "Verified" : "Unverified"}
+                              </span>
+                            ) : null}
                           </li>
                         );
                       })}

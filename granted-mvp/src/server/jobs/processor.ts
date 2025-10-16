@@ -97,6 +97,8 @@ async function runNormalize(sessionId: string): Promise<{
   coverage: CoverageSnapshot;
   fixNext: FixNextSuggestion | null;
   promotions: NormalizeRfpResult["promotions"];
+  dodVersion: number | null;
+  discoveryToast: NormalizeRfpResult["discoveryToast"];
 }> {
   const { vectorStoreId } = await ensureVectorStore(sessionId);
   const context: GrantAgentContext = {
@@ -109,6 +111,8 @@ async function runNormalize(sessionId: string): Promise<{
     coverage: coverageResult.coverage,
     fixNext: coverageResult.fixNext ?? null,
     promotions: normalizeResult.promotions,
+    dodVersion: normalizeResult.dodVersion ?? null,
+    discoveryToast: normalizeResult.discoveryToast ?? null,
   };
 }
 
@@ -194,19 +198,39 @@ export async function processJob(job: DbJobRow): Promise<void> {
     await logJob(job.id, "info", `processing ${job.kind}`, { sessionId: job.session_id });
     switch (job.kind) {
       case "normalize": {
-        const { coverage, fixNext, promotions } = await runNormalize(job.session_id);
+        const { coverage, fixNext, promotions, dodVersion, discoveryToast } = await runNormalize(job.session_id);
         console.info("[jobs] normalize.coverage", {
           jobId: job.id,
           sessionId: job.session_id,
           coverageScore: coverage.score,
           promotions,
+          dodVersion,
         });
         await logJob(job.id, "info", "normalize coverage updated", {
           coverageScore: coverage.score,
           promotions,
+          dodVersion,
         });
+        if (discoveryToast) {
+          console.info("[jobs] normalize.discovery", {
+            jobId: job.id,
+            fromVersion: discoveryToast.fromVersion ?? null,
+            toVersion: discoveryToast.toVersion,
+          });
+          await logJob(job.id, "info", "discovered DoD updated", {
+            fromVersion: discoveryToast.fromVersion ?? null,
+            toVersion: discoveryToast.toVersion,
+          });
+        }
+        const coverageMessageParts = [
+          `Coverage updated. ${Math.round((coverage.score ?? 0) * 100)}% of sections mapped.`,
+        ];
+        if (discoveryToast) {
+          const from = discoveryToast.fromVersion ?? "previous";
+          coverageMessageParts.push(`RFP checklist updated (${from} → v${discoveryToast.toVersion}).`);
+        }
         await persistAssistantTurn(job.session_id, {
-          content: `Coverage updated. ${Math.round((coverage.score ?? 0) * 100)}% of sections mapped.`,
+          content: coverageMessageParts.join(" "),
           coverage,
           fixNext,
         });

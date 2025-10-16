@@ -446,6 +446,16 @@ export default function Chat({
   const handleImport = useCallback(async () => {
     const trimmed = urlInput.trim();
     if (!trimmed) return;
+    const candidate = trimmed.startsWith("http") ? trimmed : `https://${trimmed}`;
+    try {
+      // Validate before hitting the API so we don't send massive non-URL payloads
+      new URL(candidate);
+    } catch {
+      setActivity("Enter a valid URL (including domain).");
+      setTimeout(() => setActivity(null), 3000);
+      return;
+    }
+
     setUrlInput("");
     setActivity("Fetching URL…");
     const res = await fetch("/api/import-url", {
@@ -453,7 +463,7 @@ export default function Chat({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         sessionId,
-        urls: [trimmed],
+        urls: [candidate],
       }),
     });
 

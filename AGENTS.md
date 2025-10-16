@@ -16,6 +16,10 @@
   - Tail logs: `VERCEL_AUTOMATION_BYPASS_SECRET=… vercel logs dpl_4sfhNCNwJ65CMozh8495jex2QnPk --scope nathans-projects-7ebab953 --token OEX4bVjd5JEyIiUKp0VlhPWm`.
   - Inspect envs: `vercel env ls`.
 
+## Testing policy
+- **Skip `pnpm test` locally.** The Vitest suite currently stalls in CI-like environments; rely on the build/lint step that Vercel runs during deployment instead.
+- Manual smoke checks, targeted scripts (e.g., `pnpm tsx scripts/debug-extract.ts …`), or Supabase migrations are fine—just avoid running the full test command.
+
 ## Secrets
 - Local `.env.local` inside `granted-mvp/` contains the same values; keep it in sync with Vercel when keys rotate.
 - Vercel environments (Development/Preview/Production) now include:

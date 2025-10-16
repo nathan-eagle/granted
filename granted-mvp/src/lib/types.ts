@@ -20,6 +20,7 @@ export interface CoverageSlotFact {
   valueText: string;
   confidence: number;
   evidence?: RfpFactEvidence | null;
+  verified?: boolean;
 }
 
 export interface CoverageQuestion {
@@ -35,6 +36,10 @@ export interface DefinitionOfDoneStatus {
   label: string;
   factIds: string[];
   satisfied: boolean;
+  notApplicable?: boolean;
+  requiredness?: "must" | "should" | "conditional";
+  satisfactionPolicy?: string;
+  condition?: string | null;
 }
 
 export interface CoverageSlot {
@@ -55,6 +60,7 @@ export interface CoverageSnapshot {
   summary: string;
   slots: CoverageSlot[];
   updatedAt: number;
+  dodVersion?: number | null;
 }
 
 export interface SourceAttachment {

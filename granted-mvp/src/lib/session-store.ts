@@ -164,7 +164,7 @@ async function createSession(projectId: string, explicitSessionId?: string): Pro
   return session;
 }
 
-async function createProjectAndSession(options: {
+export async function createProjectAndSession(options: {
   ownerId?: string | null;
   explicitSessionId?: string | null;
   name?: string | null;
@@ -215,6 +215,9 @@ async function buildSessionState(
             ? (coverageRow.slots as CoverageSnapshot["slots"])
             : (coverageRow.payload as CoverageSnapshot | null)?.slots ?? []),
         updatedAt: new Date(coverageRow.created_at).getTime(),
+        dodVersion:
+          (coverageRow as { dod_version?: number | null }).dod_version ??
+          ((coverageRow.payload as CoverageSnapshot | null)?.dodVersion ?? null),
       } satisfies CoverageSnapshot)
     : null;
 
@@ -549,7 +552,11 @@ export async function upsertDraftMarkdown(sessionId: string, sectionId: string, 
   }
 }
 
-export async function saveCoverageSnapshot(sessionId: string, snapshot: CoverageSnapshot): Promise<void> {
+export async function saveCoverageSnapshot(
+  sessionId: string,
+  snapshot: CoverageSnapshot,
+  dodVersion?: number | null,
+): Promise<void> {
   const supabase = await getSupabaseAdmin();
   const { error } = await supabase.from("coverage_snapshots").insert({
     session_id: sessionId,
@@ -557,6 +564,7 @@ export async function saveCoverageSnapshot(sessionId: string, snapshot: Coverage
     summary: snapshot.summary,
     payload: snapshot,
     slots: snapshot.slots,
+    dod_version: dodVersion ?? snapshot.dodVersion ?? null,
   });
   if (error) {
     console.error("Failed to insert coverage snapshot", error);

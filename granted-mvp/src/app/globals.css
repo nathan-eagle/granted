@@ -979,6 +979,28 @@ select {
   margin-top: 0.15rem;
 }
 
+.coverage-fact__badge {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.4rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 0.4rem;
+  border: 1px solid transparent;
+  font-size: 0.7rem;
+}
+
+.coverage-fact__badge--verified {
+  border-color: rgba(116, 220, 173, 0.8);
+  color: rgb(116, 220, 173);
+  background: rgba(116, 220, 173, 0.12);
+}
+
+.coverage-fact__badge--unverified {
+  border-color: rgba(255, 198, 109, 0.8);
+  color: rgb(255, 198, 109);
+  background: rgba(255, 198, 109, 0.1);
+}
+
 .coverage-slot__missing {
   margin-top: 0.4rem;
   font-size: 0.75rem;
@@ -1015,6 +1037,7 @@ select {
 .coverage-dod-item {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.4rem;
   font-size: 0.78rem;
   color: var(--text-secondary);
@@ -1022,6 +1045,10 @@ select {
 
 .coverage-dod-item--done {
   color: rgb(116, 220, 173);
+}
+
+.coverage-dod-item--na {
+  color: rgba(255, 255, 255, 0.55);
 }
 
 .coverage-dod-indicator {
@@ -1033,6 +1060,41 @@ select {
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   font-size: 0.7rem;
+}
+
+.coverage-dod-label {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.coverage-dod-condition {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.coverage-na-toggle {
+  margin-left: auto;
+  font-size: 0.7rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.85);
+  cursor: pointer;
+}
+
+.coverage-na-toggle:hover,
+.coverage-na-toggle:focus-visible {
+  border-color: rgb(116, 220, 173);
+  color: rgb(116, 220, 173);
+}
+
+.coverage-na-toggle--active {
+  border-color: rgb(116, 220, 173);
+  background: rgba(116, 220, 173, 0.12);
+  color: rgb(116, 220, 173);
 }
 
 .coverage-slot__questions {
@@ -1050,6 +1112,26 @@ select {
   padding: 0.35rem 0.65rem;
   border: 1px solid rgba(255, 255, 255, 0.16);
   font-size: 0.75rem;
+}
+
+.source-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.source-new-button {
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(84, 123, 255, 0.14);
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.source-new-button:hover {
+  background: rgba(124, 157, 255, 0.26);
 }
 
 .source-empty {
